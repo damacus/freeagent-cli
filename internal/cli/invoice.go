@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -42,6 +43,17 @@ func invoiceCommand() *cli.Command {
 					&cli.StringFlag{Name: "url", Usage: "Invoice URL"},
 				},
 				Action: invoiceGet,
+			},
+			{
+				Name:  "delete",
+				Usage: "Delete a draft invoice",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "id", Usage: "Invoice ID"},
+					&cli.StringFlag{Name: "url", Usage: "Invoice URL"},
+					&cli.BoolFlag{Name: "yes", Usage: "Skip confirmation prompt"},
+					&cli.BoolFlag{Name: "force", Usage: "Allow delete even if not Draft"},
+				},
+				Action: invoiceDelete,
 			},
 			{
 				Name:  "create",
@@ -286,6 +298,96 @@ func invoiceGet(c *cli.Context) error {
 	fmt.Fprintf(os.Stdout, "Dated On:  %v\n", invoice["dated_on"])
 	fmt.Fprintf(os.Stdout, "Due On:    %v\n", invoice["due_on"])
 	fmt.Fprintf(os.Stdout, "Total:     %v %v\n", invoice["currency"], invoice["total_value"])
+	return nil
+}
+
+func invoiceDelete(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+
+	client, _, err := newClient(context.Background(), rt, profile)
+	if err != nil {
+		return err
+	}
+
+	id := c.String("id")
+	urlValue := c.String("url")
+	if id == "" && urlValue == "" {
+		return fmt.Errorf("id or url required")
+	}
+
+	path := ""
+	if urlValue != "" {
+		path = urlValue
+	} else {
+		path = fmt.Sprintf("/invoices/%s", id)
+	}
+
+	resp, _, _, err := client.Do(context.Background(), http.MethodGet, path, nil, "")
+	if err != nil {
+		return err
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(resp, &decoded); err != nil {
+		return err
+	}
+	invoice, _ := decoded["invoice"].(map[string]any)
+	status := ""
+	reference := ""
+	if invoice != nil {
+		if v, ok := invoice["status"].(string); ok {
+			status = v
+		}
+		if v, ok := invoice["reference"].(string); ok {
+			reference = v
+		}
+	}
+
+	if !c.Bool("force") && status != "" && !strings.EqualFold(status, "Draft") {
+		return fmt.Errorf("invoice status is %s; use --force to delete anyway", status)
+	}
+
+	if !c.Bool("yes") {
+		label := path
+		if reference != "" {
+			label = fmt.Sprintf("%s (%s)", reference, path)
+		}
+		fmt.Fprintf(os.Stdout, "Delete invoice %s? (y/N): ", label)
+		var answer string
+		_, _ = fmt.Fscanln(os.Stdin, &answer)
+		answer = strings.TrimSpace(strings.ToLower(answer))
+		if answer != "y" && answer != "yes" {
+			fmt.Fprintln(os.Stdout, "Cancelled")
+			return nil
+		}
+	}
+
+	resp, _, _, err = client.Do(context.Background(), http.MethodDelete, path, nil, "")
+	if err != nil {
+		return err
+	}
+
+	if rt.JSONOutput {
+		if len(resp) == 0 {
+			return writeJSONOutput([]byte(`{"status":"ok"}`))
+		}
+		return writeJSONOutput(resp)
+	}
+
+	if reference != "" {
+		fmt.Fprintf(os.Stdout, "Deleted invoice %s\n", reference)
+		return nil
+	}
+	fmt.Fprintln(os.Stdout, "Deleted invoice")
 	return nil
 }
 
