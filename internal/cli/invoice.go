@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -18,6 +19,19 @@ func invoiceCommand() *cli.Command {
 		Name:  "invoices",
 		Usage: "Create and send invoices",
 		Subcommands: []*cli.Command{
+			{
+				Name:  "list",
+				Usage: "List invoices",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "view", Usage: "API view filter (for example: recent)"},
+					&cli.StringFlag{Name: "contact", Usage: "Contact ID or URL"},
+					&cli.StringFlag{Name: "from", Usage: "Start date (YYYY-MM-DD)"},
+					&cli.StringFlag{Name: "to", Usage: "End date (YYYY-MM-DD)"},
+					&cli.StringFlag{Name: "status", Usage: "Invoice status"},
+					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
+				},
+				Action: invoiceList,
+			},
 			{
 				Name:  "create",
 				Usage: "Create a draft invoice",
@@ -93,6 +107,87 @@ func invoiceCreate(c *cli.Context) error {
 		return nil
 	}
 	fmt.Fprintln(os.Stdout, "Invoice created")
+	return nil
+}
+
+func invoiceList(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+
+	client, _, err := newClient(context.Background(), rt, profile)
+	if err != nil {
+		return err
+	}
+
+	query := url.Values{}
+	if v := c.String("view"); v != "" {
+		query.Set("view", v)
+	}
+	if v := c.String("status"); v != "" {
+		query.Set("status", v)
+	}
+	if v := c.String("from"); v != "" {
+		query.Set("from_date", v)
+	}
+	if v := c.String("to"); v != "" {
+		query.Set("to_date", v)
+	}
+	if v := c.String("updated-since"); v != "" {
+		query.Set("updated_since", v)
+	}
+	if v := c.String("contact"); v != "" {
+		resolved, err := normalizeResourceURL(profile.BaseURL, "contacts", v)
+		if err != nil {
+			return err
+		}
+		query.Set("contact", resolved)
+	}
+
+	path := "/invoices"
+	if encoded := query.Encode(); encoded != "" {
+		path += "?" + encoded
+	}
+
+	resp, _, _, err := client.Do(context.Background(), http.MethodGet, path, nil, "")
+	if err != nil {
+		return err
+	}
+
+	if rt.JSONOutput {
+		return writeJSONOutput(resp)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(resp, &decoded); err != nil {
+		return err
+	}
+
+	list, _ := decoded["invoices"].([]any)
+	if len(list) == 0 {
+		fmt.Fprintln(os.Stdout, "No invoices found")
+		return nil
+	}
+
+	for _, item := range list {
+		inv, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		ref := inv["reference"]
+		status := inv["status"]
+		url := inv["url"]
+		if ref != nil || status != nil || url != nil {
+			fmt.Fprintf(os.Stdout, "%v\t%v\t%v\n", ref, status, url)
+		}
+	}
 	return nil
 }
 
