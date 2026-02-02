@@ -1,15 +1,14 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
-func NewApp() *cli.App {
-	app := &cli.App{
+func NewApp() *cli.Command {
+	app := &cli.Command{
 		Name:  "freegant",
 		Usage: "CLI for the FreeAgent API",
 		Flags: []cli.Flag{
@@ -38,7 +37,6 @@ func NewApp() *cli.App {
 				Usage: "Output raw JSON",
 			},
 		},
-		Before: initRuntime,
 		Commands: []*cli.Command{
 			authCommand(),
 			invoiceCommand(),
@@ -50,17 +48,17 @@ func NewApp() *cli.App {
 	return app
 }
 
-func initRuntime(c *cli.Context) error {
+func runtimeFrom(cmd *cli.Command) (Runtime, error) {
 	rt := Runtime{
-		ConfigPath: c.String("config"),
-		Profile:    c.String("profile"),
-		Sandbox:    c.Bool("sandbox"),
-		BaseURL:    c.String("base-url"),
-		JSONOutput: c.Bool("json"),
+		ConfigPath: cmd.String("config"),
+		Profile:    cmd.String("profile"),
+		Sandbox:    cmd.Bool("sandbox"),
+		BaseURL:    cmd.String("base-url"),
+		JSONOutput: cmd.Bool("json"),
 	}
 
 	if rt.Profile == "" {
-		return errors.New("profile cannot be empty")
+		return rt, fmt.Errorf("profile cannot be empty")
 	}
 
 	if rt.BaseURL == "" {
@@ -71,25 +69,9 @@ func initRuntime(c *cli.Context) error {
 		}
 	}
 
-	c.App.Metadata = map[string]interface{}{
-		"runtime": rt,
-	}
-
 	if !strings.HasSuffix(rt.BaseURL, "/v2") {
-		return fmt.Errorf("base-url must include /v2 (got %s)", rt.BaseURL)
+		return rt, fmt.Errorf("base-url must include /v2 (got %s)", rt.BaseURL)
 	}
 
-	return nil
-}
-
-func runtimeFrom(c *cli.Context) Runtime {
-	if c.App.Metadata == nil {
-		return Runtime{}
-	}
-	if v, ok := c.App.Metadata["runtime"]; ok {
-		if rt, ok := v.(Runtime); ok {
-			return rt
-		}
-	}
-	return Runtime{}
+	return rt, nil
 }
