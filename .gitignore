@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# build outputs
+freegant
+
+# Go
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
