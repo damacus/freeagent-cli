@@ -132,19 +132,36 @@ type approveFailed struct {
 }
 
 func approveExplanations(ctx context.Context, client *freeagent.Client, explanations []string) approveResult {
-	result := approveResult{}
 	payload := map[string]any{
 		"bank_transaction_explanation": map[string]any{
 			"marked_for_review": false,
 		},
 	}
-	for _, explanation := range explanations {
-		_, _, _, err := client.DoJSON(ctx, http.MethodPut, explanation, payload)
-		if err != nil {
-			result.Failed = append(result.Failed, approveFailed{ID: explanation, Error: err.Error()})
-			continue
+
+	type outcome struct {
+		id  string
+		err error
+	}
+	outcomes := make([]outcome, len(explanations))
+
+	var g errgroup.Group
+	for i, explanation := range explanations {
+		i, explanation := i, explanation
+		g.Go(func() error {
+			_, _, _, err := client.DoJSON(ctx, http.MethodPut, explanation, payload)
+			outcomes[i] = outcome{id: explanation, err: err}
+			return nil // collect all results; don't cancel siblings on failure
+		})
+	}
+	_ = g.Wait()
+
+	var result approveResult
+	for _, o := range outcomes {
+		if o.err != nil {
+			result.Failed = append(result.Failed, approveFailed{ID: o.id, Error: o.err.Error()})
+		} else {
+			result.Approved = append(result.Approved, o.id)
 		}
-		result.Approved = append(result.Approved, explanation)
 	}
 	return result
 }

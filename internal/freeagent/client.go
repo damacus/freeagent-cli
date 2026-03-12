@@ -19,6 +19,15 @@ const (
 	timeoutDefault = 30 * time.Second
 )
 
+var defaultHTTPClient = &http.Client{
+	Timeout: timeoutDefault,
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
+
 type Client struct {
 	BaseURL      string
 	UserAgent    string
@@ -34,7 +43,7 @@ func (c *Client) httpClient() *http.Client {
 	if c.HTTP != nil {
 		return c.HTTP
 	}
-	return &http.Client{Timeout: timeoutDefault}
+	return defaultHTTPClient
 }
 
 func (c *Client) ResolveURL(path string) (string, error) {
