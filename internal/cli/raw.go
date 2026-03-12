@@ -2,13 +2,12 @@ package cli
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 
-	"freeagent-cli/internal/config"
+	"github.com/damacus/freeagent-cli/internal/config"
 
 	"github.com/urfave/cli/v2"
 )
@@ -38,7 +37,7 @@ func rawAction(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -64,9 +63,9 @@ func rawAction(c *cli.Context) error {
 
 	var resp []byte
 	if body != nil {
-		resp, _, _, err = client.Do(context.Background(), method, path, bytes.NewReader(body), "application/json")
+		resp, _, _, err = client.Do(c.Context, method, path, bytes.NewReader(body), "application/json")
 	} else {
-		resp, _, _, err = client.Do(context.Background(), method, path, nil, "")
+		resp, _, _, err = client.Do(c.Context, method, path, nil, "")
 	}
 	if err != nil {
 		return err

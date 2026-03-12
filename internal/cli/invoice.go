@@ -8,11 +8,14 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 	"time"
 
-	"freeagent-cli/internal/config"
-	"freeagent-cli/internal/freeagent"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/damacus/freeagent-cli/internal/config"
+	"github.com/damacus/freeagent-cli/internal/freeagent"
 
 	"github.com/urfave/cli/v2"
 )
@@ -101,7 +104,7 @@ func invoiceCreate(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -111,7 +114,7 @@ func invoiceCreate(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.DoJSON(context.Background(), http.MethodPost, "/invoices", payload)
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/invoices", payload)
 	if err != nil {
 		return err
 	}
@@ -145,7 +148,7 @@ func invoiceList(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -179,7 +182,7 @@ func invoiceList(c *cli.Context) error {
 		path += "?" + encoded
 	}
 
-	resp, _, _, err := client.Do(context.Background(), http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -199,10 +202,39 @@ func invoiceList(c *cli.Context) error {
 		return nil
 	}
 
+	// Collect unique contact URLs then fetch all names concurrently.
+	contactURLs := make(map[string]struct{})
+	for _, item := range list {
+		inv, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if contactURL, ok := inv["contact"].(string); ok && contactURL != "" {
+			contactURLs[contactURL] = struct{}{}
+		}
+	}
+
+	contactCache := make(map[string]string)
+	if len(contactURLs) > 0 {
+		var mu sync.Mutex
+		g, gctx := errgroup.WithContext(c.Context)
+		for contactURL := range contactURLs {
+			contactURL := contactURL
+			g.Go(func() error {
+				name, err := fetchContactName(gctx, client, contactURL)
+				if err == nil && name != "" {
+					mu.Lock()
+					contactCache[contactURL] = name
+					mu.Unlock()
+				}
+				return nil // non-fatal: fall back to raw URL
+			})
+		}
+		_ = g.Wait()
+	}
+
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(writer, "Reference\tStatus\tContact\tAmount\tURL")
-
-	contactCache := map[string]string{}
 
 	for _, item := range list {
 		inv, ok := item.(map[string]any)
@@ -211,23 +243,20 @@ func invoiceList(c *cli.Context) error {
 		}
 		ref := inv["reference"]
 		status := inv["status"]
-		url := inv["url"]
+		invURL := inv["url"]
 		amount := inv["total_value"]
 		currency := inv["currency"]
 		contactDisplay := inv["contact"]
 		if contactURL, ok := inv["contact"].(string); ok && contactURL != "" {
-			if cached, ok := contactCache[contactURL]; ok {
-				contactDisplay = cached
-			} else if contactName, err := fetchContactName(client, contactURL); err == nil && contactName != "" {
-				contactDisplay = contactName
-				contactCache[contactURL] = contactName
+			if name, ok := contactCache[contactURL]; ok {
+				contactDisplay = name
 			}
 		}
-		if ref != nil || status != nil || url != nil {
+		if ref != nil || status != nil || invURL != nil {
 			if currency != nil && amount != nil {
-				fmt.Fprintf(writer, "%v\t%v\t%v\t%v %v\t%v\n", ref, status, contactDisplay, currency, amount, url)
+				fmt.Fprintf(writer, "%v\t%v\t%v\t%v %v\t%v\n", ref, status, contactDisplay, currency, amount, invURL)
 			} else {
-				fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n", ref, status, contactDisplay, "-", url)
+				fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n", ref, status, contactDisplay, "-", invURL)
 			}
 		}
 	}
@@ -247,7 +276,7 @@ func invoiceGet(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -265,7 +294,7 @@ func invoiceGet(c *cli.Context) error {
 		path = fmt.Sprintf("/invoices/%s", id)
 	}
 
-	resp, _, _, err := client.Do(context.Background(), http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -286,7 +315,7 @@ func invoiceGet(c *cli.Context) error {
 
 	contactDisplay := invoice["contact"]
 	if contactURL, ok := invoice["contact"].(string); ok && contactURL != "" {
-		if contactName, err := fetchContactName(client, contactURL); err == nil && contactName != "" {
+		if contactName, err := fetchContactName(c.Context, client, contactURL); err == nil && contactName != "" {
 			contactDisplay = fmt.Sprintf("%s (%s)", contactName, contactURL)
 		}
 	}
@@ -313,7 +342,7 @@ func invoiceDelete(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -331,7 +360,7 @@ func invoiceDelete(c *cli.Context) error {
 		path = fmt.Sprintf("/invoices/%s", id)
 	}
 
-	resp, _, _, err := client.Do(context.Background(), http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -371,7 +400,7 @@ func invoiceDelete(c *cli.Context) error {
 		}
 	}
 
-	resp, _, _, err = client.Do(context.Background(), http.MethodDelete, path, nil, "")
+	resp, _, _, err = client.Do(c.Context, http.MethodDelete, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -391,8 +420,8 @@ func invoiceDelete(c *cli.Context) error {
 	return nil
 }
 
-func fetchContactName(client *freeagent.Client, contactURL string) (string, error) {
-	resp, _, _, err := client.Do(context.Background(), http.MethodGet, contactURL, nil, "")
+func fetchContactName(ctx context.Context, client *freeagent.Client, contactURL string) (string, error) {
+	resp, _, _, err := client.Do(ctx, http.MethodGet, contactURL, nil, "")
 	if err != nil {
 		return "", err
 	}
@@ -511,7 +540,7 @@ func invoiceSend(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -538,7 +567,7 @@ func invoiceSend(c *cli.Context) error {
 		if err := json.Unmarshal(data, &payload); err != nil {
 			return err
 		}
-		resp, _, _, err := client.DoJSON(context.Background(), http.MethodPost, path+"/send_email", payload)
+		resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, path+"/send_email", payload)
 		if err != nil {
 			return err
 		}
@@ -566,7 +595,7 @@ func invoiceSend(c *cli.Context) error {
 			email["body"] = message
 		}
 		payload := map[string]any{"invoice": map[string]any{"email": email}}
-		resp, _, _, err := client.DoJSON(context.Background(), http.MethodPost, path+"/send_email", payload)
+		resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, path+"/send_email", payload)
 		if err != nil {
 			return err
 		}
@@ -577,7 +606,7 @@ func invoiceSend(c *cli.Context) error {
 		return nil
 	}
 
-	resp, _, _, err := client.Do(context.Background(), http.MethodPost, path+"/transitions/mark_as_sent", nil, "")
+	resp, _, _, err := client.Do(c.Context, http.MethodPost, path+"/transitions/mark_as_sent", nil, "")
 	if err != nil {
 		return err
 	}

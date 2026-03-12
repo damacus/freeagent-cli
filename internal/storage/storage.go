@@ -55,7 +55,7 @@ func (s *Store) Set(profile string, token *Token) error {
 	if s.fallback != nil {
 		return s.fallback.Set(profile, token)
 	}
-	return nil
+	return errors.New("no token store available")
 }
 
 func (s *Store) Delete(profile string) error {

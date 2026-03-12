@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"freeagent-cli/internal/storage"
+	"github.com/damacus/freeagent-cli/internal/storage"
 )
 
 const (
@@ -247,8 +247,8 @@ func (c *Client) doRequest(ctx context.Context, method, urlStr string, body []by
 		if err != nil {
 			return nil, 0, nil, err
 		}
-		defer resp.Body.Close()
 		data, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			return nil, resp.StatusCode, resp.Header, err
 		}

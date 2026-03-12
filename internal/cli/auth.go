@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"freeagent-cli/internal/config"
-	"freeagent-cli/internal/storage"
+	"github.com/damacus/freeagent-cli/internal/config"
+	"github.com/damacus/freeagent-cli/internal/storage"
 
 	"github.com/urfave/cli/v2"
 )
@@ -151,12 +151,15 @@ func authLogin(c *cli.Context) error {
 		}
 	}
 
-	client, store, err := newClient(context.Background(), rt, profile)
+	client, store, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
 
-	state := randomState()
+	state, err := randomState()
+	if err != nil {
+		return fmt.Errorf("generate oauth state: %w", err)
+	}
 	authURL, err := client.ApproveURL(state)
 	if err != nil {
 		return err
@@ -178,7 +181,7 @@ func authLogin(c *cli.Context) error {
 		}
 	}
 
-	token, err := client.ExchangeCode(context.Background(), code)
+	token, err := client.ExchangeCode(c.Context, code)
 	if err != nil {
 		return err
 	}
@@ -298,7 +301,7 @@ func authRefresh(c *cli.Context) error {
 		return err
 	}
 
-	client, store, err := newClient(context.Background(), rt, profile)
+	client, store, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -310,7 +313,7 @@ func authRefresh(c *cli.Context) error {
 		return exitf("refresh token missing for profile %s", rt.Profile)
 	}
 
-	refreshed, err := client.Refresh(context.Background(), stored.RefreshToken)
+	refreshed, err := client.Refresh(c.Context, stored.RefreshToken)
 	if err != nil {
 		return err
 	}
@@ -375,7 +378,7 @@ func waitForCallback(authURL, redirectURI, state string) (string, error) {
 	}
 	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
-		if expected := state; expected != "" && q.Get("state") != expected {
+		if q.Get("state") != state {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = w.Write([]byte("state mismatch"))
 			errCh <- errors.New("state mismatch")
@@ -430,12 +433,12 @@ func extractCode(input string) (string, error) {
 	return input, nil
 }
 
-func randomState() string {
+func randomState() (string, error) {
 	data := make([]byte, 16)
 	if _, err := rand.Read(data); err != nil {
-		return ""
+		return "", fmt.Errorf("crypto/rand: %w", err)
 	}
-	return fmt.Sprintf("%x", data)
+	return fmt.Sprintf("%x", data), nil
 }
 
 func mustMarshal(value any) []byte {
