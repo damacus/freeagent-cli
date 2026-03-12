@@ -3,6 +3,7 @@
 
 # build outputs
 freeagent
+dist/
 
 # Go
 bin/
