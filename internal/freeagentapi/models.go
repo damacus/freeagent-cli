@@ -37,6 +37,7 @@ type Contact struct {
 	Country          string `json:"country"`
 	UpdatedAt        string `json:"updated_at"`
 	CreatedAt        string `json:"created_at"`
+	DisplayName      string `json:"display_name,omitempty"`
 }
 
 type ContactResponse struct {
@@ -72,8 +73,19 @@ type UpdateContactRequest struct {
 	Contact ContactInput `json:"contact"`
 }
 
-// InvoiceItem represents a line item on an invoice.
+// InvoiceItem represents a line item on an invoice returned by the API.
 type InvoiceItem struct {
+	URL            string `json:"url"`
+	Description    string `json:"description"`
+	Quantity       string `json:"quantity"`
+	Price          string `json:"price"`
+	Category       string `json:"category"`
+	SalesTaxStatus string `json:"sales_tax_status"`
+	SalesTaxRate   string `json:"sales_tax_rate"`
+}
+
+// InvoiceItemInput is used when creating or updating invoice line items.
+type InvoiceItemInput struct {
 	URL            string `json:"url,omitempty"`
 	Description    string `json:"description,omitempty"`
 	Quantity       string `json:"quantity,omitempty"`
@@ -164,10 +176,10 @@ type Project struct {
 	ContactName       string `json:"contact_name"`
 	Currency          string `json:"currency"`
 	Status            string `json:"status"`
-	StartsOn          string `json:"starts_on,omitempty"`
-	EndsOn            string `json:"ends_on,omitempty"`
-	NormalBillingRate string `json:"normal_billing_rate,omitempty"`
-	BillingPeriod     string `json:"billing_period,omitempty"`
+	StartsOn          string `json:"starts_on"`
+	EndsOn            string `json:"ends_on"`
+	NormalBillingRate string `json:"normal_billing_rate"`
+	BillingPeriod     string `json:"billing_period"`
 	IsIR35            bool   `json:"is_ir35"`
 	UpdatedAt         string `json:"updated_at"`
 	CreatedAt         string `json:"created_at"`
@@ -283,13 +295,13 @@ type UpdateTimeslipRequest struct {
 type BillItem struct {
 	URL            string `json:"url,omitempty"`
 	Bill           string `json:"bill,omitempty"`
-	Description    string `json:"description,omitempty"`
-	Quantity       string `json:"quantity,omitempty"`
-	TotalValue     string `json:"total_value,omitempty"`
-	Category       string `json:"category,omitempty"`
-	SalesTaxStatus string `json:"sales_tax_status,omitempty"`
-	SalesTaxRate   string `json:"sales_tax_rate,omitempty"`
-	SalesTaxValue  string `json:"sales_tax_value,omitempty"`
+	Description    string `json:"description"`
+	Quantity       string `json:"quantity"`
+	TotalValue     string `json:"total_value"`
+	Category       string `json:"category"`
+	SalesTaxStatus string `json:"sales_tax_status"`
+	SalesTaxRate   string `json:"sales_tax_rate"`
+	SalesTaxValue  string `json:"sales_tax_value"`
 }
 
 // Bill represents a FreeAgent bill.
@@ -337,7 +349,7 @@ type BillInput struct {
 	DueOn       string           `json:"due_on,omitempty"`
 	Reference   string           `json:"reference,omitempty"`
 	Currency    string           `json:"currency,omitempty"`
-	SaleTaxRate string           `json:"sale_tax_rate,omitempty"`
+	SaleTaxRate string           `json:"sales_tax_rate,omitempty"`
 	TotalValue  string           `json:"total_value,omitempty"`
 	BillItems   []BillItemInput  `json:"bill_items,omitempty"`
 	Attachment  *AttachmentInput `json:"attachment,omitempty"`
@@ -367,6 +379,7 @@ type BankTransactionExplanation struct {
 	IsDeletable     bool        `json:"is_deletable"`
 	Attachment      *Attachment `json:"attachment,omitempty"`
 	UpdatedAt       string      `json:"updated_at"`
+	CreatedAt       string      `json:"created_at"`
 }
 
 type BankTransactionExplanationResponse struct {
