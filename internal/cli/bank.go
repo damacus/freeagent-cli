@@ -2,11 +2,14 @@ package cli
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/sync/errgroup"
@@ -51,6 +54,7 @@ func bankCommand() *cli.Command {
 							&cli.StringFlag{Name: "sales-tax-status", Usage: "VAT status (e.g. UK_OUT_OF_SCOPE, UK_ZERO, UK_STANDARD)"},
 							&cli.StringFlag{Name: "sales-tax-rate", Usage: "VAT rate percentage (e.g. 20.0)"},
 							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
+							&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 						},
 						Action: bankExplainCreate,
 					},
@@ -72,6 +76,7 @@ func bankCommand() *cli.Command {
 							&cli.StringFlag{Name: "sales-tax-status", Usage: "VAT status"},
 							&cli.StringFlag{Name: "sales-tax-rate", Usage: "VAT rate percentage"},
 							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
+							&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 						},
 						Action: bankExplainUpdate,
 					},
@@ -123,6 +128,13 @@ func bankExplainCreate(c *cli.Context) error {
 			return err
 		}
 		inner["project"] = projectURL
+	}
+	if v := c.String("receipt"); v != "" {
+		att, err := attachmentPayload(v)
+		if err != nil {
+			return err
+		}
+		inner["attachment"] = att
 	}
 
 	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/bank_transaction_explanations", payload)
@@ -213,6 +225,13 @@ func bankExplainUpdate(c *cli.Context) error {
 		}
 		inner["project"] = projectURL
 	}
+	if v := c.String("receipt"); v != "" {
+		att, err := attachmentPayload(v)
+		if err != nil {
+			return err
+		}
+		inner["attachment"] = att
+	}
 	if len(inner) == 0 {
 		return fmt.Errorf("no fields to update")
 	}
@@ -223,6 +242,24 @@ func bankExplainUpdate(c *cli.Context) error {
 		return err
 	}
 	return writeJSONOutput(resp)
+}
+
+// attachmentPayload reads a file from disk and returns the attachment map
+// ready to embed under "attachment" in an explanation payload.
+func attachmentPayload(path string) (map[string]any, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("reading receipt %q: %w", path, err)
+	}
+	contentType := mime.TypeByExtension(filepath.Ext(path))
+	if contentType == "" {
+		contentType = http.DetectContentType(data)
+	}
+	return map[string]any{
+		"file_name":    filepath.Base(path),
+		"content_type": contentType,
+		"data":         base64.StdEncoding.EncodeToString(data),
+	}, nil
 }
 
 func bankApprove(c *cli.Context) error {
