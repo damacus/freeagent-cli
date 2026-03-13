@@ -10,14 +10,24 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
-	"freeagent-cli/internal/storage"
+	"github.com/damacus/freeagent-cli/internal/storage"
 )
 
 const (
 	timeoutDefault = 30 * time.Second
 )
+
+var defaultHTTPClient = &http.Client{
+	Timeout: timeoutDefault,
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
 
 type Client struct {
 	BaseURL      string
@@ -28,13 +38,14 @@ type Client struct {
 	Profile      string
 	Store        storage.TokenStore
 	HTTP         *http.Client
+	mu           sync.Mutex // serialises token refresh across concurrent requests
 }
 
 func (c *Client) httpClient() *http.Client {
 	if c.HTTP != nil {
 		return c.HTTP
 	}
-	return &http.Client{Timeout: timeoutDefault}
+	return defaultHTTPClient
 }
 
 func (c *Client) ResolveURL(path string) (string, error) {
@@ -136,6 +147,9 @@ func (c *Client) tokenRequest(ctx context.Context, payload url.Values) (*storage
 }
 
 func (c *Client) AccessToken(ctx context.Context) (*storage.Token, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if c.Store == nil {
 		return nil, errors.New("token store not configured")
 	}
@@ -206,15 +220,20 @@ func (c *Client) Do(ctx context.Context, method, path string, body io.Reader, co
 	}
 
 	if status == http.StatusUnauthorized && token.RefreshToken != "" {
+		c.mu.Lock()
 		refreshed, refreshErr := c.Refresh(ctx, token.RefreshToken)
 		if refreshErr == nil {
 			if refreshed.RefreshToken == "" {
 				refreshed.RefreshToken = token.RefreshToken
 			}
-			if err := c.Store.Set(c.Profile, refreshed); err == nil {
+			storeErr := c.Store.Set(c.Profile, refreshed)
+			c.mu.Unlock()
+			if storeErr == nil {
 				respBody, status, headers, err = c.doRequest(ctx, method, urlStr, payload, contentType, refreshed.AccessToken)
 				return respBody, status, headers, err
 			}
+		} else {
+			c.mu.Unlock()
 		}
 	}
 
@@ -247,8 +266,8 @@ func (c *Client) doRequest(ctx context.Context, method, urlStr string, body []by
 		if err != nil {
 			return nil, 0, nil, err
 		}
-		defer resp.Body.Close()
 		data, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			return nil, resp.StatusCode, resp.Header, err
 		}

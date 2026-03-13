@@ -10,8 +10,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"freeagent-cli/internal/config"
-	"freeagent-cli/internal/freeagent"
+	"github.com/damacus/freeagent-cli/internal/config"
+	"github.com/damacus/freeagent-cli/internal/freeagent"
 
 	"github.com/urfave/cli/v2"
 )
@@ -102,7 +102,7 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 		path += "?" + queryParams
 	}
 
-	resp, _, _, err := client.Do(context.Background(), http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func contactsGet(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func contactsGet(c *cli.Context) error {
 		path = fmt.Sprintf("/contacts/%s", id)
 	}
 
-	resp, _, _, err := client.Do(context.Background(), http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func contactsCreate(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(context.Background(), rt, profile)
+	client, _, err := newClient(c.Context, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -258,7 +258,7 @@ func contactsCreate(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.DoJSON(context.Background(), http.MethodPost, "/contacts", payload)
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/contacts", payload)
 	if err != nil {
 		return err
 	}

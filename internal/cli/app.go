@@ -8,10 +8,14 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func NewApp() *cli.App {
+var appVersion = "dev"
+
+func NewApp(version string) *cli.App {
+	appVersion = version
 	app := &cli.App{
-		Name:  "freeagent",
-		Usage: "CLI for the FreeAgent API",
+		Name:    "freeagent",
+		Usage:   "CLI for the FreeAgent API",
+		Version: version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "config",
