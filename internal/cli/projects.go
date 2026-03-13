@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/damacus/freeagent-cli/internal/config"
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
 	"github.com/urfave/cli/v2"
 )
@@ -114,26 +115,21 @@ func projectsList(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.ProjectsResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
-	list, _ := decoded["projects"].([]any)
 
-	if len(list) == 0 {
+	if len(result.Projects) == 0 {
 		fmt.Fprintln(os.Stdout, "No projects found")
 		return nil
 	}
 
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(writer, "Name\tContact\tStatus\tURL")
-	for _, item := range list {
-		proj, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
+	for _, proj := range result.Projects {
 		fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n",
-			proj["name"], proj["contact_name"], proj["status"], proj["url"])
+			proj.Name, proj.ContactName, proj.Status, proj.URL)
 	}
 	_ = writer.Flush()
 	return nil
@@ -190,33 +186,34 @@ func projectsCreate(c *cli.Context) error {
 		return err
 	}
 
-	inner := map[string]any{
-		"name":    c.String("name"),
-		"contact": contactURL,
+	input := fa.ProjectInput{
+		Name:    c.String("name"),
+		Contact: contactURL,
 	}
 	if v := c.String("currency"); v != "" {
-		inner["currency"] = strings.ToUpper(v)
+		input.Currency = strings.ToUpper(v)
 	}
 	if v := c.String("status"); v != "" {
-		inner["status"] = v
+		input.Status = v
 	}
 	if v := c.String("starts-on"); v != "" {
-		inner["starts_on"] = v
+		input.StartsOn = v
 	}
 	if v := c.String("ends-on"); v != "" {
-		inner["ends_on"] = v
+		input.EndsOn = v
 	}
 	if v := c.String("billing-rate"); v != "" {
-		inner["normal_billing_rate"] = v
+		input.NormalBillingRate = v
 	}
 	if v := c.String("billing-period"); v != "" {
-		inner["billing_period"] = v
+		input.BillingPeriod = v
 	}
 	if c.IsSet("is-ir35") {
-		inner["is_ir35"] = c.Bool("is-ir35")
+		v := c.Bool("is-ir35")
+		input.IsIR35 = &v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/projects", map[string]any{"project": inner})
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/projects", fa.CreateProjectRequest{Project: input})
 	if err != nil {
 		return err
 	}
@@ -225,16 +222,11 @@ func projectsCreate(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.ProjectResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
-	proj, _ := decoded["project"].(map[string]any)
-	if proj != nil {
-		fmt.Fprintf(os.Stdout, "Created project %v (%v)\n", proj["name"], proj["url"])
-		return nil
-	}
-	fmt.Fprintln(os.Stdout, "Project created")
+	fmt.Fprintf(os.Stdout, "Created project %v (%v)\n", result.Project.Name, result.Project.URL)
 	return nil
 }
 
@@ -262,33 +254,35 @@ func projectsUpdate(c *cli.Context) error {
 		return err
 	}
 
-	inner := map[string]any{}
+	input := fa.ProjectInput{}
 	if v := c.String("name"); v != "" {
-		inner["name"] = v
+		input.Name = v
 	}
 	if v := c.String("status"); v != "" {
-		inner["status"] = v
+		input.Status = v
 	}
 	if v := c.String("starts-on"); v != "" {
-		inner["starts_on"] = v
+		input.StartsOn = v
 	}
 	if v := c.String("ends-on"); v != "" {
-		inner["ends_on"] = v
+		input.EndsOn = v
 	}
 	if v := c.String("billing-rate"); v != "" {
-		inner["normal_billing_rate"] = v
+		input.NormalBillingRate = v
 	}
 	if v := c.String("billing-period"); v != "" {
-		inner["billing_period"] = v
+		input.BillingPeriod = v
 	}
 	if c.IsSet("is-ir35") {
-		inner["is_ir35"] = c.Bool("is-ir35")
+		v := c.Bool("is-ir35")
+		input.IsIR35 = &v
 	}
-	if len(inner) == 0 {
+	if input.Name == "" && input.Status == "" && input.StartsOn == "" && input.EndsOn == "" &&
+		input.NormalBillingRate == "" && input.BillingPeriod == "" && input.IsIR35 == nil {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, projURL, map[string]any{"project": inner})
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, projURL, fa.UpdateProjectRequest{Project: input})
 	if err != nil {
 		return err
 	}

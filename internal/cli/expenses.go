@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/damacus/freeagent-cli/internal/config"
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
 	"github.com/urfave/cli/v2"
 )
@@ -126,26 +127,21 @@ func expensesList(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.ExpensesResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
-	list, _ := decoded["expenses"].([]any)
 
-	if len(list) == 0 {
+	if len(result.Expenses) == 0 {
 		fmt.Fprintln(os.Stdout, "No expenses found")
 		return nil
 	}
 
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(writer, "Date\tDescription\tGross\tURL")
-	for _, item := range list {
-		exp, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
+	for _, exp := range result.Expenses {
 		fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n",
-			exp["dated_on"], exp["description"], exp["gross_value"], exp["url"])
+			exp.DatedOn, exp.Description, exp.GrossValue, exp.URL)
 	}
 	_ = writer.Flush()
 	return nil
@@ -202,11 +198,11 @@ func expensesCreate(c *cli.Context) error {
 		return err
 	}
 
-	inner := map[string]any{
-		"dated_on":    c.String("dated-on"),
-		"description": c.String("description"),
-		"gross_value": c.String("gross-value"),
-		"category":    categoryURL,
+	input := fa.ExpenseInput{
+		DatedOn:     c.String("dated-on"),
+		Description: c.String("description"),
+		GrossValue:  c.String("gross-value"),
+		Category:    categoryURL,
 	}
 
 	if v := c.String("user"); v != "" {
@@ -214,33 +210,37 @@ func expensesCreate(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		inner["user"] = userURL
+		input.User = userURL
 	}
 	if v := c.String("currency"); v != "" {
-		inner["currency"] = strings.ToUpper(v)
+		input.Currency = strings.ToUpper(v)
 	}
 	if v := c.String("sales-tax-status"); v != "" {
-		inner["sales_tax_status"] = v
+		input.SalesTaxStatus = v
 	}
 	if v := c.String("sales-tax-rate"); v != "" {
-		inner["sales_tax_rate"] = v
+		input.SalesTaxRate = v
 	}
 	if v := c.String("project"); v != "" {
 		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
 		if err != nil {
 			return err
 		}
-		inner["project"] = projectURL
+		input.Project = projectURL
 	}
 	if v := c.String("receipt"); v != "" {
 		att, err := attachmentPayload(v)
 		if err != nil {
 			return err
 		}
-		inner["attachment"] = att
+		input.Attachment = &fa.AttachmentInput{
+			FileName:    att["file_name"].(string),
+			ContentType: att["content_type"].(string),
+			Data:        att["data"].(string),
+		}
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/expenses", map[string]any{"expense": inner})
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/expenses", fa.CreateExpenseRequest{Expense: input})
 	if err != nil {
 		return err
 	}
@@ -249,16 +249,11 @@ func expensesCreate(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.ExpenseResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
-	exp, _ := decoded["expense"].(map[string]any)
-	if exp != nil {
-		fmt.Fprintf(os.Stdout, "Created expense %v (%v)\n", exp["description"], exp["url"])
-		return nil
-	}
-	fmt.Fprintln(os.Stdout, "Expense created")
+	fmt.Fprintf(os.Stdout, "Created expense %v (%v)\n", result.Expense.Description, result.Expense.URL)
 	return nil
 }
 
@@ -286,48 +281,56 @@ func expensesUpdate(c *cli.Context) error {
 		return err
 	}
 
-	inner := map[string]any{}
+	input := fa.ExpenseInput{}
 	if v := c.String("dated-on"); v != "" {
-		inner["dated_on"] = v
+		input.DatedOn = v
 	}
 	if v := c.String("description"); v != "" {
-		inner["description"] = v
+		input.Description = v
 	}
 	if v := c.String("gross-value"); v != "" {
-		inner["gross_value"] = v
+		input.GrossValue = v
 	}
 	if v := c.String("category"); v != "" {
 		categoryURL, err := normalizeResourceURL(profile.BaseURL, "categories", v)
 		if err != nil {
 			return err
 		}
-		inner["category"] = categoryURL
+		input.Category = categoryURL
 	}
 	if v := c.String("sales-tax-status"); v != "" {
-		inner["sales_tax_status"] = v
+		input.SalesTaxStatus = v
 	}
 	if v := c.String("sales-tax-rate"); v != "" {
-		inner["sales_tax_rate"] = v
+		input.SalesTaxRate = v
 	}
 	if v := c.String("project"); v != "" {
 		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
 		if err != nil {
 			return err
 		}
-		inner["project"] = projectURL
+		input.Project = projectURL
 	}
 	if v := c.String("receipt"); v != "" {
 		att, err := attachmentPayload(v)
 		if err != nil {
 			return err
 		}
-		inner["attachment"] = att
+		input.Attachment = &fa.AttachmentInput{
+			FileName:    att["file_name"].(string),
+			ContentType: att["content_type"].(string),
+			Data:        att["data"].(string),
+		}
 	}
-	if len(inner) == 0 {
+
+	// Check if any fields were set
+	if input.DatedOn == "" && input.Description == "" && input.GrossValue == "" &&
+		input.Category == "" && input.SalesTaxStatus == "" && input.SalesTaxRate == "" &&
+		input.Project == "" && input.Attachment == nil {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, expURL, map[string]any{"expense": inner})
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, expURL, fa.UpdateExpenseRequest{Expense: input})
 	if err != nil {
 		return err
 	}
