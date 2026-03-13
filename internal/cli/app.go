@@ -51,6 +51,7 @@ func NewApp(version string) *cli.App {
 			invoiceCommand(),
 			projectsCommand(),
 			rawCommand(),
+			timeslipsCommand(),
 		},
 	}
 
