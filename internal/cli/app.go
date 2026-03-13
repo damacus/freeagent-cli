@@ -49,6 +49,7 @@ func NewApp(version string) *cli.App {
 			contactsCommand(),
 			expensesCommand(),
 			invoiceCommand(),
+			projectsCommand(),
 			rawCommand(),
 		},
 	}
