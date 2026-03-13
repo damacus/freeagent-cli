@@ -47,6 +47,7 @@ func NewApp(version string) *cli.App {
 			authCommand(),
 			bankCommand(),
 			contactsCommand(),
+			expensesCommand(),
 			invoiceCommand(),
 			rawCommand(),
 		},
