@@ -35,8 +35,194 @@ func bankCommand() *cli.Command {
 				},
 				Action: bankApprove,
 			},
+			{
+				Name:  "explain",
+				Usage: "Manage bank transaction explanations",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "create",
+						Usage: "Create an explanation for a bank transaction",
+						Flags: []cli.Flag{
+							&cli.StringFlag{Name: "bank-transaction", Required: true, Usage: "Bank transaction ID or URL"},
+							&cli.StringFlag{Name: "dated-on", Required: true, Usage: "Date of the transaction (YYYY-MM-DD)"},
+							&cli.StringFlag{Name: "description", Required: true, Usage: "Description of the transaction"},
+							&cli.StringFlag{Name: "gross-value", Required: true, Usage: "Gross value (e.g. 100.00)"},
+							&cli.StringFlag{Name: "category", Required: true, Usage: "Category URL (e.g. /ledger_accounts/123)"},
+							&cli.StringFlag{Name: "sales-tax-status", Usage: "VAT status (e.g. UK_OUT_OF_SCOPE, UK_ZERO, UK_STANDARD)"},
+							&cli.StringFlag{Name: "sales-tax-rate", Usage: "VAT rate percentage (e.g. 20.0)"},
+							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
+						},
+						Action: bankExplainCreate,
+					},
+					{
+						Name:      "get",
+						Usage:     "Get a bank transaction explanation",
+						ArgsUsage: "<id|url>",
+						Action:    bankExplainGet,
+					},
+					{
+						Name:      "update",
+						Usage:     "Update a bank transaction explanation",
+						ArgsUsage: "<id|url>",
+						Flags: []cli.Flag{
+							&cli.StringFlag{Name: "dated-on", Usage: "Date of the transaction (YYYY-MM-DD)"},
+							&cli.StringFlag{Name: "description", Usage: "Description of the transaction"},
+							&cli.StringFlag{Name: "gross-value", Usage: "Gross value (e.g. 100.00)"},
+							&cli.StringFlag{Name: "category", Usage: "Category URL (e.g. /ledger_accounts/123)"},
+							&cli.StringFlag{Name: "sales-tax-status", Usage: "VAT status"},
+							&cli.StringFlag{Name: "sales-tax-rate", Usage: "VAT rate percentage"},
+							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
+						},
+						Action: bankExplainUpdate,
+					},
+				},
+			},
 		},
 	}
+}
+
+func bankExplainCreate(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	txnURL, err := normalizeResourceURL(profile.BaseURL, "bank_transactions", c.String("bank-transaction"))
+	if err != nil {
+		return err
+	}
+
+	payload := map[string]any{
+		"bank_transaction_explanation": map[string]any{
+			"bank_transaction": txnURL,
+			"dated_on":        c.String("dated-on"),
+			"description":     c.String("description"),
+			"gross_value":     c.String("gross-value"),
+			"category":        c.String("category"),
+		},
+	}
+	inner := payload["bank_transaction_explanation"].(map[string]any)
+	if v := c.String("sales-tax-status"); v != "" {
+		inner["sales_tax_status"] = v
+	}
+	if v := c.String("sales-tax-rate"); v != "" {
+		inner["sales_tax_rate"] = v
+	}
+	if v := c.String("project"); v != "" {
+		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
+		if err != nil {
+			return err
+		}
+		inner["project"] = projectURL
+	}
+
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/bank_transaction_explanations", payload)
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func bankExplainGet(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	id := c.Args().First()
+	if id == "" {
+		return fmt.Errorf("explanation id or url required")
+	}
+	explanationURL, err := normalizeResourceURL(profile.BaseURL, "bank_transaction_explanations", id)
+	if err != nil {
+		return err
+	}
+
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, explanationURL, nil, "")
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func bankExplainUpdate(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	id := c.Args().First()
+	if id == "" {
+		return fmt.Errorf("explanation id or url required")
+	}
+	explanationURL, err := normalizeResourceURL(profile.BaseURL, "bank_transaction_explanations", id)
+	if err != nil {
+		return err
+	}
+
+	inner := map[string]any{}
+	if v := c.String("dated-on"); v != "" {
+		inner["dated_on"] = v
+	}
+	if v := c.String("description"); v != "" {
+		inner["description"] = v
+	}
+	if v := c.String("gross-value"); v != "" {
+		inner["gross_value"] = v
+	}
+	if v := c.String("category"); v != "" {
+		inner["category"] = v
+	}
+	if v := c.String("sales-tax-status"); v != "" {
+		inner["sales_tax_status"] = v
+	}
+	if v := c.String("sales-tax-rate"); v != "" {
+		inner["sales_tax_rate"] = v
+	}
+	if v := c.String("project"); v != "" {
+		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
+		if err != nil {
+			return err
+		}
+		inner["project"] = projectURL
+	}
+	if len(inner) == 0 {
+		return fmt.Errorf("no fields to update")
+	}
+
+	payload := map[string]any{"bank_transaction_explanation": inner}
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, explanationURL, payload)
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
 }
 
 func bankApprove(c *cli.Context) error {
