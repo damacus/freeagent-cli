@@ -46,9 +46,14 @@ func NewApp(version string) *cli.App {
 		Commands: []*cli.Command{
 			authCommand(),
 			bankCommand(),
+			billsCommand(),
 			contactsCommand(),
+			expensesCommand(),
 			invoiceCommand(),
+			projectsCommand(),
 			rawCommand(),
+			tasksCommand(),
+			timeslipsCommand(),
 		},
 	}
 

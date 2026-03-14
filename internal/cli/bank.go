@@ -2,17 +2,21 @@ package cli
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	"github.com/damacus/freeagent-cli/internal/freeagent"
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
 	"github.com/urfave/cli/v2"
 )
@@ -35,8 +39,226 @@ func bankCommand() *cli.Command {
 				},
 				Action: bankApprove,
 			},
+			{
+				Name:  "explain",
+				Usage: "Manage bank transaction explanations",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "create",
+						Usage: "Create an explanation for a bank transaction",
+						Flags: []cli.Flag{
+							&cli.StringFlag{Name: "bank-transaction", Required: true, Usage: "Bank transaction ID or URL"},
+							&cli.StringFlag{Name: "dated-on", Required: true, Usage: "Date of the transaction (YYYY-MM-DD)"},
+							&cli.StringFlag{Name: "description", Required: true, Usage: "Description of the transaction"},
+							&cli.StringFlag{Name: "gross-value", Required: true, Usage: "Gross value (e.g. 100.00)"},
+							&cli.StringFlag{Name: "category", Required: true, Usage: "Category URL (e.g. /ledger_accounts/123)"},
+							&cli.StringFlag{Name: "sales-tax-status", Usage: "VAT status (e.g. UK_OUT_OF_SCOPE, UK_ZERO, UK_STANDARD)"},
+							&cli.StringFlag{Name: "sales-tax-rate", Usage: "VAT rate percentage (e.g. 20.0)"},
+							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
+							&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
+						},
+						Action: bankExplainCreate,
+					},
+					{
+						Name:      "get",
+						Usage:     "Get a bank transaction explanation",
+						ArgsUsage: "<id|url>",
+						Action:    bankExplainGet,
+					},
+					{
+						Name:      "update",
+						Usage:     "Update a bank transaction explanation",
+						ArgsUsage: "<id|url>",
+						Flags: []cli.Flag{
+							&cli.StringFlag{Name: "dated-on", Usage: "Date of the transaction (YYYY-MM-DD)"},
+							&cli.StringFlag{Name: "description", Usage: "Description of the transaction"},
+							&cli.StringFlag{Name: "gross-value", Usage: "Gross value (e.g. 100.00)"},
+							&cli.StringFlag{Name: "category", Usage: "Category URL (e.g. /ledger_accounts/123)"},
+							&cli.StringFlag{Name: "sales-tax-status", Usage: "VAT status"},
+							&cli.StringFlag{Name: "sales-tax-rate", Usage: "VAT rate percentage"},
+							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
+							&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
+						},
+						Action: bankExplainUpdate,
+					},
+				},
+			},
 		},
 	}
+}
+
+func bankExplainCreate(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	txnURL, err := normalizeResourceURL(profile.BaseURL, "bank_transactions", c.String("bank-transaction"))
+	if err != nil {
+		return err
+	}
+
+	input := fa.BankTransactionExplanationInput{
+		BankTransaction: txnURL,
+		DatedOn:         c.String("dated-on"),
+		Description:     c.String("description"),
+		GrossValue:      c.String("gross-value"),
+		Category:        c.String("category"),
+	}
+	if v := c.String("sales-tax-status"); v != "" {
+		input.SalesTaxStatus = v
+	}
+	if v := c.String("sales-tax-rate"); v != "" {
+		input.SalesTaxRate = v
+	}
+	if v := c.String("project"); v != "" {
+		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
+		if err != nil {
+			return err
+		}
+		input.Project = projectURL
+	}
+	if v := c.String("receipt"); v != "" {
+		att, err := attachmentPayload(v)
+		if err != nil {
+			return err
+		}
+		input.Attachment = att
+	}
+
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/bank_transaction_explanations", fa.CreateBankTransactionExplanationRequest{BankTransactionExplanation: input})
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func bankExplainGet(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	id := c.Args().First()
+	if id == "" {
+		return fmt.Errorf("explanation id or url required")
+	}
+	explanationURL, err := normalizeResourceURL(profile.BaseURL, "bank_transaction_explanations", id)
+	if err != nil {
+		return err
+	}
+
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, explanationURL, nil, "")
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func bankExplainUpdate(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	id := c.Args().First()
+	if id == "" {
+		return fmt.Errorf("explanation id or url required")
+	}
+	explanationURL, err := normalizeResourceURL(profile.BaseURL, "bank_transaction_explanations", id)
+	if err != nil {
+		return err
+	}
+
+	input := fa.BankTransactionExplanationInput{}
+	if v := c.String("dated-on"); v != "" {
+		input.DatedOn = v
+	}
+	if v := c.String("description"); v != "" {
+		input.Description = v
+	}
+	if v := c.String("gross-value"); v != "" {
+		input.GrossValue = v
+	}
+	if v := c.String("category"); v != "" {
+		input.Category = v
+	}
+	if v := c.String("sales-tax-status"); v != "" {
+		input.SalesTaxStatus = v
+	}
+	if v := c.String("sales-tax-rate"); v != "" {
+		input.SalesTaxRate = v
+	}
+	if v := c.String("project"); v != "" {
+		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
+		if err != nil {
+			return err
+		}
+		input.Project = projectURL
+	}
+	if v := c.String("receipt"); v != "" {
+		att, err := attachmentPayload(v)
+		if err != nil {
+			return err
+		}
+		input.Attachment = att
+	}
+	if input.DatedOn == "" && input.Description == "" && input.GrossValue == "" &&
+		input.Category == "" && input.SalesTaxStatus == "" && input.SalesTaxRate == "" &&
+		input.Project == "" && input.Attachment == nil {
+		return fmt.Errorf("no fields to update")
+	}
+
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, explanationURL, fa.UpdateBankTransactionExplanationRequest{BankTransactionExplanation: input})
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+// attachmentPayload reads a file from disk and returns an AttachmentInput
+// ready to embed under "attachment" in a request payload.
+func attachmentPayload(path string) (*fa.AttachmentInput, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("reading receipt %q: %w", path, err)
+	}
+	contentType := mime.TypeByExtension(filepath.Ext(path))
+	if contentType == "" {
+		contentType = http.DetectContentType(data)
+	}
+	return &fa.AttachmentInput{
+		FileName:    filepath.Base(path),
+		ContentType: contentType,
+		Data:        base64.StdEncoding.EncodeToString(data),
+	}, nil
 }
 
 func bankApprove(c *cli.Context) error {

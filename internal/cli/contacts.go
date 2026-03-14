@@ -12,6 +12,7 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	"github.com/damacus/freeagent-cli/internal/freeagent"
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
 	"github.com/urfave/cli/v2"
 )
@@ -117,11 +118,11 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 		return err
 	}
 
-	var decoded map[string]any
+	var decoded fa.ContactsResponse
 	if err := json.Unmarshal(resp, &decoded); err != nil {
 		return err
 	}
-	list, _ := decoded["contacts"].([]any)
+	list := decoded.Contacts
 
 	filtered := list
 	query = strings.TrimSpace(query)
@@ -134,7 +135,7 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 
 	if rt.JSONOutput {
 		if query != "" {
-			data, err := json.Marshal(map[string]any{"contacts": filtered})
+			data, err := json.Marshal(fa.ContactsResponse{Contacts: filtered})
 			if err != nil {
 				return err
 			}
@@ -150,12 +151,8 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(writer, "Name\tEmail\tURL")
-	for _, item := range filtered {
-		contact, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
-		fmt.Fprintf(writer, "%v\t%v\t%v\n", contactDisplayName(contact), contactEmail(contact), contact["url"])
+	for _, contact := range filtered {
+		fmt.Fprintf(writer, "%v\t%v\t%v\n", contactDisplayName(contact), contactEmail(contact), contact.URL)
 	}
 	_ = writer.Flush()
 	return nil
@@ -214,24 +211,24 @@ func contactsGet(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
+	var decoded fa.ContactResponse
 	if err := json.Unmarshal(resp, &decoded); err != nil {
 		return err
 	}
-	contact, _ := decoded["contact"].(map[string]any)
-	if contact == nil {
+	contact := decoded.Contact
+	if contact.URL == "" && contact.OrganisationName == "" && contact.FirstName == "" && contact.LastName == "" {
 		fmt.Fprintln(os.Stdout, string(resp))
 		return nil
 	}
 
 	fmt.Fprintf(os.Stdout, "Name:     %v\n", contactDisplayName(contact))
 	fmt.Fprintf(os.Stdout, "Email:    %v\n", contactEmail(contact))
-	fmt.Fprintf(os.Stdout, "URL:      %v\n", contact["url"])
-	if v := contact["phone_number"]; v != nil {
-		fmt.Fprintf(os.Stdout, "Phone:    %v\n", v)
+	fmt.Fprintf(os.Stdout, "URL:      %v\n", contact.URL)
+	if contact.PhoneNumber != "" {
+		fmt.Fprintf(os.Stdout, "Phone:    %v\n", contact.PhoneNumber)
 	}
-	if v := contact["mobile"]; v != nil {
-		fmt.Fprintf(os.Stdout, "Mobile:   %v\n", v)
+	if contact.Mobile != "" {
+		fmt.Fprintf(os.Stdout, "Mobile:   %v\n", contact.Mobile)
 	}
 	return nil
 }
@@ -253,12 +250,12 @@ func contactsCreate(c *cli.Context) error {
 		return err
 	}
 
-	payload, err := buildContactPayload(c)
+	input, err := buildContactInput(c)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/contacts", payload)
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/contacts", fa.CreateContactRequest{Contact: input})
 	if err != nil {
 		return err
 	}
@@ -267,96 +264,94 @@ func contactsCreate(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
+	var decoded fa.ContactResponse
 	if err := json.Unmarshal(resp, &decoded); err != nil {
 		return err
 	}
-	contact, _ := decoded["contact"].(map[string]any)
-	if contact != nil {
-		fmt.Fprintf(os.Stdout, "Created contact %v (%v)\n", contactDisplayName(contact), contact["url"])
+	contact := decoded.Contact
+	if contact.URL != "" || contact.OrganisationName != "" || contact.FirstName != "" {
+		fmt.Fprintf(os.Stdout, "Created contact %v (%v)\n", contactDisplayName(contact), contact.URL)
 		return nil
 	}
 	fmt.Fprintln(os.Stdout, "Contact created")
 	return nil
 }
 
-func buildContactPayload(c *cli.Context) (map[string]any, error) {
-	var contact map[string]any
-	payload := map[string]any{}
+func buildContactInput(c *cli.Context) (fa.ContactInput, error) {
+	input := fa.ContactInput{}
 
 	if bodyPath := c.String("body"); bodyPath != "" {
 		data, err := os.ReadFile(bodyPath)
 		if err != nil {
-			return nil, err
+			return input, err
 		}
-		var decoded map[string]any
-		if err := json.Unmarshal(data, &decoded); err != nil {
-			return nil, err
+		// Try to parse as {"contact": {...}} or just {...}
+		var wrapper struct {
+			Contact fa.ContactInput `json:"contact"`
 		}
-		if v, ok := decoded["contact"].(map[string]any); ok {
-			payload = decoded
-			contact = v
+		var raw map[string]json.RawMessage
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return input, err
+		}
+		if contactData, ok := raw["contact"]; ok {
+			if err := json.Unmarshal(contactData, &wrapper.Contact); err != nil {
+				return input, err
+			}
+			input = wrapper.Contact
 		} else {
-			contact = decoded
-			payload["contact"] = contact
+			if err := json.Unmarshal(data, &input); err != nil {
+				return input, err
+			}
 		}
-	} else {
-		contact = map[string]any{}
-		payload["contact"] = contact
 	}
 
 	if org := strings.TrimSpace(c.String("organisation")); org != "" {
-		contact["organisation_name"] = org
+		input.OrganisationName = org
 	}
 	if first := strings.TrimSpace(c.String("first-name")); first != "" {
-		contact["first_name"] = first
+		input.FirstName = first
 	}
 	if last := strings.TrimSpace(c.String("last-name")); last != "" {
-		contact["last_name"] = last
+		input.LastName = last
 	}
 	if email := strings.TrimSpace(c.String("email")); email != "" {
-		contact["email"] = email
+		input.Email = email
 	}
 	if email := strings.TrimSpace(c.String("billing-email")); email != "" {
-		contact["billing_email"] = email
+		input.BillingEmail = email
 	}
 	if phone := strings.TrimSpace(c.String("phone")); phone != "" {
-		contact["phone_number"] = phone
+		input.PhoneNumber = phone
 	}
 	if mobile := strings.TrimSpace(c.String("mobile")); mobile != "" {
-		contact["mobile"] = mobile
+		input.Mobile = mobile
 	}
-
 	if addr1 := strings.TrimSpace(c.String("address1")); addr1 != "" {
-		contact["address1"] = addr1
+		input.Address1 = addr1
 	}
 	if addr2 := strings.TrimSpace(c.String("address2")); addr2 != "" {
-		contact["address2"] = addr2
+		input.Address2 = addr2
 	}
 	if addr3 := strings.TrimSpace(c.String("address3")); addr3 != "" {
-		contact["address3"] = addr3
+		input.Address3 = addr3
 	}
 	if town := strings.TrimSpace(c.String("town")); town != "" {
-		contact["town"] = town
+		input.Town = town
 	}
 	if region := strings.TrimSpace(c.String("region")); region != "" {
-		contact["region"] = region
+		input.Region = region
 	}
 	if postcode := strings.TrimSpace(c.String("postcode")); postcode != "" {
-		contact["postcode"] = postcode
+		input.Postcode = postcode
 	}
 	if country := strings.TrimSpace(c.String("country")); country != "" {
-		contact["country"] = country
+		input.Country = country
 	}
 
-	if _, ok := contact["organisation_name"]; !ok {
-		first, _ := contact["first_name"].(string)
-		last, _ := contact["last_name"].(string)
-		if strings.TrimSpace(first) == "" && strings.TrimSpace(last) == "" {
-			return nil, fmt.Errorf("organisation or first-name/last-name required (or include in --body)")
-		}
+	if input.OrganisationName == "" && strings.TrimSpace(input.FirstName) == "" && strings.TrimSpace(input.LastName) == "" {
+		return input, fmt.Errorf("organisation or first-name/last-name required (or include in --body)")
 	}
-	return payload, nil
+	return input, nil
 }
 
 func resolveContactValue(ctx context.Context, client *freeagent.Client, baseURL, value string) (string, error) {
@@ -382,7 +377,7 @@ func resolveContactValue(ctx context.Context, client *freeagent.Client, baseURL,
 	return match, nil
 }
 
-func fetchContacts(ctx context.Context, client *freeagent.Client, query string) ([]any, error) {
+func fetchContacts(ctx context.Context, client *freeagent.Client, query string) ([]fa.Contact, error) {
 	path := "/contacts"
 	if query != "" {
 		path += "?" + query
@@ -391,15 +386,14 @@ func fetchContacts(ctx context.Context, client *freeagent.Client, query string) 
 	if err != nil {
 		return nil, err
 	}
-	var decoded map[string]any
+	var decoded fa.ContactsResponse
 	if err := json.Unmarshal(resp, &decoded); err != nil {
 		return nil, err
 	}
-	list, _ := decoded["contacts"].([]any)
-	return list, nil
+	return decoded.Contacts, nil
 }
 
-func resolveContactMatch(contacts []any, query string) (string, error) {
+func resolveContactMatch(contacts []fa.Contact, query string) (string, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return "", fmt.Errorf("contact is required")
@@ -424,14 +418,10 @@ func resolveContactMatch(contacts []any, query string) (string, error) {
 	return "", fmt.Errorf("no contact matches %q", query)
 }
 
-func matchContacts(contacts []any, query string, exact bool) []map[string]any {
+func matchContacts(contacts []fa.Contact, query string, exact bool) []fa.Contact {
 	query = strings.ToLower(strings.TrimSpace(query))
-	var matches []map[string]any
-	for _, item := range contacts {
-		contact, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
+	var matches []fa.Contact
+	for _, contact := range contacts {
 		name := strings.ToLower(strings.TrimSpace(contactDisplayName(contact)))
 		email := strings.ToLower(strings.TrimSpace(contactEmail(contact)))
 		values := []string{name, email}
@@ -452,7 +442,7 @@ func matchContacts(contacts []any, query string, exact bool) []map[string]any {
 	return matches
 }
 
-func formatContactAmbiguous(query string, matches []map[string]any) error {
+func formatContactAmbiguous(query string, matches []fa.Contact) error {
 	var options []string
 	for _, contact := range matches {
 		name := contactDisplayName(contact)
@@ -466,18 +456,14 @@ func formatContactAmbiguous(query string, matches []map[string]any) error {
 	return fmt.Errorf("multiple contacts match %q: %s", query, strings.Join(options, "; "))
 }
 
-func filterContacts(list []any, query string) []any {
+func filterContacts(list []fa.Contact, query string) []fa.Contact {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return list
 	}
-	var out []any
+	var out []fa.Contact
 	lower := strings.ToLower(query)
-	for _, item := range list {
-		contact, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
+	for _, contact := range list {
 		name := strings.ToLower(contactDisplayName(contact))
 		email := strings.ToLower(contactEmail(contact))
 		if strings.Contains(name, lower) || strings.Contains(email, lower) {
@@ -487,52 +473,37 @@ func filterContacts(list []any, query string) []any {
 	return out
 }
 
-func contactDisplayName(contact map[string]any) string {
-	if contact == nil {
-		return ""
+func contactDisplayName(contact fa.Contact) string {
+	if contact.OrganisationName != "" {
+		return contact.OrganisationName
 	}
-	if name, ok := contact["organisation_name"].(string); ok && name != "" {
-		return name
-	}
-	first, _ := contact["first_name"].(string)
-	last, _ := contact["last_name"].(string)
-	full := strings.TrimSpace(strings.TrimSpace(first) + " " + strings.TrimSpace(last))
+	first := strings.TrimSpace(contact.FirstName)
+	last := strings.TrimSpace(contact.LastName)
+	full := strings.TrimSpace(first + " " + last)
 	if full != "" {
 		return full
 	}
-	if name, ok := contact["display_name"].(string); ok && name != "" {
-		return name
+	if contact.DisplayName != "" {
+		return contact.DisplayName
 	}
-	if name, ok := contact["name"].(string); ok && name != "" {
-		return name
-	}
-	if url, ok := contact["url"].(string); ok {
-		return url
+	if contact.URL != "" {
+		return contact.URL
 	}
 	return ""
 }
 
-func contactEmail(contact map[string]any) string {
-	if contact == nil {
-		return ""
+func contactEmail(contact fa.Contact) string {
+	if contact.Email != "" {
+		return contact.Email
 	}
-	if email, ok := contact["email"].(string); ok && email != "" {
-		return email
-	}
-	if email, ok := contact["billing_email"].(string); ok && email != "" {
-		return email
+	if contact.BillingEmail != "" {
+		return contact.BillingEmail
 	}
 	return ""
 }
 
-func contactURL(contact map[string]any) string {
-	if contact == nil {
-		return ""
-	}
-	if urlValue, ok := contact["url"].(string); ok {
-		return urlValue
-	}
-	return ""
+func contactURL(contact fa.Contact) string {
+	return contact.URL
 }
 
 func isLikelyID(value string) bool {
