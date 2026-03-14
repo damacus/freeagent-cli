@@ -16,6 +16,7 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	"github.com/damacus/freeagent-cli/internal/freeagent"
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
 	"github.com/urfave/cli/v2"
 )
@@ -106,38 +107,35 @@ func bankExplainCreate(c *cli.Context) error {
 		return err
 	}
 
-	payload := map[string]any{
-		"bank_transaction_explanation": map[string]any{
-			"bank_transaction": txnURL,
-			"dated_on":        c.String("dated-on"),
-			"description":     c.String("description"),
-			"gross_value":     c.String("gross-value"),
-			"category":        c.String("category"),
-		},
+	input := fa.BankTransactionExplanationInput{
+		BankTransaction: txnURL,
+		DatedOn:         c.String("dated-on"),
+		Description:     c.String("description"),
+		GrossValue:      c.String("gross-value"),
+		Category:        c.String("category"),
 	}
-	inner := payload["bank_transaction_explanation"].(map[string]any)
 	if v := c.String("sales-tax-status"); v != "" {
-		inner["sales_tax_status"] = v
+		input.SalesTaxStatus = v
 	}
 	if v := c.String("sales-tax-rate"); v != "" {
-		inner["sales_tax_rate"] = v
+		input.SalesTaxRate = v
 	}
 	if v := c.String("project"); v != "" {
 		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
 		if err != nil {
 			return err
 		}
-		inner["project"] = projectURL
+		input.Project = projectURL
 	}
 	if v := c.String("receipt"); v != "" {
 		att, err := attachmentPayload(v)
 		if err != nil {
 			return err
 		}
-		inner["attachment"] = att
+		input.Attachment = att
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/bank_transaction_explanations", payload)
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/bank_transaction_explanations", fa.CreateBankTransactionExplanationRequest{BankTransactionExplanation: input})
 	if err != nil {
 		return err
 	}
@@ -199,54 +197,55 @@ func bankExplainUpdate(c *cli.Context) error {
 		return err
 	}
 
-	inner := map[string]any{}
+	input := fa.BankTransactionExplanationInput{}
 	if v := c.String("dated-on"); v != "" {
-		inner["dated_on"] = v
+		input.DatedOn = v
 	}
 	if v := c.String("description"); v != "" {
-		inner["description"] = v
+		input.Description = v
 	}
 	if v := c.String("gross-value"); v != "" {
-		inner["gross_value"] = v
+		input.GrossValue = v
 	}
 	if v := c.String("category"); v != "" {
-		inner["category"] = v
+		input.Category = v
 	}
 	if v := c.String("sales-tax-status"); v != "" {
-		inner["sales_tax_status"] = v
+		input.SalesTaxStatus = v
 	}
 	if v := c.String("sales-tax-rate"); v != "" {
-		inner["sales_tax_rate"] = v
+		input.SalesTaxRate = v
 	}
 	if v := c.String("project"); v != "" {
 		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
 		if err != nil {
 			return err
 		}
-		inner["project"] = projectURL
+		input.Project = projectURL
 	}
 	if v := c.String("receipt"); v != "" {
 		att, err := attachmentPayload(v)
 		if err != nil {
 			return err
 		}
-		inner["attachment"] = att
+		input.Attachment = att
 	}
-	if len(inner) == 0 {
+	if input.DatedOn == "" && input.Description == "" && input.GrossValue == "" &&
+		input.Category == "" && input.SalesTaxStatus == "" && input.SalesTaxRate == "" &&
+		input.Project == "" && input.Attachment == nil {
 		return fmt.Errorf("no fields to update")
 	}
 
-	payload := map[string]any{"bank_transaction_explanation": inner}
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, explanationURL, payload)
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, explanationURL, fa.UpdateBankTransactionExplanationRequest{BankTransactionExplanation: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-// attachmentPayload reads a file from disk and returns the attachment map
-// ready to embed under "attachment" in an explanation payload.
-func attachmentPayload(path string) (map[string]any, error) {
+// attachmentPayload reads a file from disk and returns an AttachmentInput
+// ready to embed under "attachment" in a request payload.
+func attachmentPayload(path string) (*fa.AttachmentInput, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading receipt %q: %w", path, err)
@@ -255,10 +254,10 @@ func attachmentPayload(path string) (map[string]any, error) {
 	if contentType == "" {
 		contentType = http.DetectContentType(data)
 	}
-	return map[string]any{
-		"file_name":    filepath.Base(path),
-		"content_type": contentType,
-		"data":         base64.StdEncoding.EncodeToString(data),
+	return &fa.AttachmentInput{
+		FileName:    filepath.Base(path),
+		ContentType: contentType,
+		Data:        base64.StdEncoding.EncodeToString(data),
 	}, nil
 }
 

@@ -110,24 +110,14 @@ func TestBillInput_AttachmentFromFile(t *testing.T) {
 		t.Fatalf("attachmentPayload failed: %v", err)
 	}
 
-	if att["file_name"] == "" {
-		t.Error("file_name should not be empty")
+	if att.FileName == "" {
+		t.Error("FileName should not be empty")
 	}
-	if att["data"] == "" {
-		t.Error("data should not be empty")
+	if att.Data == "" {
+		t.Error("Data should not be empty")
 	}
-
-	// verify we can construct an AttachmentInput from it
-	attInput := &fa.AttachmentInput{
-		FileName:    att["file_name"].(string),
-		ContentType: att["content_type"].(string),
-		Data:        att["data"].(string),
-	}
-	if attInput.FileName == "" {
-		t.Error("AttachmentInput.FileName should not be empty")
-	}
-	if attInput.Data == "" {
-		t.Error("AttachmentInput.Data should not be empty")
+	if att.ContentType == "" {
+		t.Error("ContentType should not be empty")
 	}
 }
 

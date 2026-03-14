@@ -233,11 +233,7 @@ func expensesCreate(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		input.Attachment = &fa.AttachmentInput{
-			FileName:    att["file_name"].(string),
-			ContentType: att["content_type"].(string),
-			Data:        att["data"].(string),
-		}
+		input.Attachment = att
 	}
 
 	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/expenses", fa.CreateExpenseRequest{Expense: input})
@@ -316,11 +312,7 @@ func expensesUpdate(c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		input.Attachment = &fa.AttachmentInput{
-			FileName:    att["file_name"].(string),
-			ContentType: att["content_type"].(string),
-			Data:        att["data"].(string),
-		}
+		input.Attachment = att
 	}
 
 	// Check if any fields were set
