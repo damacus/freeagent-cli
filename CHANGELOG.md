@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/damacus/freeagent-cli/compare/v0.2.0...v0.3.0) (2026-03-14)
+
+
+### Features
+
+* typed client refactor + bills and tasks commands ([#3](https://github.com/damacus/freeagent-cli/issues/3)) ([de561f4](https://github.com/damacus/freeagent-cli/commit/de561f4d248fb5d4cdbbc16b206a1fc2533c5207))
+
 ## [0.2.0](https://github.com/damacus/freeagent-cli/compare/v0.1.0...v0.2.0) (2026-03-13)
 
 
