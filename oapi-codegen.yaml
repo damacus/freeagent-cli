@@ -1,0 +1,4 @@
+package: freeagentapi
+output: internal/freeagentapi/types.gen.go
+generate:
+  - types
