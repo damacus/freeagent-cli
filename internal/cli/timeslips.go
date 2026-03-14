@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/damacus/freeagent-cli/internal/config"
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
 	"github.com/urfave/cli/v2"
 )
@@ -133,26 +134,21 @@ func timeslipsList(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
+	var decoded fa.TimeslipsResponse
 	if err := json.Unmarshal(resp, &decoded); err != nil {
 		return err
 	}
-	list, _ := decoded["timeslips"].([]any)
 
-	if len(list) == 0 {
+	if len(decoded.Timeslips) == 0 {
 		fmt.Fprintln(os.Stdout, "No timeslips found")
 		return nil
 	}
 
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(writer, "Date\tHours\tProject\tTask\tURL")
-	for _, item := range list {
-		ts, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
+	for _, ts := range decoded.Timeslips {
 		fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n",
-			ts["dated_on"], ts["hours"], ts["project"], ts["task"], ts["url"])
+			ts.DatedOn, ts.Hours, ts.Project, ts.Task, ts.URL)
 	}
 	_ = writer.Flush()
 	return nil
@@ -213,24 +209,24 @@ func timeslipsCreate(c *cli.Context) error {
 		return err
 	}
 
-	inner := map[string]any{
-		"project":  projURL,
-		"task":     taskURL,
-		"dated_on": c.String("dated-on"),
-		"hours":    c.String("hours"),
+	input := fa.TimeslipInput{
+		Project: projURL,
+		Task:    taskURL,
+		DatedOn: c.String("dated-on"),
+		Hours:   c.String("hours"),
 	}
 	if v := c.String("user"); v != "" {
 		userURL, err := normalizeResourceURL(profile.BaseURL, "users", v)
 		if err != nil {
 			return err
 		}
-		inner["user"] = userURL
+		input.User = userURL
 	}
 	if v := c.String("comment"); v != "" {
-		inner["comment"] = v
+		input.Comment = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/timeslips", map[string]any{"timeslip": inner})
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/timeslips", fa.CreateTimeslipRequest{Timeslip: input})
 	if err != nil {
 		return err
 	}
@@ -239,13 +235,12 @@ func timeslipsCreate(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
+	var decoded fa.TimeslipResponse
 	if err := json.Unmarshal(resp, &decoded); err != nil {
 		return err
 	}
-	ts, _ := decoded["timeslip"].(map[string]any)
-	if ts != nil {
-		fmt.Fprintf(os.Stdout, "Created timeslip %v h on %v (%v)\n", ts["hours"], ts["dated_on"], ts["url"])
+	if decoded.Timeslip.URL != "" {
+		fmt.Fprintf(os.Stdout, "Created timeslip %v h on %v (%v)\n", decoded.Timeslip.Hours, decoded.Timeslip.DatedOn, decoded.Timeslip.URL)
 		return nil
 	}
 	fmt.Fprintln(os.Stdout, "Timeslip created")
@@ -276,28 +271,33 @@ func timeslipsUpdate(c *cli.Context) error {
 		return err
 	}
 
-	inner := map[string]any{}
+	input := fa.TimeslipInput{}
+	hasFields := false
 	if v := c.String("dated-on"); v != "" {
-		inner["dated_on"] = v
+		input.DatedOn = v
+		hasFields = true
 	}
 	if v := c.String("hours"); v != "" {
-		inner["hours"] = v
+		input.Hours = v
+		hasFields = true
 	}
 	if v := c.String("comment"); v != "" {
-		inner["comment"] = v
+		input.Comment = v
+		hasFields = true
 	}
 	if v := c.String("task"); v != "" {
 		taskURL, err := normalizeResourceURL(profile.BaseURL, "tasks", v)
 		if err != nil {
 			return err
 		}
-		inner["task"] = taskURL
+		input.Task = taskURL
+		hasFields = true
 	}
-	if len(inner) == 0 {
+	if !hasFields {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, tsURL, map[string]any{"timeslip": inner})
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, tsURL, fa.UpdateTimeslipRequest{Timeslip: input})
 	if err != nil {
 		return err
 	}

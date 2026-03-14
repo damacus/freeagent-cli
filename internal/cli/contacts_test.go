@@ -1,23 +1,24 @@
 package cli
 
-import "testing"
+import (
+	"testing"
 
-func makeContact(fields map[string]any) map[string]any { return fields }
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
+)
 
 func TestContactDisplayName(t *testing.T) {
 	cases := []struct {
 		name    string
-		contact map[string]any
+		contact fa.Contact
 		want    string
 	}{
-		{"nil", nil, ""},
-		{"organisation_name", makeContact(map[string]any{"organisation_name": "Acme Ltd"}), "Acme Ltd"},
-		{"first+last", makeContact(map[string]any{"first_name": "Jane", "last_name": "Doe"}), "Jane Doe"},
-		{"first only", makeContact(map[string]any{"first_name": "Jane"}), "Jane"},
-		{"display_name fallback", makeContact(map[string]any{"display_name": "Jane Doe"}), "Jane Doe"},
-		{"name fallback", makeContact(map[string]any{"name": "Jane Doe"}), "Jane Doe"},
-		{"url fallback", makeContact(map[string]any{"url": "https://api.freeagent.com/v2/contacts/1"}), "https://api.freeagent.com/v2/contacts/1"},
-		{"empty", makeContact(map[string]any{}), ""},
+		{"nil/empty", fa.Contact{}, ""},
+		{"organisation_name", fa.Contact{OrganisationName: "Acme Ltd"}, "Acme Ltd"},
+		{"first+last", fa.Contact{FirstName: "Jane", LastName: "Doe"}, "Jane Doe"},
+		{"first only", fa.Contact{FirstName: "Jane"}, "Jane"},
+		{"display_name fallback", fa.Contact{DisplayName: "Jane Doe"}, "Jane Doe"},
+		{"url fallback", fa.Contact{URL: "https://api.freeagent.com/v2/contacts/1"}, "https://api.freeagent.com/v2/contacts/1"},
+		{"empty", fa.Contact{}, ""},
 	}
 
 	for _, tc := range cases {
@@ -32,14 +33,14 @@ func TestContactDisplayName(t *testing.T) {
 func TestContactEmail(t *testing.T) {
 	cases := []struct {
 		name    string
-		contact map[string]any
+		contact fa.Contact
 		want    string
 	}{
-		{"nil", nil, ""},
-		{"email field", makeContact(map[string]any{"email": "a@b.com"}), "a@b.com"},
-		{"billing_email fallback", makeContact(map[string]any{"billing_email": "billing@b.com"}), "billing@b.com"},
-		{"email preferred over billing", makeContact(map[string]any{"email": "a@b.com", "billing_email": "billing@b.com"}), "a@b.com"},
-		{"empty", makeContact(map[string]any{}), ""},
+		{"empty", fa.Contact{}, ""},
+		{"email field", fa.Contact{Email: "a@b.com"}, "a@b.com"},
+		{"billing_email fallback", fa.Contact{BillingEmail: "billing@b.com"}, "billing@b.com"},
+		{"email preferred over billing", fa.Contact{Email: "a@b.com", BillingEmail: "billing@b.com"}, "a@b.com"},
+		{"empty fields", fa.Contact{}, ""},
 	}
 
 	for _, tc := range cases {
@@ -71,10 +72,10 @@ func TestIsLikelyID(t *testing.T) {
 }
 
 func TestFilterContacts(t *testing.T) {
-	list := []any{
-		makeContact(map[string]any{"organisation_name": "Acme Ltd", "email": "acme@example.com"}),
-		makeContact(map[string]any{"organisation_name": "Globex Corp", "email": "globex@example.com"}),
-		makeContact(map[string]any{"first_name": "Jane", "last_name": "Doe", "email": "jane@example.com"}),
+	list := []fa.Contact{
+		{OrganisationName: "Acme Ltd", Email: "acme@example.com"},
+		{OrganisationName: "Globex Corp", Email: "globex@example.com"},
+		{FirstName: "Jane", LastName: "Doe", Email: "jane@example.com"},
 	}
 
 	t.Run("empty query returns all", func(t *testing.T) {
@@ -113,9 +114,9 @@ func TestFilterContacts(t *testing.T) {
 }
 
 func TestMatchContacts_Exact(t *testing.T) {
-	list := []any{
-		makeContact(map[string]any{"organisation_name": "Acme"}),
-		makeContact(map[string]any{"organisation_name": "Acme Ltd"}),
+	list := []fa.Contact{
+		{OrganisationName: "Acme"},
+		{OrganisationName: "Acme Ltd"},
 	}
 	got := matchContacts(list, "Acme", true)
 	if len(got) != 1 || contactDisplayName(got[0]) != "Acme" {
@@ -124,10 +125,10 @@ func TestMatchContacts_Exact(t *testing.T) {
 }
 
 func TestMatchContacts_Partial(t *testing.T) {
-	list := []any{
-		makeContact(map[string]any{"organisation_name": "Acme"}),
-		makeContact(map[string]any{"organisation_name": "Acme Ltd"}),
-		makeContact(map[string]any{"organisation_name": "Globex"}),
+	list := []fa.Contact{
+		{OrganisationName: "Acme"},
+		{OrganisationName: "Acme Ltd"},
+		{OrganisationName: "Globex"},
 	}
 	got := matchContacts(list, "Acme", false)
 	if len(got) != 2 {
