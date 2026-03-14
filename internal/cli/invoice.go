@@ -16,6 +16,7 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	"github.com/damacus/freeagent-cli/internal/freeagent"
+	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
 	"github.com/urfave/cli/v2"
 )
@@ -123,13 +124,12 @@ func invoiceCreate(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.InvoiceResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
-	invoice, _ := decoded["invoice"].(map[string]any)
-	if invoice != nil {
-		fmt.Fprintf(os.Stdout, "Created invoice %v (%v)\n", invoice["reference"], invoice["url"])
+	if result.Invoice.URL != "" || result.Invoice.Reference != "" {
+		fmt.Fprintf(os.Stdout, "Created invoice %v (%v)\n", result.Invoice.Reference, result.Invoice.URL)
 		return nil
 	}
 	fmt.Fprintln(os.Stdout, "Invoice created")
@@ -191,26 +191,21 @@ func invoiceList(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.InvoicesResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
 
-	list, _ := decoded["invoices"].([]any)
-	if len(list) == 0 {
+	if len(result.Invoices) == 0 {
 		fmt.Fprintln(os.Stdout, "No invoices found")
 		return nil
 	}
 
 	// Collect unique contact URLs then fetch all names concurrently.
 	contactURLs := make(map[string]struct{})
-	for _, item := range list {
-		inv, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
-		if contactURL, ok := inv["contact"].(string); ok && contactURL != "" {
-			contactURLs[contactURL] = struct{}{}
+	for _, inv := range result.Invoices {
+		if inv.Contact != "" {
+			contactURLs[inv.Contact] = struct{}{}
 		}
 	}
 
@@ -236,28 +231,17 @@ func invoiceList(c *cli.Context) error {
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(writer, "Reference\tStatus\tContact\tAmount\tURL")
 
-	for _, item := range list {
-		inv, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
-		ref := inv["reference"]
-		status := inv["status"]
-		invURL := inv["url"]
-		amount := inv["total_value"]
-		currency := inv["currency"]
-		contactDisplay := inv["contact"]
-		if contactURL, ok := inv["contact"].(string); ok && contactURL != "" {
-			if name, ok := contactCache[contactURL]; ok {
+	for _, inv := range result.Invoices {
+		contactDisplay := inv.Contact
+		if inv.Contact != "" {
+			if name, ok := contactCache[inv.Contact]; ok {
 				contactDisplay = name
 			}
 		}
-		if ref != nil || status != nil || invURL != nil {
-			if currency != nil && amount != nil {
-				fmt.Fprintf(writer, "%v\t%v\t%v\t%v %v\t%v\n", ref, status, contactDisplay, currency, amount, invURL)
-			} else {
-				fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n", ref, status, contactDisplay, "-", invURL)
-			}
+		if inv.Currency != "" && inv.TotalValue != "" {
+			fmt.Fprintf(writer, "%v\t%v\t%v\t%v %v\t%v\n", inv.Reference, inv.Status, contactDisplay, inv.Currency, inv.TotalValue, inv.URL)
+		} else {
+			fmt.Fprintf(writer, "%v\t%v\t%v\t%v\t%v\n", inv.Reference, inv.Status, contactDisplay, "-", inv.URL)
 		}
 	}
 	_ = writer.Flush()
@@ -303,30 +287,30 @@ func invoiceGet(c *cli.Context) error {
 		return writeJSONOutput(resp)
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.InvoiceResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
-	invoice, _ := decoded["invoice"].(map[string]any)
-	if invoice == nil {
+	if result.Invoice.URL == "" && result.Invoice.Reference == "" {
 		fmt.Fprintln(os.Stdout, string(resp))
 		return nil
 	}
 
-	contactDisplay := invoice["contact"]
-	if contactURL, ok := invoice["contact"].(string); ok && contactURL != "" {
-		if contactName, err := fetchContactName(c.Context, client, contactURL); err == nil && contactName != "" {
-			contactDisplay = fmt.Sprintf("%s (%s)", contactName, contactURL)
+	inv := result.Invoice
+	contactDisplay := inv.Contact
+	if inv.Contact != "" {
+		if contactName, err := fetchContactName(c.Context, client, inv.Contact); err == nil && contactName != "" {
+			contactDisplay = fmt.Sprintf("%s (%s)", contactName, inv.Contact)
 		}
 	}
 
-	fmt.Fprintf(os.Stdout, "Reference: %v\n", invoice["reference"])
-	fmt.Fprintf(os.Stdout, "Status:    %v\n", invoice["status"])
-	fmt.Fprintf(os.Stdout, "URL:       %v\n", invoice["url"])
+	fmt.Fprintf(os.Stdout, "Reference: %v\n", inv.Reference)
+	fmt.Fprintf(os.Stdout, "Status:    %v\n", inv.Status)
+	fmt.Fprintf(os.Stdout, "URL:       %v\n", inv.URL)
 	fmt.Fprintf(os.Stdout, "Contact:   %v\n", contactDisplay)
-	fmt.Fprintf(os.Stdout, "Dated On:  %v\n", invoice["dated_on"])
-	fmt.Fprintf(os.Stdout, "Due On:    %v\n", invoice["due_on"])
-	fmt.Fprintf(os.Stdout, "Total:     %v %v\n", invoice["currency"], invoice["total_value"])
+	fmt.Fprintf(os.Stdout, "Dated On:  %v\n", inv.DatedOn)
+	fmt.Fprintf(os.Stdout, "Due On:    %v\n", inv.DueOn)
+	fmt.Fprintf(os.Stdout, "Total:     %v %v\n", inv.Currency, inv.TotalValue)
 	return nil
 }
 
@@ -365,21 +349,12 @@ func invoiceDelete(c *cli.Context) error {
 		return err
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.InvoiceResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
 	}
-	invoice, _ := decoded["invoice"].(map[string]any)
-	status := ""
-	reference := ""
-	if invoice != nil {
-		if v, ok := invoice["status"].(string); ok {
-			status = v
-		}
-		if v, ok := invoice["reference"].(string); ok {
-			reference = v
-		}
-	}
+	status := result.Invoice.Status
+	reference := result.Invoice.Reference
 
 	if !c.Bool("force") && status != "" && !strings.EqualFold(status, "Draft") {
 		return fmt.Errorf("invoice status is %s; use --force to delete anyway", status)
@@ -425,22 +400,19 @@ func fetchContactName(ctx context.Context, client *freeagent.Client, contactURL 
 	if err != nil {
 		return "", err
 	}
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
+	var result fa.ContactResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return "", err
 	}
-	contact, _ := decoded["contact"].(map[string]any)
-	if contact == nil {
-		return "", nil
+	if result.Contact.OrganisationName != "" {
+		return result.Contact.OrganisationName, nil
 	}
-	if name, ok := contact["organisation_name"].(string); ok && name != "" {
-		return name, nil
+	if result.Contact.DisplayName != "" {
+		return result.Contact.DisplayName, nil
 	}
-	if name, ok := contact["display_name"].(string); ok && name != "" {
-		return name, nil
-	}
-	if name, ok := contact["name"].(string); ok && name != "" {
-		return name, nil
+	firstName := strings.TrimSpace(result.Contact.FirstName + " " + result.Contact.LastName)
+	if firstName != "" {
+		return firstName, nil
 	}
 	return "", nil
 }
