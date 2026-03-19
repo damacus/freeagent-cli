@@ -54,7 +54,15 @@ func saveProfile(cfg *config.Config, profileName, cfgPath string, profile config
 	return cfg.Save(cfgPath)
 }
 
+// newClientFn is the factory used by all CLI actions to build an API client.
+// It can be overridden in tests to inject a mock token store or base URL.
+var newClientFn = defaultNewClient
+
 func newClient(ctx context.Context, rt Runtime, profile config.Profile) (*freeagent.Client, *storage.Store, error) {
+	return newClientFn(ctx, rt, profile)
+}
+
+func defaultNewClient(_ context.Context, rt Runtime, profile config.Profile) (*freeagent.Client, *storage.Store, error) {
 	store, err := storage.NewDefaultStore()
 	if err != nil {
 		return nil, nil, err
