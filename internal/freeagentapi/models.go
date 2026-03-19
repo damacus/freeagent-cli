@@ -758,3 +758,27 @@ type CISBand struct {
 	Rate string `json:"rate"`
 }
 type CISBandsResponse struct{ CISBands []CISBand `json:"cis_bands"` }
+
+// ---- Bank Accounts ----
+
+type BankAccount struct {
+	URL            string `json:"url"`
+	Name           string `json:"name"`
+	Type           string `json:"type"`
+	Status         string `json:"status"`
+	IsPersonal     bool   `json:"is_personal"`
+	OpeningBalance string `json:"opening_balance"`
+	CreatedAt      string `json:"created_at"`
+	UpdatedAt      string `json:"updated_at"`
+}
+type BankAccountResponse struct{ BankAccount BankAccount `json:"bank_account"` }
+type BankAccountsResponse struct{ BankAccounts []BankAccount `json:"bank_accounts"` }
+type BankAccountInput struct {
+	Name           string `json:"name,omitempty"`
+	Type           string `json:"type,omitempty"`
+	Status         string `json:"status,omitempty"`
+	IsPersonal     *bool  `json:"is_personal,omitempty"`
+	OpeningBalance string `json:"opening_balance,omitempty"`
+}
+type CreateBankAccountRequest struct{ BankAccount BankAccountInput `json:"bank_account"` }
+type UpdateBankAccountRequest struct{ BankAccount BankAccountInput `json:"bank_account"` }

@@ -13,9 +13,10 @@ var appVersion = "dev"
 func NewApp(version string) *cli.App {
 	appVersion = version
 	app := &cli.App{
-		Name:    "freeagent",
-		Usage:   "CLI for the FreeAgent API",
-		Version: version,
+		Name:                 "freeagent",
+		Usage:                "CLI for the FreeAgent API",
+		Version:              version,
+		EnableBashCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "config",
@@ -47,6 +48,7 @@ func NewApp(version string) *cli.App {
 			accountingCommand(),
 			accountManagersCommand(),
 			authCommand(),
+			bankAccountsCommand(),
 			bankCommand(),
 			billsCommand(),
 			capitalAssetsCommand(),
@@ -77,6 +79,7 @@ func NewApp(version string) *cli.App {
 			tasksCommand(),
 			timeslipsCommand(),
 			usersCommand(),
+			completionCommand(),
 		},
 	}
 
