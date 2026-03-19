@@ -54,6 +54,7 @@ func NewApp(version string) *cli.App {
 			rawCommand(),
 			tasksCommand(),
 			timeslipsCommand(),
+			usersCommand(),
 		},
 	}
 
