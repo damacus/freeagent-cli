@@ -363,6 +363,31 @@ type UpdateBillRequest struct {
 	Bill BillInput `json:"bill"`
 }
 
+// BankTransaction represents a FreeAgent bank transaction.
+type BankTransaction struct {
+	URL                         string   `json:"url"`
+	BankAccount                 string   `json:"bank_account"`
+	DatedOn                     string   `json:"dated_on"`
+	Description                 string   `json:"description"`
+	Amount                      string   `json:"amount"`
+	IsManual                    bool     `json:"is_manual"`
+	IsLocked                    bool     `json:"is_locked"`
+	MarkedForReview             bool     `json:"marked_for_review"`
+	BankTransactionExplanations []struct {
+		URL string `json:"url"`
+	} `json:"bank_transaction_explanations"`
+	UpdatedAt string `json:"updated_at"`
+	CreatedAt string `json:"created_at"`
+}
+
+type BankTransactionResponse struct {
+	BankTransaction BankTransaction `json:"bank_transaction"`
+}
+
+type BankTransactionsResponse struct {
+	BankTransactions []BankTransaction `json:"bank_transactions"`
+}
+
 // BankTransactionExplanation represents a FreeAgent bank transaction explanation.
 type BankTransactionExplanation struct {
 	URL             string      `json:"url"`
