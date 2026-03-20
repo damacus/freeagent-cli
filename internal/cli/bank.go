@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 
 	"golang.org/x/sync/errgroup"
 
@@ -26,6 +27,25 @@ func bankCommand() *cli.Command {
 		Name:  "bank",
 		Usage: "Work with bank transactions",
 		Subcommands: []*cli.Command{
+			{
+				Name:  "list",
+				Usage: "List bank transactions",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "bank-account", Required: true, Usage: "Bank account ID or URL"},
+					&cli.StringFlag{Name: "from", Usage: "Start date (YYYY-MM-DD)"},
+					&cli.StringFlag{Name: "to", Usage: "End date (YYYY-MM-DD)"},
+					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
+					&cli.StringFlag{Name: "view", Usage: "Filter view (e.g. unexplained)"},
+					&cli.IntFlag{Name: "per-page", Value: 100, Usage: "Results per page"},
+				},
+				Action: bankList,
+			},
+			{
+				Name:      "get",
+				Usage:     "Get a bank transaction",
+				ArgsUsage: "<id|url>",
+				Action:    bankGet,
+			},
 			{
 				Name:  "approve",
 				Usage: "Approve bank transactions in bulk",
@@ -259,6 +279,102 @@ func attachmentPayload(path string) (*fa.AttachmentInput, error) {
 		ContentType: contentType,
 		Data:        base64.StdEncoding.EncodeToString(data),
 	}, nil
+}
+
+func bankList(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	bankAccountURL, err := normalizeResourceURL(profile.BaseURL, "bank_accounts", c.String("bank-account"))
+	if err != nil {
+		return err
+	}
+
+	query := url.Values{}
+	query.Set("bank_account", bankAccountURL)
+	if v := c.String("from"); v != "" {
+		query.Set("from_date", v)
+	}
+	if v := c.String("to"); v != "" {
+		query.Set("to_date", v)
+	}
+	if v := c.String("updated-since"); v != "" {
+		query.Set("updated_since", v)
+	}
+	if v := c.String("view"); v != "" {
+		query.Set("view", v)
+	}
+	if v := c.Int("per-page"); v > 0 {
+		query.Set("per_page", fmt.Sprintf("%d", v))
+	}
+
+	path := "/bank_transactions?" + query.Encode()
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	if err != nil {
+		return err
+	}
+	if rt.JSONOutput {
+		return writeJSONOutput(resp)
+	}
+
+	var result fa.BankTransactionsResponse
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return err
+	}
+	if len(result.BankTransactions) == 0 {
+		fmt.Fprintln(os.Stdout, "No bank transactions found")
+		return nil
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "Date\tDescription\tAmount\tMarked For Review\tURL")
+	for _, t := range result.BankTransactions {
+		fmt.Fprintf(w, "%v\t%v\t%v\t%v\t%v\n", t.DatedOn, t.Description, t.Amount, t.MarkedForReview, t.URL)
+	}
+	_ = w.Flush()
+	return nil
+}
+
+func bankGet(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	id := c.Args().First()
+	if id == "" {
+		return fmt.Errorf("bank transaction id or url required")
+	}
+	txnURL, err := normalizeResourceURL(profile.BaseURL, "bank_transactions", id)
+	if err != nil {
+		return err
+	}
+
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, txnURL, nil, "")
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
 }
 
 func bankApprove(c *cli.Context) error {
