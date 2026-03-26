@@ -208,7 +208,25 @@ func bankExplainUpdate(c *cli.Context) error {
 		return err
 	}
 
-	id := c.Args().First()
+	inputArgs, err := parsePositionalUpdateInput(
+		c,
+		"dated-on",
+		"description",
+		"gross-value",
+		"category",
+		"sales-tax-status",
+		"sales-tax-rate",
+		"project",
+		"receipt",
+	)
+	if err != nil {
+		if err.Error() == "resource id or url required" {
+			return fmt.Errorf("explanation id or url required")
+		}
+		return err
+	}
+
+	id := inputArgs.ID()
 	if id == "" {
 		return fmt.Errorf("explanation id or url required")
 	}
@@ -218,32 +236,32 @@ func bankExplainUpdate(c *cli.Context) error {
 	}
 
 	input := fa.BankTransactionExplanationInput{}
-	if v := c.String("dated-on"); v != "" {
+	if v := inputArgs.String(c, "dated-on"); v != "" {
 		input.DatedOn = v
 	}
-	if v := c.String("description"); v != "" {
+	if v := inputArgs.String(c, "description"); v != "" {
 		input.Description = v
 	}
-	if v := c.String("gross-value"); v != "" {
+	if v := inputArgs.String(c, "gross-value"); v != "" {
 		input.GrossValue = v
 	}
-	if v := c.String("category"); v != "" {
+	if v := inputArgs.String(c, "category"); v != "" {
 		input.Category = v
 	}
-	if v := c.String("sales-tax-status"); v != "" {
+	if v := inputArgs.String(c, "sales-tax-status"); v != "" {
 		input.SalesTaxStatus = v
 	}
-	if v := c.String("sales-tax-rate"); v != "" {
+	if v := inputArgs.String(c, "sales-tax-rate"); v != "" {
 		input.SalesTaxRate = v
 	}
-	if v := c.String("project"); v != "" {
+	if v := inputArgs.String(c, "project"); v != "" {
 		projectURL, err := normalizeResourceURL(profile.BaseURL, "projects", v)
 		if err != nil {
 			return err
 		}
 		input.Project = projectURL
 	}
-	if v := c.String("receipt"); v != "" {
+	if v := inputArgs.String(c, "receipt"); v != "" {
 		att, err := attachmentPayload(v)
 		if err != nil {
 			return err

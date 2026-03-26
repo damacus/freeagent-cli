@@ -259,7 +259,25 @@ func billsUpdate(c *cli.Context) error {
 		return err
 	}
 
-	id := c.Args().First()
+	inputArgs, err := parsePositionalUpdateInput(
+		c,
+		"contact",
+		"dated-on",
+		"due-on",
+		"reference",
+		"currency",
+		"total-value",
+		"sale-tax-rate",
+		"receipt",
+	)
+	if err != nil {
+		if err.Error() == "resource id or url required" {
+			return fmt.Errorf("bill id or url required")
+		}
+		return err
+	}
+
+	id := inputArgs.ID()
 	if id == "" {
 		return fmt.Errorf("bill id or url required")
 	}
@@ -271,7 +289,7 @@ func billsUpdate(c *cli.Context) error {
 	input := fa.BillInput{}
 	hasFields := false
 
-	if v := c.String("contact"); v != "" {
+	if v := inputArgs.String(c, "contact"); v != "" {
 		contactURL, err := resolveContactValue(c.Context, client, profile.BaseURL, v)
 		if err != nil {
 			return err
@@ -279,31 +297,31 @@ func billsUpdate(c *cli.Context) error {
 		input.Contact = contactURL
 		hasFields = true
 	}
-	if v := c.String("dated-on"); v != "" {
+	if v := inputArgs.String(c, "dated-on"); v != "" {
 		input.DatedOn = v
 		hasFields = true
 	}
-	if v := c.String("due-on"); v != "" {
+	if v := inputArgs.String(c, "due-on"); v != "" {
 		input.DueOn = v
 		hasFields = true
 	}
-	if v := c.String("reference"); v != "" {
+	if v := inputArgs.String(c, "reference"); v != "" {
 		input.Reference = v
 		hasFields = true
 	}
-	if v := c.String("currency"); v != "" {
+	if v := inputArgs.String(c, "currency"); v != "" {
 		input.Currency = v
 		hasFields = true
 	}
-	if v := c.String("total-value"); v != "" {
+	if v := inputArgs.String(c, "total-value"); v != "" {
 		input.TotalValue = v
 		hasFields = true
 	}
-	if v := c.String("sale-tax-rate"); v != "" {
+	if v := inputArgs.String(c, "sale-tax-rate"); v != "" {
 		input.SaleTaxRate = v
 		hasFields = true
 	}
-	if v := c.String("receipt"); v != "" {
+	if v := inputArgs.String(c, "receipt"); v != "" {
 		att, err := attachmentPayload(v)
 		if err != nil {
 			return err
