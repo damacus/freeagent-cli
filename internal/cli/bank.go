@@ -59,6 +59,7 @@ func bankCommand() *cli.Command {
 				},
 				Action: bankApprove,
 			},
+			reviewCommand(),
 			{
 				Name:  "explain",
 				Usage: "Manage bank transaction explanations",
@@ -470,11 +471,7 @@ type approveFailed struct {
 }
 
 func approveExplanations(ctx context.Context, client *freeagent.Client, explanations []string) approveResult {
-	payload := map[string]any{
-		"bank_transaction_explanation": map[string]any{
-			"marked_for_review": false,
-		},
-	}
+	markedForReview := false
 
 	type outcome struct {
 		id  string
@@ -483,10 +480,13 @@ func approveExplanations(ctx context.Context, client *freeagent.Client, explanat
 	outcomes := make([]outcome, len(explanations))
 
 	var g errgroup.Group
+	g.SetLimit(8)
 	for i, explanation := range explanations {
 		i, explanation := i, explanation
 		g.Go(func() error {
-			_, _, _, err := client.DoJSON(ctx, http.MethodPut, explanation, payload)
+			_, err := client.UpdateBankTransactionExplanation(ctx, explanation, fa.BankTransactionExplanationInput{
+				MarkedForReview: &markedForReview,
+			})
 			outcomes[i] = outcome{id: explanation, err: err}
 			return nil // collect all results; don't cancel siblings on failure
 		})
@@ -530,29 +530,23 @@ func explanationsForDateRange(c *cli.Context, client *freeagent.Client, baseURL 
 		return nil, fmt.Errorf("provide --ids or a date filter (--from/--to/--updated-since)")
 	}
 
-	path := "/bank_transaction_explanations?" + query.Encode()
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	explanationList, err := client.ListBankTransactionExplanations(c.Context, freeagent.ListBankTransactionExplanationsOptions{
+		BankAccount:  query.Get("bank_account"),
+		FromDate:     query.Get("from_date"),
+		ToDate:       query.Get("to_date"),
+		UpdatedSince: query.Get("updated_since"),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	var decoded map[string]any
-	if err := json.Unmarshal(resp, &decoded); err != nil {
-		return nil, err
-	}
-	list, _ := decoded["bank_transaction_explanations"].([]any)
-
 	var explanations []string
-	for _, item := range list {
-		explanation, ok := item.(map[string]any)
-		if !ok {
+	for _, explanation := range explanationList {
+		if !explanation.MarkedForReview {
 			continue
 		}
-		if marked, ok := explanation["marked_for_review"].(bool); ok && !marked {
-			continue
-		}
-		if urlValue, ok := explanation["url"].(string); ok && urlValue != "" {
-			explanations = append(explanations, urlValue)
+		if explanation.URL != "" {
+			explanations = append(explanations, explanation.URL)
 		}
 	}
 	return explanations, nil
@@ -561,50 +555,23 @@ func explanationsForDateRange(c *cli.Context, client *freeagent.Client, baseURL 
 // explanationsForTransactions fetches explanation URLs for each transaction ID
 // concurrently to avoid N+1 serial API calls.
 func explanationsForTransactions(ctx context.Context, client *freeagent.Client, baseURL string, ids []string) ([]string, error) {
-	results := make([][]string, len(ids))
-
-	g, gctx := errgroup.WithContext(ctx)
-	for i, id := range ids {
-		i, id := i, id
-		g.Go(func() error {
-			txnURL, err := normalizeResourceURL(baseURL, "bank_transactions", id)
-			if err != nil {
-				return err
-			}
-			resp, _, _, err := client.Do(gctx, http.MethodGet, txnURL, nil, "")
-			if err != nil {
-				return err
-			}
-			var decoded map[string]any
-			if err := json.Unmarshal(resp, &decoded); err != nil {
-				return err
-			}
-			txn, _ := decoded["bank_transaction"].(map[string]any)
-			if txn == nil {
-				return nil
-			}
-			items, _ := txn["bank_transaction_explanations"].([]any)
-			var urls []string
-			for _, item := range items {
-				entry, ok := item.(map[string]any)
-				if !ok {
-					continue
-				}
-				if urlValue, ok := entry["url"].(string); ok && urlValue != "" {
-					urls = append(urls, urlValue)
-				}
-			}
-			results[i] = urls
-			return nil
-		})
+	transactionURLs := make([]string, 0, len(ids))
+	for _, id := range ids {
+		txnURL, err := normalizeResourceURL(baseURL, "bank_transactions", id)
+		if err != nil {
+			return nil, err
+		}
+		transactionURLs = append(transactionURLs, txnURL)
 	}
-	if err := g.Wait(); err != nil {
+
+	results, err := client.ExplanationURLsForTransactions(ctx, transactionURLs)
+	if err != nil {
 		return nil, err
 	}
 
 	var explanations []string
-	for _, urls := range results {
-		explanations = append(explanations, urls...)
+	for _, transactionURL := range transactionURLs {
+		explanations = append(explanations, results[transactionURL]...)
 	}
 	return explanations, nil
 }
