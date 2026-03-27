@@ -50,6 +50,7 @@ func testApp(baseURL string) *cli.App {
 	app := NewApp("test")
 
 	origBefore := app.Before
+	origNewClientFn := newClientFn
 	app.Before = func(c *cli.Context) error {
 		// Run the original initRuntime first.
 		if err := origBefore(c); err != nil {
@@ -73,6 +74,10 @@ func testApp(baseURL string) *cli.App {
 			}
 			return client, nil, nil
 		}
+		return nil
+	}
+	app.After = func(*cli.Context) error {
+		newClientFn = origNewClientFn
 		return nil
 	}
 	return app
