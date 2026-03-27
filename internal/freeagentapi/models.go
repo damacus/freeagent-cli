@@ -363,21 +363,24 @@ type UpdateBillRequest struct {
 	Bill BillInput `json:"bill"`
 }
 
+type BankTransactionReference struct {
+	URL string `json:"url"`
+}
+
 // BankTransaction represents a FreeAgent bank transaction.
 type BankTransaction struct {
-	URL                         string   `json:"url"`
-	BankAccount                 string   `json:"bank_account"`
-	DatedOn                     string   `json:"dated_on"`
-	Description                 string   `json:"description"`
-	Amount                      string   `json:"amount"`
-	IsManual                    bool     `json:"is_manual"`
-	IsLocked                    bool     `json:"is_locked"`
-	MarkedForReview             bool     `json:"marked_for_review"`
-	BankTransactionExplanations []struct {
-		URL string `json:"url"`
-	} `json:"bank_transaction_explanations"`
-	UpdatedAt string `json:"updated_at"`
-	CreatedAt string `json:"created_at"`
+	URL                         string                     `json:"url"`
+	BankAccount                 string                     `json:"bank_account"`
+	DatedOn                     string                     `json:"dated_on"`
+	Description                 string                     `json:"description"`
+	FullDescription             string                     `json:"full_description,omitempty"`
+	Amount                      string                     `json:"amount"`
+	IsManual                    bool                       `json:"is_manual"`
+	IsLocked                    bool                       `json:"is_locked"`
+	MarkedForReview             bool                       `json:"marked_for_review"`
+	BankTransactionExplanations []BankTransactionReference `json:"bank_transaction_explanations"`
+	UpdatedAt                   string                     `json:"updated_at"`
+	CreatedAt                   string                     `json:"created_at"`
 }
 
 type BankTransactionResponse struct {
@@ -397,6 +400,11 @@ type BankTransactionExplanation struct {
 	DatedOn         string      `json:"dated_on"`
 	Description     string      `json:"description"`
 	GrossValue      string      `json:"gross_value"`
+	Project         string      `json:"project,omitempty"`
+	Type            string      `json:"type,omitempty"`
+	Detail          string      `json:"detail,omitempty"`
+	RebillType      string      `json:"rebill_type,omitempty"`
+	RebillFactor    string      `json:"rebill_factor,omitempty"`
 	SalesTaxStatus  string      `json:"sales_tax_status,omitempty"`
 	SalesTaxRate    string      `json:"sales_tax_rate,omitempty"`
 	MarkedForReview bool        `json:"marked_for_review"`
@@ -424,6 +432,8 @@ type BankTransactionExplanationInput struct {
 	SalesTaxStatus  string           `json:"sales_tax_status,omitempty"`
 	SalesTaxRate    string           `json:"sales_tax_rate,omitempty"`
 	Project         string           `json:"project,omitempty"`
+	RebillType      string           `json:"rebill_type,omitempty"`
+	RebillFactor    string           `json:"rebill_factor,omitempty"`
 	MarkedForReview *bool            `json:"marked_for_review,omitempty"`
 	Attachment      *AttachmentInput `json:"attachment,omitempty"`
 }
@@ -453,10 +463,18 @@ type UserInput struct {
 	LastName  string `json:"last_name,omitempty"`
 	Role      string `json:"role,omitempty"`
 }
-type UserResponse      struct{ User  User   `json:"user"` }
-type UsersResponse     struct{ Users []User `json:"users"` }
-type CreateUserRequest struct{ User UserInput `json:"user"` }
-type UpdateUserRequest struct{ User UserInput `json:"user"` }
+type UserResponse struct {
+	User User `json:"user"`
+}
+type UsersResponse struct {
+	Users []User `json:"users"`
+}
+type CreateUserRequest struct {
+	User UserInput `json:"user"`
+}
+type UpdateUserRequest struct {
+	User UserInput `json:"user"`
+}
 
 // ---- Categories ----
 
@@ -477,10 +495,18 @@ type CategoryInput struct {
 	AutoSalesTaxRate string `json:"auto_sales_tax_rate,omitempty"`
 	TaxReportingName string `json:"tax_reporting_name,omitempty"`
 }
-type CategoryResponse      struct{ Category   Category   `json:"category"` }
-type CategoriesResponse    struct{ Categories []Category `json:"categories"` }
-type CreateCategoryRequest struct{ Category CategoryInput `json:"category"` }
-type UpdateCategoryRequest struct{ Category CategoryInput `json:"category"` }
+type CategoryResponse struct {
+	Category Category `json:"category"`
+}
+type CategoriesResponse struct {
+	Categories []Category `json:"categories"`
+}
+type CreateCategoryRequest struct {
+	Category CategoryInput `json:"category"`
+}
+type UpdateCategoryRequest struct {
+	Category CategoryInput `json:"category"`
+}
 
 // ---- Company ----
 
@@ -492,7 +518,9 @@ type Company struct {
 	MileageUnits string `json:"mileage_units"`
 	UpdatedAt    string `json:"updated_at"`
 }
-type CompanyResponse struct{ Company Company `json:"company"` }
+type CompanyResponse struct {
+	Company Company `json:"company"`
+}
 
 // ---- Notes ----
 
@@ -508,10 +536,18 @@ type NoteInput struct {
 	Note      string `json:"note,omitempty"`
 	ParentURL string `json:"parent_url,omitempty"`
 }
-type NoteResponse      struct{ Note  Note   `json:"note"` }
-type NotesResponse     struct{ Notes []Note `json:"notes"` }
-type CreateNoteRequest struct{ Note NoteInput `json:"note"` }
-type UpdateNoteRequest struct{ Note NoteInput `json:"note"` }
+type NoteResponse struct {
+	Note Note `json:"note"`
+}
+type NotesResponse struct {
+	Notes []Note `json:"notes"`
+}
+type CreateNoteRequest struct {
+	Note NoteInput `json:"note"`
+}
+type UpdateNoteRequest struct {
+	Note NoteInput `json:"note"`
+}
 
 // ---- Properties ----
 
@@ -530,10 +566,18 @@ type PropertyInput struct {
 	Region   string `json:"region,omitempty"`
 	Country  string `json:"country,omitempty"`
 }
-type PropertyResponse      struct{ Property   Property   `json:"property"` }
-type PropertiesResponse    struct{ Properties []Property `json:"properties"` }
-type CreatePropertyRequest struct{ Property PropertyInput `json:"property"` }
-type UpdatePropertyRequest struct{ Property PropertyInput `json:"property"` }
+type PropertyResponse struct {
+	Property Property `json:"property"`
+}
+type PropertiesResponse struct {
+	Properties []Property `json:"properties"`
+}
+type CreatePropertyRequest struct {
+	Property PropertyInput `json:"property"`
+}
+type UpdatePropertyRequest struct {
+	Property PropertyInput `json:"property"`
+}
 
 // ---- Estimates ----
 
@@ -573,10 +617,18 @@ type EstimateInput struct {
 	EstimateType string `json:"estimate_type,omitempty"`
 	Status       string `json:"status,omitempty"`
 }
-type EstimateResponse      struct{ Estimate  Estimate   `json:"estimate"` }
-type EstimatesResponse     struct{ Estimates []Estimate `json:"estimates"` }
-type CreateEstimateRequest struct{ Estimate EstimateInput `json:"estimate"` }
-type UpdateEstimateRequest struct{ Estimate EstimateInput `json:"estimate"` }
+type EstimateResponse struct {
+	Estimate Estimate `json:"estimate"`
+}
+type EstimatesResponse struct {
+	Estimates []Estimate `json:"estimates"`
+}
+type CreateEstimateRequest struct {
+	Estimate EstimateInput `json:"estimate"`
+}
+type UpdateEstimateRequest struct {
+	Estimate EstimateInput `json:"estimate"`
+}
 
 // ---- Credit Notes ----
 
@@ -602,17 +654,25 @@ type CreditNote struct {
 	CreditNoteItems []CreditNoteItem `json:"credit_note_items"`
 }
 type CreditNoteInput struct {
-	Contact            string               `json:"contact,omitempty"`
-	Currency           string               `json:"currency,omitempty"`
-	DatedOn            string               `json:"dated_on,omitempty"`
-	DueOn              string               `json:"due_on,omitempty"`
-	PaymentTermsInDays int                  `json:"payment_terms_in_days,omitempty"`
+	Contact            string                `json:"contact,omitempty"`
+	Currency           string                `json:"currency,omitempty"`
+	DatedOn            string                `json:"dated_on,omitempty"`
+	DueOn              string                `json:"due_on,omitempty"`
+	PaymentTermsInDays int                   `json:"payment_terms_in_days,omitempty"`
 	CreditNoteItems    []CreditNoteItemInput `json:"credit_note_items,omitempty"`
 }
-type CreditNoteResponse      struct{ CreditNote  CreditNote   `json:"credit_note"` }
-type CreditNotesResponse     struct{ CreditNotes []CreditNote `json:"credit_notes"` }
-type CreateCreditNoteRequest struct{ CreditNote CreditNoteInput `json:"credit_note"` }
-type UpdateCreditNoteRequest struct{ CreditNote CreditNoteInput `json:"credit_note"` }
+type CreditNoteResponse struct {
+	CreditNote CreditNote `json:"credit_note"`
+}
+type CreditNotesResponse struct {
+	CreditNotes []CreditNote `json:"credit_notes"`
+}
+type CreateCreditNoteRequest struct {
+	CreditNote CreditNoteInput `json:"credit_note"`
+}
+type UpdateCreditNoteRequest struct {
+	CreditNote CreditNoteInput `json:"credit_note"`
+}
 
 // ---- Credit Note Reconciliations ----
 
@@ -632,10 +692,18 @@ type CreditNoteReconciliationInput struct {
 	GrossValue   string `json:"gross_value,omitempty"`
 	ExchangeRate string `json:"exchange_rate,omitempty"`
 }
-type CreditNoteReconciliationResponse      struct{ CreditNoteReconciliation  CreditNoteReconciliation   `json:"credit_note_reconciliation"` }
-type CreditNoteReconciliationsResponse     struct{ CreditNoteReconciliations []CreditNoteReconciliation `json:"credit_note_reconciliations"` }
-type CreateCreditNoteReconciliationRequest struct{ CreditNoteReconciliation CreditNoteReconciliationInput `json:"credit_note_reconciliation"` }
-type UpdateCreditNoteReconciliationRequest struct{ CreditNoteReconciliation CreditNoteReconciliationInput `json:"credit_note_reconciliation"` }
+type CreditNoteReconciliationResponse struct {
+	CreditNoteReconciliation CreditNoteReconciliation `json:"credit_note_reconciliation"`
+}
+type CreditNoteReconciliationsResponse struct {
+	CreditNoteReconciliations []CreditNoteReconciliation `json:"credit_note_reconciliations"`
+}
+type CreateCreditNoteReconciliationRequest struct {
+	CreditNoteReconciliation CreditNoteReconciliationInput `json:"credit_note_reconciliation"`
+}
+type UpdateCreditNoteReconciliationRequest struct {
+	CreditNoteReconciliation CreditNoteReconciliationInput `json:"credit_note_reconciliation"`
+}
 
 // ---- Journal Sets ----
 
@@ -665,10 +733,18 @@ type JournalSetInput struct {
 	Tag            string              `json:"tag,omitempty"`
 	JournalEntries []JournalEntryInput `json:"journal_entries,omitempty"`
 }
-type JournalSetResponse      struct{ JournalSet  JournalSet   `json:"journal_set"` }
-type JournalSetsResponse     struct{ JournalSets []JournalSet `json:"journal_sets"` }
-type CreateJournalSetRequest struct{ JournalSet JournalSetInput `json:"journal_set"` }
-type UpdateJournalSetRequest struct{ JournalSet JournalSetInput `json:"journal_set"` }
+type JournalSetResponse struct {
+	JournalSet JournalSet `json:"journal_set"`
+}
+type JournalSetsResponse struct {
+	JournalSets []JournalSet `json:"journal_sets"`
+}
+type CreateJournalSetRequest struct {
+	JournalSet JournalSetInput `json:"journal_set"`
+}
+type UpdateJournalSetRequest struct {
+	JournalSet JournalSetInput `json:"journal_set"`
+}
 
 // ---- Capital Asset Types ----
 
@@ -679,10 +755,18 @@ type CapitalAssetType struct {
 type CapitalAssetTypeInput struct {
 	Name string `json:"name,omitempty"`
 }
-type CapitalAssetTypeResponse      struct{ CapitalAssetType  CapitalAssetType   `json:"capital_asset_type"` }
-type CapitalAssetTypesResponse     struct{ CapitalAssetTypes []CapitalAssetType `json:"capital_asset_types"` }
-type CreateCapitalAssetTypeRequest struct{ CapitalAssetType CapitalAssetTypeInput `json:"capital_asset_type"` }
-type UpdateCapitalAssetTypeRequest struct{ CapitalAssetType CapitalAssetTypeInput `json:"capital_asset_type"` }
+type CapitalAssetTypeResponse struct {
+	CapitalAssetType CapitalAssetType `json:"capital_asset_type"`
+}
+type CapitalAssetTypesResponse struct {
+	CapitalAssetTypes []CapitalAssetType `json:"capital_asset_types"`
+}
+type CreateCapitalAssetTypeRequest struct {
+	CapitalAssetType CapitalAssetTypeInput `json:"capital_asset_type"`
+}
+type UpdateCapitalAssetTypeRequest struct {
+	CapitalAssetType CapitalAssetTypeInput `json:"capital_asset_type"`
+}
 
 // ---- Capital Assets ----
 
@@ -693,8 +777,12 @@ type CapitalAsset struct {
 	Value       string `json:"value"`
 	Status      string `json:"status"`
 }
-type CapitalAssetResponse  struct{ CapitalAsset  CapitalAsset   `json:"capital_asset"` }
-type CapitalAssetsResponse struct{ CapitalAssets []CapitalAsset `json:"capital_assets"` }
+type CapitalAssetResponse struct {
+	CapitalAsset CapitalAsset `json:"capital_asset"`
+}
+type CapitalAssetsResponse struct {
+	CapitalAssets []CapitalAsset `json:"capital_assets"`
+}
 
 // ---- Sales Tax Periods ----
 
@@ -711,10 +799,18 @@ type SalesTaxPeriodInput struct {
 	SalesTaxRate1              string `json:"sales_tax_rate_1,omitempty"`
 	SalesTaxRegistrationNumber string `json:"sales_tax_registration_number,omitempty"`
 }
-type SalesTaxPeriodResponse      struct{ SalesTaxPeriod  SalesTaxPeriod   `json:"sales_tax_period"` }
-type SalesTaxPeriodsResponse     struct{ SalesTaxPeriods []SalesTaxPeriod `json:"sales_tax_periods"` }
-type CreateSalesTaxPeriodRequest struct{ SalesTaxPeriod SalesTaxPeriodInput `json:"sales_tax_period"` }
-type UpdateSalesTaxPeriodRequest struct{ SalesTaxPeriod SalesTaxPeriodInput `json:"sales_tax_period"` }
+type SalesTaxPeriodResponse struct {
+	SalesTaxPeriod SalesTaxPeriod `json:"sales_tax_period"`
+}
+type SalesTaxPeriodsResponse struct {
+	SalesTaxPeriods []SalesTaxPeriod `json:"sales_tax_periods"`
+}
+type CreateSalesTaxPeriodRequest struct {
+	SalesTaxPeriod SalesTaxPeriodInput `json:"sales_tax_period"`
+}
+type UpdateSalesTaxPeriodRequest struct {
+	SalesTaxPeriod SalesTaxPeriodInput `json:"sales_tax_period"`
+}
 
 // ---- Recurring Invoices (read-only) ----
 
@@ -725,8 +821,12 @@ type RecurringInvoice struct {
 	Status     string `json:"status"`
 	TotalValue string `json:"total_value"`
 }
-type RecurringInvoiceResponse  struct{ RecurringInvoice  RecurringInvoice   `json:"recurring_invoice"` }
-type RecurringInvoicesResponse struct{ RecurringInvoices []RecurringInvoice `json:"recurring_invoices"` }
+type RecurringInvoiceResponse struct {
+	RecurringInvoice RecurringInvoice `json:"recurring_invoice"`
+}
+type RecurringInvoicesResponse struct {
+	RecurringInvoices []RecurringInvoice `json:"recurring_invoices"`
+}
 
 // ---- Stock Items (read-only) ----
 
@@ -736,8 +836,12 @@ type StockItem struct {
 	ItemCode    string `json:"item_code"`
 	SalesPrice  string `json:"sales_price"`
 }
-type StockItemResponse  struct{ StockItem  StockItem   `json:"stock_item"` }
-type StockItemsResponse struct{ StockItems []StockItem `json:"stock_items"` }
+type StockItemResponse struct {
+	StockItem StockItem `json:"stock_item"`
+}
+type StockItemsResponse struct {
+	StockItems []StockItem `json:"stock_items"`
+}
 
 // ---- Price List Items (read-only) ----
 
@@ -746,8 +850,12 @@ type PriceListItem struct {
 	Description string `json:"description"`
 	Price       string `json:"price"`
 }
-type PriceListItemResponse  struct{ PriceListItem  PriceListItem   `json:"price_list_item"` }
-type PriceListItemsResponse struct{ PriceListItems []PriceListItem `json:"price_list_items"` }
+type PriceListItemResponse struct {
+	PriceListItem PriceListItem `json:"price_list_item"`
+}
+type PriceListItemsResponse struct {
+	PriceListItems []PriceListItem `json:"price_list_items"`
+}
 
 // ---- Clients (read-only, accountancy practice) ----
 
@@ -755,7 +863,9 @@ type Client struct {
 	URL  string `json:"url"`
 	Name string `json:"name"`
 }
-type ClientsResponse struct{ Clients []Client `json:"clients"` }
+type ClientsResponse struct {
+	Clients []Client `json:"clients"`
+}
 
 // ---- Account Managers (read-only) ----
 
@@ -765,15 +875,21 @@ type AccountManager struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 }
-type AccountManagerResponse  struct{ AccountManager  AccountManager   `json:"account_manager"` }
-type AccountManagersResponse struct{ AccountManagers []AccountManager `json:"account_managers"` }
+type AccountManagerResponse struct {
+	AccountManager AccountManager `json:"account_manager"`
+}
+type AccountManagersResponse struct {
+	AccountManagers []AccountManager `json:"account_managers"`
+}
 
 // ---- Email Addresses (read-only) ----
 
 type EmailAddress struct {
 	Address string `json:"address"`
 }
-type EmailAddressesResponse struct{ EmailAddresses []EmailAddress `json:"email_addresses"` }
+type EmailAddressesResponse struct {
+	EmailAddresses []EmailAddress `json:"email_addresses"`
+}
 
 // ---- CIS Bands (read-only) ----
 
@@ -782,7 +898,9 @@ type CISBand struct {
 	Name string `json:"name"`
 	Rate string `json:"rate"`
 }
-type CISBandsResponse struct{ CISBands []CISBand `json:"cis_bands"` }
+type CISBandsResponse struct {
+	CISBands []CISBand `json:"cis_bands"`
+}
 
 // ---- Bank Accounts ----
 
@@ -796,8 +914,12 @@ type BankAccount struct {
 	CreatedAt      string `json:"created_at"`
 	UpdatedAt      string `json:"updated_at"`
 }
-type BankAccountResponse struct{ BankAccount BankAccount `json:"bank_account"` }
-type BankAccountsResponse struct{ BankAccounts []BankAccount `json:"bank_accounts"` }
+type BankAccountResponse struct {
+	BankAccount BankAccount `json:"bank_account"`
+}
+type BankAccountsResponse struct {
+	BankAccounts []BankAccount `json:"bank_accounts"`
+}
 type BankAccountInput struct {
 	Name           string `json:"name,omitempty"`
 	Type           string `json:"type,omitempty"`
@@ -805,5 +927,9 @@ type BankAccountInput struct {
 	IsPersonal     *bool  `json:"is_personal,omitempty"`
 	OpeningBalance string `json:"opening_balance,omitempty"`
 }
-type CreateBankAccountRequest struct{ BankAccount BankAccountInput `json:"bank_account"` }
-type UpdateBankAccountRequest struct{ BankAccount BankAccountInput `json:"bank_account"` }
+type CreateBankAccountRequest struct {
+	BankAccount BankAccountInput `json:"bank_account"`
+}
+type UpdateBankAccountRequest struct {
+	BankAccount BankAccountInput `json:"bank_account"`
+}
