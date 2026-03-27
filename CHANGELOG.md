@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/damacus/freeagent-cli/compare/v0.3.0...v0.4.0) (2026-03-27)
+
+
+### Features
+
+* add bank review and accounting commands ([#10](https://github.com/damacus/freeagent-cli/issues/10)) ([7c7d925](https://github.com/damacus/freeagent-cli/commit/7c7d925482599a91958f94529bc823c408143286))
+
+
+### Bug Fixes
+
+* support trailing receipt flags on updates ([#8](https://github.com/damacus/freeagent-cli/issues/8)) ([36d324c](https://github.com/damacus/freeagent-cli/commit/36d324c7b8533f637683d1afaae52e87a54bc122))
+
 ## [0.3.0](https://github.com/damacus/freeagent-cli/compare/v0.2.0...v0.3.0) (2026-03-20)
 
 
