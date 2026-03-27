@@ -4258,6 +4258,87 @@ paths:
         schema:
           type: string
           example: ""
+  /v2/accounting/balance_sheet/summary:
+    get:
+      tags:
+        - Balance Sheet
+      summary: Get the balance sheet summary
+      description: Get the balance sheet summary
+      operationId: getTheBalanceSheetSummary
+      parameters:
+        - name: as_at_date
+          in: query
+          schema:
+            type: string
+            example: "2018-01-01"
+      responses:
+        "200":
+          description: ""
+  /v2/accounting/transactions:
+    get:
+      tags:
+        - Transactions
+      summary: List all transactions
+      description: List all transactions
+      operationId: listAllTransactions
+      parameters:
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            example: "2018-01-01"
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            example: "2018-01-01"
+      responses:
+        "200":
+          description: ""
+  /v2/accounting/transactions/{id}:
+    get:
+      tags:
+        - Transactions
+      summary: Get a single transaction
+      description: Get a single transaction
+      operationId: getASingleTransaction
+      responses:
+        "200":
+          description: ""
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: ""
+  /v2/accounting/final_accounts_reports:
+    get:
+      tags:
+        - Final Accounts Reports
+      summary: List all final accounts reports
+      description: List all final accounts reports
+      operationId: listAllFinalAccountsReports
+      responses:
+        "200":
+          description: ""
+  /v2/accounting/final_accounts_reports/{id}:
+    get:
+      tags:
+        - Final Accounts Reports
+      summary: Get a single final accounts report
+      description: Get a single final accounts report
+      operationId: getASingleFinalAccountsReport
+      responses:
+        "200":
+          description: ""
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: ""
   /v2/accounting/trial_balance/summary:
     get:
       tags:

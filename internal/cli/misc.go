@@ -179,8 +179,8 @@ func accountingCommand() *cli.Command {
 		Usage: "View accounting reports",
 		Subcommands: []*cli.Command{
 			{
-				Name:  "profit-and-loss",
-				Usage: "Get profit and loss summary",
+				Name:   "profit-and-loss",
+				Usage:  "Get profit and loss summary",
 				Action: accountingProfitAndLoss,
 			},
 			{
@@ -191,6 +191,28 @@ func accountingCommand() *cli.Command {
 					&cli.StringFlag{Name: "to", Usage: "To date (YYYY-MM-DD)"},
 				},
 				Action: accountingTrialBalance,
+			},
+			{
+				Name:  "balance-sheet",
+				Usage: "Get balance sheet summary",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "as-at", Usage: "As at date (YYYY-MM-DD)"},
+				},
+				Action: accountingBalanceSheet,
+			},
+			{
+				Name:  "transactions",
+				Usage: "List accounting transactions",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "from", Usage: "From date (YYYY-MM-DD)"},
+					&cli.StringFlag{Name: "to", Usage: "To date (YYYY-MM-DD)"},
+				},
+				Action: accountingTransactions,
+			},
+			{
+				Name:  "final-accounts-reports",
+				Usage: "List final accounts reports",
+				Action: accountingFinalAccountsReports,
 			},
 		},
 	}
@@ -245,6 +267,88 @@ func accountingTrialBalance(c *cli.Context) error {
 	appendParam("to_date", c.String("to"))
 
 	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func accountingBalanceSheet(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	endpoint := "/accounting/balance_sheet/summary"
+	if asAt := c.String("as-at"); asAt != "" {
+		endpoint += "?as_at_date=" + asAt
+	}
+
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func accountingTransactions(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	endpoint := "/accounting/transactions"
+	sep := "?"
+	appendParam := func(key, value string) {
+		if value != "" {
+			endpoint += sep + key + "=" + value
+			sep = "&"
+		}
+	}
+	appendParam("from_date", c.String("from"))
+	appendParam("to_date", c.String("to"))
+
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func accountingFinalAccountsReports(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/accounting/final_accounts_reports", nil, "")
 	if err != nil {
 		return err
 	}
