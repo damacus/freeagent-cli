@@ -5,6 +5,9 @@
 /freeagent
 dist/
 
+# worktrees
+.worktrees/
+
 # Go
 bin/
 *.exe
