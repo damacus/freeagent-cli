@@ -1,6 +1,9 @@
 package cli
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestPayrollCommand_Subcommands(t *testing.T) {
 	cmd := payrollCommand()
@@ -42,5 +45,65 @@ func TestPayrollProfilesCommand_Subcommands(t *testing.T) {
 	}
 	if !found {
 		t.Error("subcommand 'get' not found")
+	}
+}
+
+func TestPayrollGetJSON(t *testing.T) {
+	data := map[string]any{
+		"payroll": map[string]any{
+			"year":         2025,
+			"total_income": "60000.00",
+		},
+	}
+	srv := newTestServer(t, "/payroll/2025", data)
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "payroll", "get", "--year", "2025"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "60000.00") {
+		t.Errorf("expected total_income in output, got: %s", out)
+	}
+}
+
+func TestPayrollGetPeriodJSON(t *testing.T) {
+	data := map[string]any{
+		"payroll": map[string]any{
+			"year":   2025,
+			"period": 3,
+			"net":    "4500.00",
+		},
+	}
+	srv := newTestServer(t, "/payroll/2025/3", data)
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "payroll", "get-period", "--year", "2025", "--period", "3"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "4500.00") {
+		t.Errorf("expected net in output, got: %s", out)
+	}
+}
+
+func TestPayrollProfilesGetJSON(t *testing.T) {
+	data := map[string]any{
+		"payroll_profiles": []map[string]any{
+			{"url": "https://api.freeagent.com/v2/payroll_profiles/2025/1", "user": "https://api.freeagent.com/v2/users/1"},
+		},
+	}
+	srv := newTestServer(t, "/payroll_profiles/2025", data)
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "payroll-profiles", "get", "--year", "2025"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "payroll_profiles/2025") {
+		t.Errorf("expected payroll profile URL in output, got: %s", out)
 	}
 }
