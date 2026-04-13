@@ -1,6 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -133,5 +137,112 @@ func TestMatchContacts_Partial(t *testing.T) {
 	got := matchContacts(list, "Acme", false)
 	if len(got) != 2 {
 		t.Errorf("partial match: got %d results, want 2", len(got))
+	}
+}
+
+func TestContactsCommand_Subcommands(t *testing.T) {
+	cmd := contactsCommand()
+	if cmd == nil {
+		t.Fatal("contactsCommand() returned nil")
+	}
+
+	want := map[string]bool{
+		"list":   false,
+		"search": false,
+		"get":    false,
+		"create": false,
+	}
+
+	for _, sub := range cmd.Subcommands {
+		if _, ok := want[sub.Name]; ok {
+			want[sub.Name] = true
+		}
+	}
+
+	for name, found := range want {
+		if !found {
+			t.Errorf("subcommand %q not found", name)
+		}
+	}
+}
+
+func TestContactsListJSON(t *testing.T) {
+	srv := newTestServer(t, "", fa.ContactsResponse{
+		Contacts: []fa.Contact{{URL: "http://x/v2/contacts/1", OrganisationName: "Acme Ltd", Email: "acme@example.com"}},
+	})
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "contacts", "list"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Acme Ltd") {
+		t.Errorf("expected organisation name in output, got: %s", out)
+	}
+}
+
+func TestContactsSearchJSON(t *testing.T) {
+	srv := newTestServer(t, "", fa.ContactsResponse{
+		Contacts: []fa.Contact{
+			{URL: "http://x/v2/contacts/1", OrganisationName: "Acme Ltd", Email: "acme@example.com"},
+			{URL: "http://x/v2/contacts/2", OrganisationName: "Globex Corp", Email: "globex@example.com"},
+		},
+	})
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "contacts", "search", "--query", "Acme"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Acme Ltd") {
+		t.Errorf("expected Acme Ltd in output, got: %s", out)
+	}
+	if strings.Contains(out, "Globex") {
+		t.Errorf("unexpected Globex in filtered output, got: %s", out)
+	}
+}
+
+func TestContactsGetJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Fatalf("expected GET, got %s", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.ContactResponse{Contact: fa.Contact{URL: "http://x/v2/contacts/1", OrganisationName: "Get Corp"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "contacts", "get", "--id", "1"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Get Corp") {
+		t.Errorf("expected org name in output, got: %s", out)
+	}
+}
+
+func TestContactsCreateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Fatalf("expected POST, got %s", r.Method)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.ContactResponse{Contact: fa.Contact{URL: "http://x/v2/contacts/3", OrganisationName: "New Corp"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "contacts", "create",
+		"--organisation", "New Corp",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "New Corp") {
+		t.Errorf("expected org name in output, got: %s", out)
 	}
 }
