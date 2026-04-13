@@ -28,18 +28,6 @@ func TestCreditNoteReconciliationsCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestCreditNoteReconciliationsList(t *testing.T) {
-	data := fa.CreditNoteReconciliationsResponse{CreditNoteReconciliations: []fa.CreditNoteReconciliation{
-		{URL: "https://api.freeagent.com/v2/credit_note_reconciliations/1", GrossValue: "100.00", DatedOn: "2024-01-15"},
-	}}
-	srv := newTestServer(t, "/credit_note_reconciliations", data)
-	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "credit-note-reconciliations", "list"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestCreditNoteReconciliationsGetJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

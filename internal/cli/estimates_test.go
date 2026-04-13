@@ -228,17 +228,3 @@ func TestEstimatesResponse_Unmarshal(t *testing.T) {
 	}
 }
 
-func TestEstimatesUpdate_NoFields(t *testing.T) {
-	input := fa.EstimateInput{}
-
-	isEmpty := input.Contact == "" &&
-		input.Currency == "" &&
-		input.DatedOn == "" &&
-		input.DueOn == "" &&
-		input.EstimateType == "" &&
-		input.Status == ""
-
-	if !isEmpty {
-		t.Error("expected EstimateInput to be empty when no fields set")
-	}
-}

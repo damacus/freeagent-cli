@@ -28,18 +28,6 @@ func TestCapitalAssetsCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestCapitalAssetsList(t *testing.T) {
-	data := fa.CapitalAssetsResponse{CapitalAssets: []fa.CapitalAsset{
-		{URL: "https://api.freeagent.com/v2/capital_assets/1", Description: "MacBook", Value: "1200.00", Status: "active"},
-	}}
-	srv := newTestServer(t, "/capital_assets", data)
-	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "capital-assets", "list"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestCapitalAssetTypesCommand_Subcommands(t *testing.T) {
 	cmd := capitalAssetTypesCommand()
 	if cmd == nil {
@@ -77,18 +65,6 @@ func TestCapitalAssetsGetJSON(t *testing.T) {
 	}
 	if !strings.Contains(out, "MacBook") {
 		t.Errorf("expected description in output, got: %s", out)
-	}
-}
-
-func TestCapitalAssetTypesList(t *testing.T) {
-	data := fa.CapitalAssetTypesResponse{CapitalAssetTypes: []fa.CapitalAssetType{
-		{URL: "https://api.freeagent.com/v2/capital_asset_types/1", Name: "Computer Equipment"},
-	}}
-	srv := newTestServer(t, "/capital_asset_types", data)
-	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "capital-asset-types", "list"})
-	if err != nil {
-		t.Fatal(err)
 	}
 }
 

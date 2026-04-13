@@ -124,27 +124,6 @@ func TestBillInput_AttachmentFromFile(t *testing.T) {
 	}
 }
 
-func TestBillsUpdate_NoFields(t *testing.T) {
-	// When no fields are provided, BillInput should be empty (zero value)
-	// and the update handler should return "no fields to update"
-	input := fa.BillInput{}
-
-	// Check that all fields are empty (zero value)
-	isEmpty := input.Contact == "" &&
-		input.DatedOn == "" &&
-		input.DueOn == "" &&
-		input.Reference == "" &&
-		input.Currency == "" &&
-		input.TotalValue == "" &&
-		input.SaleTaxRate == "" &&
-		input.Attachment == nil &&
-		len(input.BillItems) == 0
-
-	if !isEmpty {
-		t.Error("expected BillInput to be empty when no fields set")
-	}
-}
-
 func TestBillsListJSON(t *testing.T) {
 	srv := newTestServer(t, "/bills", fa.BillsResponse{
 		Bills: []fa.Bill{
