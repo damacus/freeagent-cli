@@ -144,3 +144,51 @@ func TestStore_Delete(t *testing.T) {
 		t.Error("fallback token not deleted")
 	}
 }
+
+func TestStore_Get_PrimaryError_NoFallback(t *testing.T) {
+	s := NewStore(&mockTokenStore{err: errStoreDown}, nil)
+	_, err := s.Get("p")
+	if err == nil {
+		t.Error("expected error when primary fails and no fallback")
+	}
+}
+
+func TestStore_Get_NilPrimary_FallbackWorks(t *testing.T) {
+	tok := &Token{AccessToken: "fb"}
+	s := NewStore(nil, &mockTokenStore{token: tok})
+	got, err := s.Get("p")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.AccessToken != "fb" {
+		t.Errorf("got %q, want fb", got.AccessToken)
+	}
+}
+
+func TestStore_Get_NilBoth(t *testing.T) {
+	s := NewStore(nil, nil)
+	_, err := s.Get("p")
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestStore_Delete_IgnoresNotFound(t *testing.T) {
+	s := NewStore(
+		&mockTokenStore{err: ErrNotFound},
+		&mockTokenStore{err: ErrNotFound},
+	)
+	if err := s.Delete("p"); err != nil {
+		t.Errorf("expected nil when both return ErrNotFound, got %v", err)
+	}
+}
+
+func TestStore_Delete_ReturnsNonNotFoundError(t *testing.T) {
+	s := NewStore(
+		&mockTokenStore{err: errStoreDown},
+		nil,
+	)
+	if err := s.Delete("p"); err == nil {
+		t.Error("expected error when primary fails with non-ErrNotFound")
+	}
+}

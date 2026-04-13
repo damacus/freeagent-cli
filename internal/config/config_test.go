@@ -98,3 +98,24 @@ func TestConfig_SetProfile_Then_Profile(t *testing.T) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 }
+
+func TestConfig_SetProfile_InitializesMap(t *testing.T) {
+	cfg := &Config{}
+	cfg.SetProfile("new", Profile{ClientID: "id"})
+	if cfg.Profiles == nil {
+		t.Fatal("Profiles map should be initialized")
+	}
+	if cfg.Profiles["new"].ClientID != "id" {
+		t.Error("profile not set correctly")
+	}
+}
+
+func TestConfig_DefaultPath(t *testing.T) {
+	p, err := DefaultPath()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if p == "" {
+		t.Error("expected non-empty default path")
+	}
+}
