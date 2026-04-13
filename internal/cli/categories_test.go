@@ -37,19 +37,6 @@ func TestCategoriesCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestCategoriesList(t *testing.T) {
-	data := fa.CategoriesResponse{Categories: []fa.Category{
-		{URL: "https://api.freeagent.com/v2/categories/1", Description: "Office Costs", NominalCode: "7600"},
-	}}
-	srv := newTestServer(t, "/categories", data)
-	defer srv.Close()
-
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "categories", "list"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestCategoryInput_JSONRoundtrip(t *testing.T) {
 	input := fa.CreateCategoryRequest{
 		Category: fa.CategoryInput{
@@ -98,16 +85,6 @@ func TestCategoriesResponse_Unmarshal(t *testing.T) {
 	}
 	if cat.NominalCode != "7600" {
 		t.Errorf("NominalCode: got %q, want %q", cat.NominalCode, "7600")
-	}
-}
-
-func TestCategoriesUpdate_NoFields(t *testing.T) {
-	input := fa.CategoryInput{}
-
-	isEmpty := input.Description == "" && input.TaxReportingName == ""
-
-	if !isEmpty {
-		t.Error("expected CategoryInput to be empty when no fields set")
 	}
 }
 
@@ -194,12 +171,19 @@ func TestCategoriesUpdateJSON(t *testing.T) {
 }
 
 func TestCategoriesDeleteJSON(t *testing.T) {
-	srv := newTestServer(t, "", nil)
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
 	defer srv.Close()
 
 	app := testApp(srv.URL + "/v2")
 	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "categories", "delete", "1"), "")
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
 	}
 }

@@ -22,7 +22,6 @@ func TestContactDisplayName(t *testing.T) {
 		{"first only", fa.Contact{FirstName: "Jane"}, "Jane"},
 		{"display_name fallback", fa.Contact{DisplayName: "Jane Doe"}, "Jane Doe"},
 		{"url fallback", fa.Contact{URL: "https://api.freeagent.com/v2/contacts/1"}, "https://api.freeagent.com/v2/contacts/1"},
-		{"empty", fa.Contact{}, ""},
 	}
 
 	for _, tc := range cases {

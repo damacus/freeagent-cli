@@ -115,22 +115,6 @@ func TestUserResponse_Unmarshal(t *testing.T) {
 	}
 }
 
-func TestUserInput_NoFields(t *testing.T) {
-	// When no fields are provided, UserInput should be empty (zero value)
-	// and the update handler should return "no fields to update"
-	input := fa.UserInput{}
-
-	// Check that all fields are empty (zero value)
-	isEmpty := input.Email == "" &&
-		input.FirstName == "" &&
-		input.LastName == "" &&
-		input.Role == ""
-
-	if !isEmpty {
-		t.Error("expected UserInput to be empty when no fields set")
-	}
-}
-
 func TestUsersListJSON(t *testing.T) {
 	srv := newTestServer(t, "", fa.UsersResponse{
 		Users: []fa.User{{URL: "http://x/v2/users/1", Email: "a@b.com", FirstName: "Alice", LastName: "Smith"}},
@@ -213,13 +197,20 @@ func TestUsersCreateJSON(t *testing.T) {
 }
 
 func TestUsersDeleteJSON(t *testing.T) {
-	srv := newTestServer(t, "", nil)
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
 	defer srv.Close()
 
 	app := testApp(srv.URL + "/v2")
 	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "users", "delete", "1"), "")
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
 	}
 }
 
