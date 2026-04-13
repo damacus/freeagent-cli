@@ -28,18 +28,6 @@ func TestSalesTaxPeriodsCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestSalesTaxPeriodsList(t *testing.T) {
-	data := fa.SalesTaxPeriodsResponse{SalesTaxPeriods: []fa.SalesTaxPeriod{
-		{URL: "https://api.freeagent.com/v2/sales_tax_periods/1", EffectiveDate: "2024-01-01", SalesTaxName: "VAT", SalesTaxRate1: "20"},
-	}}
-	srv := newTestServer(t, "/sales_tax_periods", data)
-	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "sales-tax-periods", "list"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestSalesTaxPeriodsListJSON(t *testing.T) {
 	srv := newTestServer(t, "", fa.SalesTaxPeriodsResponse{
 		SalesTaxPeriods: []fa.SalesTaxPeriod{{URL: "http://x/v2/sales_tax_periods/1", EffectiveDate: "2024-04-01", SalesTaxName: "VAT", SalesTaxRate1: "20"}},

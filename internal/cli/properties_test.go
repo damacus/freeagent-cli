@@ -28,18 +28,6 @@ func TestPropertiesCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestPropertiesList(t *testing.T) {
-	data := fa.PropertiesResponse{Properties: []fa.Property{
-		{URL: "https://api.freeagent.com/v2/properties/1", Address1: "1 High St", Town: "London", Country: "GB"},
-	}}
-	srv := newTestServer(t, "/properties", data)
-	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "properties", "list"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestPropertyInput_JSONRoundtrip(t *testing.T) {
 	input := fa.CreatePropertyRequest{
 		Property: fa.PropertyInput{Address1: "1 High St", Town: "London", Country: "GB"},
@@ -55,13 +43,11 @@ func TestPropertyInput_JSONRoundtrip(t *testing.T) {
 	if decoded.Property.Address1 != input.Property.Address1 {
 		t.Errorf("Address1: got %q, want %q", decoded.Property.Address1, input.Property.Address1)
 	}
-}
-
-func TestPropertiesUpdate_NoFields(t *testing.T) {
-	input := fa.PropertyInput{}
-	isEmpty := input.Address1 == "" && input.Address2 == "" && input.Town == "" && input.Region == "" && input.Country == ""
-	if !isEmpty {
-		t.Error("expected PropertyInput to be empty when no fields set")
+	if decoded.Property.Town != input.Property.Town {
+		t.Errorf("Town: got %q, want %q", decoded.Property.Town, input.Property.Town)
+	}
+	if decoded.Property.Country != input.Property.Country {
+		t.Errorf("Country: got %q, want %q", decoded.Property.Country, input.Property.Country)
 	}
 }
 

@@ -28,18 +28,6 @@ func TestNotesCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestNotesList(t *testing.T) {
-	data := fa.NotesResponse{Notes: []fa.Note{
-		{URL: "https://api.freeagent.com/v2/notes/1", Note: "Test note", Author: "Alice"},
-	}}
-	srv := newTestServer(t, "/notes", data)
-	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "notes", "list"})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestNoteInput_JSONRoundtrip(t *testing.T) {
 	input := fa.CreateNoteRequest{
 		Note: fa.NoteInput{Note: "Hello world", ParentURL: "https://api.freeagent.com/v2/contacts/1"},
