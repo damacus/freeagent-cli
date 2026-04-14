@@ -2,6 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -35,32 +38,145 @@ func TestEstimatesCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestEstimatesList(t *testing.T) {
-	data := fa.EstimatesResponse{Estimates: []fa.Estimate{
-		{
-			URL:        "https://api.freeagent.com/v2/estimates/1",
-			Contact:    "https://api.freeagent.com/v2/contacts/1",
-			Reference:  "EST-001",
-			Status:     "Draft",
-			TotalValue: "1000.00",
+func TestEstimatesListJSON(t *testing.T) {
+	srv := newTestServer(t, "/estimates", fa.EstimatesResponse{
+		Estimates: []fa.Estimate{
+			{URL: "http://x/v2/estimates/1", Reference: "EST-001", Status: "Draft", TotalValue: "1000.00"},
 		},
-	}}
-	srv := newTestServer(t, "/estimates", data)
+	})
 	defer srv.Close()
 
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "estimates", "list"})
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "estimates", "list"), "")
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !strings.Contains(out, "EST-001") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
 }
 
-func TestEstimatesTransition(t *testing.T) {
-	srv := newTestServer(t, "/estimates/1/transitions/mark_as_sent", nil)
+func TestEstimatesGetJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.EstimateResponse{
+			Estimate: fa.Estimate{URL: "http://x/v2/estimates/1", Reference: "EST-001", Status: "Draft"},
+		})
+	}))
 	defer srv.Close()
 
-	err := testApp(srv.URL).Run([]string{"fa", "estimates", "transition", "--status", "sent", "1"})
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "estimates", "get", "1"), "")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !strings.Contains(out, "EST-001") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
+}
+
+func TestEstimatesCreateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.EstimateResponse{
+			Estimate: fa.Estimate{URL: "http://x/v2/estimates/2", Reference: "EST-002", Currency: "GBP"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "estimates", "create",
+		"--contact", "http://x/v2/contacts/1",
+		"--currency", "GBP",
+		"--dated-on", "2024-01-15",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "EST-002") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
+}
+
+func TestEstimatesUpdateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.EstimateResponse{
+			Estimate: fa.Estimate{URL: "http://x/v2/estimates/1", Reference: "EST-001", Currency: "USD"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "estimates", "update",
+		"--currency", "USD",
+		"1",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "USD") {
+		t.Errorf("expected currency in output, got: %s", out)
+	}
+}
+
+func TestEstimatesDeleteJSON(t *testing.T) {
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "estimates", "delete", "1"), "")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
+	}
+}
+
+func TestEstimatesTransitionJSON(t *testing.T) {
+	var methodSeen string
+	var pathSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		pathSeen = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.EstimateResponse{
+			Estimate: fa.Estimate{URL: "http://x/v2/estimates/1", Status: "sent"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "estimates", "transition", "--status", "sent", "1"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if methodSeen != http.MethodPut {
+		t.Errorf("expected PUT request, got %s", methodSeen)
+	}
+	if !strings.Contains(pathSeen, "mark_as_sent") {
+		t.Errorf("expected transition URL to contain mark_as_sent, got: %s", pathSeen)
 	}
 }
 
@@ -118,17 +234,3 @@ func TestEstimatesResponse_Unmarshal(t *testing.T) {
 	}
 }
 
-func TestEstimatesUpdate_NoFields(t *testing.T) {
-	input := fa.EstimateInput{}
-
-	isEmpty := input.Contact == "" &&
-		input.Currency == "" &&
-		input.DatedOn == "" &&
-		input.DueOn == "" &&
-		input.EstimateType == "" &&
-		input.Status == ""
-
-	if !isEmpty {
-		t.Error("expected EstimateInput to be empty when no fields set")
-	}
-}

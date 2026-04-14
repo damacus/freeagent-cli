@@ -2,6 +2,7 @@ package cli
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -61,5 +62,66 @@ func TestCompanyResponse_Unmarshal(t *testing.T) {
 	}
 	if resp.Company.CurrencyCode != "GBP" {
 		t.Errorf("CurrencyCode: got %q, want %q", resp.Company.CurrencyCode, "GBP")
+	}
+}
+
+func TestCompanyGetJSON(t *testing.T) {
+	data := fa.CompanyResponse{Company: fa.Company{
+		URL:          "https://api.freeagent.com/v2/company",
+		Name:         "Acme Corp",
+		Type:         "LimitedCompany",
+		CurrencyCode: "GBP",
+	}}
+	srv := newTestServer(t, "/company", data)
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "company", "get"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Acme Corp") {
+		t.Errorf("expected company name in output, got: %s", out)
+	}
+	if !strings.Contains(out, "GBP") {
+		t.Errorf("expected currency_code in output, got: %s", out)
+	}
+}
+
+func TestCompanyBusinessCategoriesJSON(t *testing.T) {
+	data := map[string]any{
+		"business_categories": []map[string]any{
+			{"name": "Accountancy", "url": "https://api.freeagent.com/v2/company/business_categories/1"},
+		},
+	}
+	srv := newTestServer(t, "/company/business_categories", data)
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "company", "business-categories"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Accountancy") {
+		t.Errorf("expected category name in output, got: %s", out)
+	}
+}
+
+func TestCompanyTaxTimelineJSON(t *testing.T) {
+	data := map[string]any{
+		"tax_timeline": map[string]any{
+			"current_tax_year": "2025",
+		},
+	}
+	srv := newTestServer(t, "/company/tax_timeline", data)
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "company", "tax-timeline"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "2025") {
+		t.Errorf("expected tax year in output, got: %s", out)
 	}
 }

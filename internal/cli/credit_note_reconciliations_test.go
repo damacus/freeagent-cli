@@ -2,6 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -25,15 +28,112 @@ func TestCreditNoteReconciliationsCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestCreditNoteReconciliationsList(t *testing.T) {
-	data := fa.CreditNoteReconciliationsResponse{CreditNoteReconciliations: []fa.CreditNoteReconciliation{
-		{URL: "https://api.freeagent.com/v2/credit_note_reconciliations/1", GrossValue: "100.00", DatedOn: "2024-01-15"},
-	}}
-	srv := newTestServer(t, "/credit_note_reconciliations", data)
+func TestCreditNoteReconciliationsGetJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.CreditNoteReconciliationResponse{
+			CreditNoteReconciliation: fa.CreditNoteReconciliation{
+				URL: "http://x/v2/credit_note_reconciliations/1", GrossValue: "100.00", DatedOn: "2024-01-15",
+			},
+		})
+	}))
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "credit-note-reconciliations", "list"})
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "credit-note-reconciliations", "get", "1"), "")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !strings.Contains(out, "100.00") {
+		t.Errorf("expected gross value in output, got: %s", out)
+	}
+}
+
+func TestCreditNoteReconciliationsCreateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.CreditNoteReconciliationResponse{
+			CreditNoteReconciliation: fa.CreditNoteReconciliation{
+				URL:        "http://x/v2/credit_note_reconciliations/2",
+				GrossValue: "200.00",
+				DatedOn:    "2024-02-01",
+			},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "credit-note-reconciliations", "create",
+		"--credit-note", "http://x/v2/credit_notes/1",
+		"--invoice", "http://x/v2/invoices/1",
+		"--dated-on", "2024-02-01",
+		"--gross-value", "200.00",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "200.00") {
+		t.Errorf("expected gross value in output, got: %s", out)
+	}
+}
+
+func TestCreditNoteReconciliationsUpdateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.CreditNoteReconciliationResponse{
+			CreditNoteReconciliation: fa.CreditNoteReconciliation{
+				URL:        "http://x/v2/credit_note_reconciliations/1",
+				GrossValue: "150.00",
+				DatedOn:    "2024-01-20",
+			},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "credit-note-reconciliations", "update",
+		"--gross-value", "150.00",
+		"1",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "150.00") {
+		t.Errorf("expected updated gross value in output, got: %s", out)
+	}
+}
+
+func TestCreditNoteReconciliationsDeleteJSON(t *testing.T) {
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "credit-note-reconciliations", "delete", "1"), "")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
 	}
 }
 

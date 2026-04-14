@@ -2,6 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -25,24 +28,144 @@ func TestCreditNotesCommand_Subcommands(t *testing.T) {
 	}
 }
 
-func TestCreditNotesList(t *testing.T) {
-	data := fa.CreditNotesResponse{CreditNotes: []fa.CreditNote{
-		{URL: "https://api.freeagent.com/v2/credit_notes/1", Reference: "CN-001", Status: "Draft", TotalValue: "100.00"},
-	}}
-	srv := newTestServer(t, "/credit_notes", data)
+func TestCreditNotesListJSON(t *testing.T) {
+	srv := newTestServer(t, "/credit_notes", fa.CreditNotesResponse{
+		CreditNotes: []fa.CreditNote{
+			{URL: "http://x/v2/credit_notes/1", Reference: "CN-001", Status: "Draft", TotalValue: "100.00"},
+		},
+	})
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "credit-notes", "list"})
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "credit-notes", "list"), "")
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !strings.Contains(out, "CN-001") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
 }
 
-func TestCreditNotesTransition(t *testing.T) {
-	srv := newTestServer(t, "/credit_notes/1/transitions/mark_as_sent", nil)
+func TestCreditNotesGetJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.CreditNoteResponse{
+			CreditNote: fa.CreditNote{URL: "http://x/v2/credit_notes/1", Reference: "CN-001", Status: "Draft"},
+		})
+	}))
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "credit-notes", "transition", "--status", "sent", "1"})
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "credit-notes", "get", "1"), "")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !strings.Contains(out, "CN-001") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
+}
+
+func TestCreditNotesCreateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.CreditNoteResponse{
+			CreditNote: fa.CreditNote{URL: "http://x/v2/credit_notes/2", Reference: "CN-002", Status: "Draft"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "credit-notes", "create",
+		"--contact", "http://x/v2/contacts/1",
+		"--dated-on", "2024-01-15",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "CN-002") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
+}
+
+func TestCreditNotesUpdateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.CreditNoteResponse{
+			CreditNote: fa.CreditNote{URL: "http://x/v2/credit_notes/1", Reference: "CN-001", Currency: "USD"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "credit-notes", "update",
+		"--currency", "USD",
+		"1",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "USD") {
+		t.Errorf("expected currency in output, got: %s", out)
+	}
+}
+
+func TestCreditNotesDeleteJSON(t *testing.T) {
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "credit-notes", "delete", "1"), "")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
+	}
+}
+
+func TestCreditNotesTransitionJSON(t *testing.T) {
+	var methodSeen string
+	var pathSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		pathSeen = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.CreditNoteResponse{
+			CreditNote: fa.CreditNote{URL: "http://x/v2/credit_notes/1", Status: "sent"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "credit-notes", "transition", "--status", "sent", "1"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if methodSeen != http.MethodPut {
+		t.Errorf("expected PUT request, got %s", methodSeen)
+	}
+	if !strings.Contains(pathSeen, "mark_as_sent") {
+		t.Errorf("expected transition URL to contain mark_as_sent, got: %s", pathSeen)
 	}
 }
 

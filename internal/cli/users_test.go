@@ -2,6 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -112,18 +115,132 @@ func TestUserResponse_Unmarshal(t *testing.T) {
 	}
 }
 
-func TestUserInput_NoFields(t *testing.T) {
-	// When no fields are provided, UserInput should be empty (zero value)
-	// and the update handler should return "no fields to update"
-	input := fa.UserInput{}
+func TestUsersListJSON(t *testing.T) {
+	srv := newTestServer(t, "", fa.UsersResponse{
+		Users: []fa.User{{URL: "http://x/v2/users/1", Email: "a@b.com", FirstName: "Alice", LastName: "Smith"}},
+	})
+	defer srv.Close()
 
-	// Check that all fields are empty (zero value)
-	isEmpty := input.Email == "" &&
-		input.FirstName == "" &&
-		input.LastName == "" &&
-		input.Role == ""
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "users", "list"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "a@b.com") {
+		t.Errorf("expected email in output, got: %s", out)
+	}
+}
 
-	if !isEmpty {
-		t.Error("expected UserInput to be empty when no fields set")
+func TestUsersGetJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.UserResponse{User: fa.User{URL: "http://x/v2/users/1", Email: "get@b.com"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "users", "get", "1"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "get@b.com") {
+		t.Errorf("expected email in output, got: %s", out)
+	}
+}
+
+func TestUsersMeJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.UserResponse{User: fa.User{URL: "http://x/v2/users/me", Email: "me@b.com"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "users", "me"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "me@b.com") {
+		t.Errorf("expected email in output, got: %s", out)
+	}
+}
+
+func TestUsersCreateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.UserResponse{User: fa.User{URL: "http://x/v2/users/2", Email: "new@b.com", FirstName: "New", LastName: "User"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "users", "create",
+		"--email", "new@b.com",
+		"--first-name", "New",
+		"--last-name", "User",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "new@b.com") {
+		t.Errorf("expected email in output, got: %s", out)
+	}
+}
+
+func TestUsersDeleteJSON(t *testing.T) {
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "users", "delete", "1"), "")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
+	}
+}
+
+func TestUsersUpdateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.UserResponse{User: fa.User{URL: "http://x/v2/users/1", Email: "updated@b.com", FirstName: "Updated"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "users", "update",
+		"--email", "updated@b.com",
+		"1",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "updated@b.com") {
+		t.Errorf("expected updated email in output, got: %s", out)
 	}
 }

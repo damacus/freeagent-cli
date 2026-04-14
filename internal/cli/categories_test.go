@@ -2,6 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -31,19 +34,6 @@ func TestCategoriesCommand_Subcommands(t *testing.T) {
 		if !found {
 			t.Errorf("subcommand %q not found", name)
 		}
-	}
-}
-
-func TestCategoriesList(t *testing.T) {
-	data := fa.CategoriesResponse{Categories: []fa.Category{
-		{URL: "https://api.freeagent.com/v2/categories/1", Description: "Office Costs", NominalCode: "7600"},
-	}}
-	srv := newTestServer(t, "/categories", data)
-	defer srv.Close()
-
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "categories", "list"})
-	if err != nil {
-		t.Fatal(err)
 	}
 }
 
@@ -98,12 +88,108 @@ func TestCategoriesResponse_Unmarshal(t *testing.T) {
 	}
 }
 
-func TestCategoriesUpdate_NoFields(t *testing.T) {
-	input := fa.CategoryInput{}
+func TestCategoriesListJSON(t *testing.T) {
+	srv := newTestServer(t, "", fa.CategoriesResponse{
+		Categories: []fa.Category{{URL: "http://x/v2/categories/1", Description: "Office Costs", NominalCode: "7600"}},
+	})
+	defer srv.Close()
 
-	isEmpty := input.Description == "" && input.TaxReportingName == ""
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "categories", "list"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Office Costs") {
+		t.Errorf("expected description in output, got: %s", out)
+	}
+}
 
-	if !isEmpty {
-		t.Error("expected CategoryInput to be empty when no fields set")
+func TestCategoriesGetJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.CategoryResponse{Category: fa.Category{URL: "http://x/v2/categories/1", Description: "Travel"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "categories", "get", "1"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Travel") {
+		t.Errorf("expected description in output, got: %s", out)
+	}
+}
+
+func TestCategoriesCreateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.CategoryResponse{Category: fa.Category{URL: "http://x/v2/categories/2", Description: "New Category"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "categories", "create",
+		"--description", "New Category",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "New Category") {
+		t.Errorf("expected description in output, got: %s", out)
+	}
+}
+
+func TestCategoriesUpdateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.CategoryResponse{Category: fa.Category{URL: "http://x/v2/categories/1", Description: "Updated Category"}})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "categories", "update",
+		"--description", "Updated Category",
+		"1",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "Updated Category") {
+		t.Errorf("expected description in output, got: %s", out)
+	}
+}
+
+func TestCategoriesDeleteJSON(t *testing.T) {
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "categories", "delete", "1"), "")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
 	}
 }

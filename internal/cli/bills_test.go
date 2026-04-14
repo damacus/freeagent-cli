@@ -2,7 +2,10 @@ package cli
 
 import (
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -121,23 +124,117 @@ func TestBillInput_AttachmentFromFile(t *testing.T) {
 	}
 }
 
-func TestBillsUpdate_NoFields(t *testing.T) {
-	// When no fields are provided, BillInput should be empty (zero value)
-	// and the update handler should return "no fields to update"
-	input := fa.BillInput{}
+func TestBillsListJSON(t *testing.T) {
+	srv := newTestServer(t, "/bills", fa.BillsResponse{
+		Bills: []fa.Bill{
+			{URL: "http://x/v2/bills/1", Reference: "B-001", ContactName: "Acme", Status: "Open", TotalValue: "500.00"},
+		},
+	})
+	defer srv.Close()
 
-	// Check that all fields are empty (zero value)
-	isEmpty := input.Contact == "" &&
-		input.DatedOn == "" &&
-		input.DueOn == "" &&
-		input.Reference == "" &&
-		input.Currency == "" &&
-		input.TotalValue == "" &&
-		input.SaleTaxRate == "" &&
-		input.Attachment == nil &&
-		len(input.BillItems) == 0
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "bills", "list"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "B-001") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
+}
 
-	if !isEmpty {
-		t.Error("expected BillInput to be empty when no fields set")
+func TestBillsGetJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.BillResponse{
+			Bill: fa.Bill{URL: "http://x/v2/bills/1", Reference: "B-001", Status: "Open"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "bills", "get", "1"), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "B-001") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
+}
+
+func TestBillsCreateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.BillResponse{
+			Bill: fa.Bill{URL: "http://x/v2/bills/2", Reference: "B-002", Status: "Open"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "bills", "create",
+		"--contact", "1",
+		"--dated-on", "2024-01-15",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "B-002") {
+		t.Errorf("expected reference in output, got: %s", out)
+	}
+}
+
+func TestBillsUpdateJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.BillResponse{
+			Bill: fa.Bill{URL: "http://x/v2/bills/1", Reference: "B-001", Currency: "USD"},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	out, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "bills", "update",
+		"--currency", "USD",
+		"1",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out, "USD") {
+		t.Errorf("expected currency in output, got: %s", out)
+	}
+}
+
+func TestBillsDeleteJSON(t *testing.T) {
+	var methodSeen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		methodSeen = r.Method
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "bills", "delete", "1"), "")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if methodSeen != http.MethodDelete {
+		t.Errorf("expected DELETE request, got %s", methodSeen)
 	}
 }
