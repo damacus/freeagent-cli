@@ -107,7 +107,9 @@ func TestCategoriesListJSON(t *testing.T) {
 func TestCategoriesGetJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			t.Fatalf("expected GET, got %s", r.Method)
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(fa.CategoryResponse{Category: fa.Category{URL: "http://x/v2/categories/1", Description: "Travel"}})
@@ -127,7 +129,9 @@ func TestCategoriesGetJSON(t *testing.T) {
 func TestCategoriesCreateJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("expected POST, got %s", r.Method)
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -150,7 +154,9 @@ func TestCategoriesCreateJSON(t *testing.T) {
 func TestCategoriesUpdateJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
-			t.Fatalf("expected PUT, got %s", r.Method)
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(fa.CategoryResponse{Category: fa.Category{URL: "http://x/v2/categories/1", Description: "Updated Category"}})

@@ -69,7 +69,9 @@ func TestJournalSetsListJSON(t *testing.T) {
 func TestJournalSetsGetJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			t.Fatalf("expected GET, got %s", r.Method)
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(fa.JournalSetResponse{JournalSet: fa.JournalSet{URL: "http://x/v2/journal_sets/1", DatedOn: "2024-01-15", Description: "Quarter end"}})
@@ -88,7 +90,9 @@ func TestJournalSetsGetJSON(t *testing.T) {
 func TestJournalSetsCreateJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("expected POST, got %s", r.Method)
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -128,7 +132,9 @@ func TestJournalSetsDeleteJSON(t *testing.T) {
 func TestJournalSetsOpeningBalancesJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			t.Fatalf("expected GET, got %s", r.Method)
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(fa.JournalSetResponse{JournalSet: fa.JournalSet{URL: "http://x/v2/journal_sets/opening_balances", Description: "Opening Balances"}})

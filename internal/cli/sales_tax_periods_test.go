@@ -46,7 +46,9 @@ func TestSalesTaxPeriodsListJSON(t *testing.T) {
 func TestSalesTaxPeriodsGetJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
-			t.Fatalf("expected GET, got %s", r.Method)
+			t.Errorf("expected GET, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(fa.SalesTaxPeriodResponse{SalesTaxPeriod: fa.SalesTaxPeriod{URL: "http://x/v2/sales_tax_periods/1", EffectiveDate: "2024-04-01", SalesTaxName: "VAT"}})
@@ -65,7 +67,9 @@ func TestSalesTaxPeriodsGetJSON(t *testing.T) {
 func TestSalesTaxPeriodsCreateJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
-			t.Fatalf("expected POST, got %s", r.Method)
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -89,7 +93,9 @@ func TestSalesTaxPeriodsCreateJSON(t *testing.T) {
 func TestSalesTaxPeriodsUpdateJSON(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
-			t.Fatalf("expected PUT, got %s", r.Method)
+			t.Errorf("expected PUT, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(fa.SalesTaxPeriodResponse{SalesTaxPeriod: fa.SalesTaxPeriod{URL: "http://x/v2/sales_tax_periods/1", EffectiveDate: "2025-04-01", SalesTaxName: "GST"}})
