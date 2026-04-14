@@ -145,6 +145,24 @@ func TestStore_Delete(t *testing.T) {
 	}
 }
 
+// TestStore_Get_PrimaryNonNotFoundError_WithFallback tests that when primary
+// returns a non-ErrNotFound error but a fallback exists, the fallback is tried.
+// This exercises the `s.fallback == nil` branch on storage.go:30.
+func TestStore_Get_PrimaryNonNotFoundError_WithFallback(t *testing.T) {
+	tok := &Token{AccessToken: "from-fallback"}
+	s := NewStore(
+		&mockTokenStore{err: errStoreDown},
+		&mockTokenStore{token: tok},
+	)
+	got, err := s.Get("p")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.AccessToken != "from-fallback" {
+		t.Errorf("got %q, want %q", got.AccessToken, "from-fallback")
+	}
+}
+
 func TestStore_Get_PrimaryError_NoFallback(t *testing.T) {
 	s := NewStore(&mockTokenStore{err: errStoreDown}, nil)
 	_, err := s.Get("p")
