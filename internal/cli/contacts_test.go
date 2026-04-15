@@ -150,6 +150,7 @@ func TestContactsCommand_Subcommands(t *testing.T) {
 		"search": false,
 		"get":    false,
 		"create": false,
+		"update": false,
 	}
 
 	for _, sub := range cmd.Subcommands {
@@ -247,5 +248,55 @@ func TestContactsCreateJSON(t *testing.T) {
 	}
 	if !strings.Contains(out, "New Corp") {
 		t.Errorf("expected org name in output, got: %s", out)
+	}
+}
+
+func TestContactsUpdate(t *testing.T) {
+	var gotPayload map[string]any
+	var srv *httptest.Server
+	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut || r.URL.Path != "/v2/contacts/1" {
+			t.Fatalf("unexpected %s %s", r.Method, r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&gotPayload); err != nil {
+			t.Fatalf("decode contact payload: %v", err)
+		}
+		_, _ = w.Write([]byte(`{"contact":{"url":"https://example.test/v2/contacts/1","organisation_name":"Equal Experts UK Ltd"}}`))
+	}))
+	defer srv.Close()
+
+	if _, err := runCLIWithIO(t, testApp(srv.URL), cliArgsWithConfig(t,
+		"contacts", "update",
+		"--organisation", "Equal Experts UK Ltd",
+		"--address1", "17 Britton Street",
+		"--town", "London",
+		"--postcode", "EC1M 5NZ",
+		"1",
+	), ""); err != nil {
+		t.Fatalf("contacts update failed: %v", err)
+	}
+
+	contact, ok := gotPayload["contact"].(map[string]any)
+	if !ok {
+		t.Fatalf("contact payload missing or wrong type: %#v", gotPayload["contact"])
+	}
+	if got := contact["organisation_name"]; got != "Equal Experts UK Ltd" {
+		t.Errorf("organisation_name: got %v, want %q", got, "Equal Experts UK Ltd")
+	}
+	if got := contact["address1"]; got != "17 Britton Street" {
+		t.Errorf("address1: got %v, want %q", got, "17 Britton Street")
+	}
+	if got := contact["town"]; got != "London" {
+		t.Errorf("town: got %v, want %q", got, "London")
+	}
+	if got := contact["postcode"]; got != "EC1M 5NZ" {
+		t.Errorf("postcode: got %v, want %q", got, "EC1M 5NZ")
+	}
+}
+
+func TestContactsUpdate_RequiresFields(t *testing.T) {
+	_, err := runCLIWithIO(t, testApp("http://example.test"), cliArgsWithConfig(t, "contacts", "update", "1"), "")
+	if err == nil || !strings.Contains(err.Error(), "no fields to update") {
+		t.Fatalf("expected empty update validation error, got %v", err)
 	}
 }

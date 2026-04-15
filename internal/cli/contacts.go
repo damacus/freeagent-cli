@@ -75,6 +75,29 @@ func contactsCommand() *cli.Command {
 				},
 				Action: contactsCreate,
 			},
+			{
+				Name:      "update",
+				Usage:     "Update a contact",
+				ArgsUsage: "<id|url>",
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "body", Usage: "JSON file with full contact payload or contact object"},
+					&cli.StringFlag{Name: "organisation", Usage: "Organisation name"},
+					&cli.StringFlag{Name: "first-name"},
+					&cli.StringFlag{Name: "last-name"},
+					&cli.StringFlag{Name: "email"},
+					&cli.StringFlag{Name: "billing-email"},
+					&cli.StringFlag{Name: "phone"},
+					&cli.StringFlag{Name: "mobile"},
+					&cli.StringFlag{Name: "address1"},
+					&cli.StringFlag{Name: "address2"},
+					&cli.StringFlag{Name: "address3"},
+					&cli.StringFlag{Name: "town"},
+					&cli.StringFlag{Name: "region"},
+					&cli.StringFlag{Name: "postcode"},
+					&cli.StringFlag{Name: "country"},
+				},
+				Action: contactsUpdate,
+			},
 		},
 	}
 }
@@ -250,7 +273,7 @@ func contactsCreate(c *cli.Context) error {
 		return err
 	}
 
-	input, err := buildContactInput(c)
+	input, err := buildContactInput(c, true)
 	if err != nil {
 		return err
 	}
@@ -277,7 +300,48 @@ func contactsCreate(c *cli.Context) error {
 	return nil
 }
 
-func buildContactInput(c *cli.Context) (fa.ContactInput, error) {
+func contactsUpdate(c *cli.Context) error {
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return err
+	}
+
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+
+	client, _, err := newClient(c.Context, rt, profile)
+	if err != nil {
+		return err
+	}
+
+	id := strings.TrimSpace(c.Args().First())
+	if id == "" {
+		return fmt.Errorf("contact id or url required")
+	}
+	contactURL, err := normalizeResourceURL(profile.BaseURL, "contacts", id)
+	if err != nil {
+		return err
+	}
+
+	input, err := buildContactInput(c, false)
+	if err != nil {
+		return err
+	}
+	if contactInputEmpty(input) {
+		return fmt.Errorf("no fields to update")
+	}
+
+	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, contactURL, fa.UpdateContactRequest{Contact: input})
+	if err != nil {
+		return err
+	}
+	return writeJSONOutput(resp)
+}
+
+func buildContactInput(c *cli.Context, requireIdentity bool) (fa.ContactInput, error) {
 	input := fa.ContactInput{}
 
 	if bodyPath := c.String("body"); bodyPath != "" {
@@ -348,10 +412,27 @@ func buildContactInput(c *cli.Context) (fa.ContactInput, error) {
 		input.Country = country
 	}
 
-	if input.OrganisationName == "" && strings.TrimSpace(input.FirstName) == "" && strings.TrimSpace(input.LastName) == "" {
+	if requireIdentity && input.OrganisationName == "" && strings.TrimSpace(input.FirstName) == "" && strings.TrimSpace(input.LastName) == "" {
 		return input, fmt.Errorf("organisation or first-name/last-name required (or include in --body)")
 	}
 	return input, nil
+}
+
+func contactInputEmpty(input fa.ContactInput) bool {
+	return input.OrganisationName == "" &&
+		input.FirstName == "" &&
+		input.LastName == "" &&
+		input.Email == "" &&
+		input.BillingEmail == "" &&
+		input.PhoneNumber == "" &&
+		input.Mobile == "" &&
+		input.Address1 == "" &&
+		input.Address2 == "" &&
+		input.Address3 == "" &&
+		input.Town == "" &&
+		input.Region == "" &&
+		input.Postcode == "" &&
+		input.Country == ""
 }
 
 func resolveContactValue(ctx context.Context, client *freeagent.Client, baseURL, value string) (string, error) {
