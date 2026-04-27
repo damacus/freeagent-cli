@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/damacus/freeagent-cli/compare/v0.4.0...v0.5.0) (2026-04-15)
+
+
+### Features
+
+* add version command and contacts update subcommand ([#13](https://github.com/damacus/freeagent-cli/issues/13)) ([d3dd6b9](https://github.com/damacus/freeagent-cli/commit/d3dd6b9c1cc843766fa66716638301ab1945c2ba))
+
 ## [0.4.0](https://github.com/damacus/freeagent-cli/compare/v0.3.0...v0.4.0) (2026-03-27)
 
 
