@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/damacus/freeagent-cli/compare/v0.5.0...v0.5.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/urfave/cli/v2 to v3 ([#21](https://github.com/damacus/freeagent-cli/issues/21)) ([1e3f6fc](https://github.com/damacus/freeagent-cli/commit/1e3f6fce3feac1fef2648b8fd97a99c4229fe9d7))
+* **deps:** update module github.com/urfave/cli/v2 to v3 ([#24](https://github.com/damacus/freeagent-cli/issues/24)) ([7c32da2](https://github.com/damacus/freeagent-cli/commit/7c32da249278d54c7d5df7565026e0736388cdf6))
+
 ## [0.5.0](https://github.com/damacus/freeagent-cli/compare/v0.4.0...v0.5.0) (2026-04-15)
 
 
