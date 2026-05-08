@@ -4,22 +4,22 @@ import (
 	"net/http"
 
 	"github.com/damacus/freeagent-cli/internal/config"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func companyCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "company",
 		Usage: "View company information",
-		Subcommands: []*cli.Command{
-			{Name: "get", Usage: "Get company details", Action: companyGet},
-			{Name: "business-categories", Usage: "List business categories", Action: companyBusinessCategories},
-			{Name: "tax-timeline", Usage: "Get tax timeline", Action: companyTaxTimeline},
+		Commands: []*cli.Command{
+			{Name: "get", Usage: "Get company details", Action: action(companyGet)},
+			{Name: "business-categories", Usage: "List business categories", Action: action(companyBusinessCategories)},
+			{Name: "tax-timeline", Usage: "Get tax timeline", Action: action(companyTaxTimeline)},
 		},
 	}
 }
 
-func companyGet(c *cli.Context) error {
+func companyGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -29,12 +29,12 @@ func companyGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/company", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/company", nil, "")
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func companyGet(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func companyBusinessCategories(c *cli.Context) error {
+func companyBusinessCategories(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -52,12 +52,12 @@ func companyBusinessCategories(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/company/business_categories", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/company/business_categories", nil, "")
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func companyBusinessCategories(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func companyTaxTimeline(c *cli.Context) error {
+func companyTaxTimeline(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -75,12 +75,12 @@ func companyTaxTimeline(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/company/tax_timeline", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/company/tax_timeline", nil, "")
 	if err != nil {
 		return err
 	}

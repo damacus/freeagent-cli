@@ -12,14 +12,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func tasksCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "tasks",
 		Usage: "Manage tasks",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List tasks",
@@ -28,13 +28,13 @@ func tasksCommand() *cli.Command {
 					&cli.StringFlag{Name: "view", Usage: "Filter by view (e.g. active, all)"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 				},
-				Action: tasksList,
+				Action: action(tasksList),
 			},
 			{
 				Name:      "get",
 				Usage:     "Get a task by ID or URL",
 				ArgsUsage: "<id|url>",
-				Action:    tasksGet,
+				Action:    action(tasksGet),
 			},
 			{
 				Name:  "create",
@@ -47,7 +47,7 @@ func tasksCommand() *cli.Command {
 					&cli.StringFlag{Name: "billing-period", Usage: "Billing period (e.g. hour, day)"},
 					&cli.StringFlag{Name: "status", Value: "Active", Usage: "Task status (e.g. Active, Completed)"},
 				},
-				Action: tasksCreate,
+				Action: action(tasksCreate),
 			},
 			{
 				Name:      "update",
@@ -59,19 +59,19 @@ func tasksCommand() *cli.Command {
 					&cli.StringFlag{Name: "billing-period", Usage: "Billing period"},
 					&cli.StringFlag{Name: "status", Usage: "Task status"},
 				},
-				Action: tasksUpdate,
+				Action: action(tasksUpdate),
 			},
 			{
 				Name:      "delete",
 				Usage:     "Delete a task",
 				ArgsUsage: "<id|url>",
-				Action:    tasksDelete,
+				Action:    action(tasksDelete),
 			},
 		},
 	}
 }
 
-func tasksList(c *cli.Context) error {
+func tasksList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func tasksList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func tasksList(c *cli.Context) error {
 		path += "?" + query.Encode()
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func tasksList(c *cli.Context) error {
 	return nil
 }
 
-func tasksGet(c *cli.Context) error {
+func tasksGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func tasksGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -159,14 +159,14 @@ func tasksGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, taskURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, taskURL, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func tasksCreate(c *cli.Context) error {
+func tasksCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -176,7 +176,7 @@ func tasksCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -201,7 +201,7 @@ func tasksCreate(c *cli.Context) error {
 		input.BillingPeriod = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/tasks", fa.CreateTaskRequest{Task: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/tasks", fa.CreateTaskRequest{Task: input})
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func tasksCreate(c *cli.Context) error {
 	return nil
 }
 
-func tasksUpdate(c *cli.Context) error {
+func tasksUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -228,7 +228,7 @@ func tasksUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -266,14 +266,14 @@ func tasksUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, taskURL, fa.UpdateTaskRequest{Task: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, taskURL, fa.UpdateTaskRequest{Task: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func tasksDelete(c *cli.Context) error {
+func tasksDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -283,7 +283,7 @@ func tasksDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -297,7 +297,7 @@ func tasksDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, taskURL, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, taskURL, nil, "")
 	if err != nil {
 		return err
 	}

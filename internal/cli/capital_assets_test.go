@@ -16,7 +16,7 @@ func TestCapitalAssetsCommand_Subcommands(t *testing.T) {
 		t.Fatal("capitalAssetsCommand() returned nil")
 	}
 	want := map[string]bool{"list": false, "get": false}
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if _, ok := want[sub.Name]; ok {
 			want[sub.Name] = true
 		}
@@ -34,7 +34,7 @@ func TestCapitalAssetTypesCommand_Subcommands(t *testing.T) {
 		t.Fatal("capitalAssetTypesCommand() returned nil")
 	}
 	want := map[string]bool{"list": false, "get": false, "create": false, "update": false, "delete": false}
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if _, ok := want[sub.Name]; ok {
 			want[sub.Name] = true
 		}

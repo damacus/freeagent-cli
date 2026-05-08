@@ -9,7 +9,7 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // ---- account-managers ----
@@ -18,14 +18,14 @@ func accountManagersCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "account-managers",
 		Usage: "View account managers (accountancy practice)",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List account managers", Action: accountManagersList},
-			{Name: "get", Usage: "Get an account manager", ArgsUsage: "<id|url>", Action: accountManagersGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List account managers", Action: action(accountManagersList)},
+			{Name: "get", Usage: "Get an account manager", ArgsUsage: "<id|url>", Action: action(accountManagersGet)},
 		},
 	}
 }
 
-func accountManagersList(c *cli.Context) error {
+func accountManagersList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -35,12 +35,12 @@ func accountManagersList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/account_managers", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/account_managers", nil, "")
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func accountManagersList(c *cli.Context) error {
 	return nil
 }
 
-func accountManagersGet(c *cli.Context) error {
+func accountManagersGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func accountManagersGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func accountManagersGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -103,13 +103,13 @@ func clientsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "clients",
 		Usage: "View clients (accountancy practice)",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List clients", Action: clientsList},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List clients", Action: action(clientsList)},
 		},
 	}
 }
 
-func clientsList(c *cli.Context) error {
+func clientsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -119,12 +119,12 @@ func clientsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/clients", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/clients", nil, "")
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -72,7 +73,7 @@ func TestBankExplainUpdate_AllowsTrailingReceiptFlag(t *testing.T) {
 	receiptPath := writeReceiptFixture(t)
 	explanationURL := srv.URL + "/v2/bank_transaction_explanations/123"
 
-	err := testApp(srv.URL + "/v2").Run([]string{
+	err := testApp(srv.URL+"/v2").Run(context.Background(), []string{
 		"fa", "--json", "bank", "explain", "update", explanationURL, "--receipt", receiptPath,
 	})
 	if err != nil {
@@ -101,7 +102,7 @@ func TestExpensesUpdate_AllowsTrailingReceiptFlag(t *testing.T) {
 	receiptPath := writeReceiptFixture(t)
 	expenseURL := srv.URL + "/v2/expenses/123"
 
-	err := testApp(srv.URL + "/v2").Run([]string{
+	err := testApp(srv.URL+"/v2").Run(context.Background(), []string{
 		"fa", "--json", "expenses", "update", expenseURL, "--receipt", receiptPath,
 	})
 	if err != nil {
@@ -130,7 +131,7 @@ func TestBillsUpdate_AllowsTrailingReceiptFlag(t *testing.T) {
 	receiptPath := writeReceiptFixture(t)
 	billURL := srv.URL + "/v2/bills/123"
 
-	err := testApp(srv.URL + "/v2").Run([]string{
+	err := testApp(srv.URL+"/v2").Run(context.Background(), []string{
 		"fa", "--json", "bills", "update", billURL, "--receipt", receiptPath,
 	})
 	if err != nil {
@@ -159,7 +160,7 @@ func TestBankExplainUpdate_StillAllowsFlagBeforeID(t *testing.T) {
 	receiptPath := writeReceiptFixture(t)
 	explanationURL := srv.URL + "/v2/bank_transaction_explanations/123"
 
-	err := testApp(srv.URL + "/v2").Run([]string{
+	err := testApp(srv.URL+"/v2").Run(context.Background(), []string{
 		"fa", "--json", "bank", "explain", "update", "--receipt", receiptPath, explanationURL,
 	})
 	if err != nil {
@@ -181,7 +182,7 @@ func TestBankExplainUpdate_AllowsMixedTrailingFlags(t *testing.T) {
 	receiptPath := writeReceiptFixture(t)
 	explanationURL := srv.URL + "/v2/bank_transaction_explanations/123"
 
-	err := testApp(srv.URL + "/v2").Run([]string{
+	err := testApp(srv.URL+"/v2").Run(context.Background(), []string{
 		"fa", "--json", "bank", "explain", "update",
 		explanationURL,
 		"--description", "Updated receipt note",
@@ -208,7 +209,7 @@ func TestBankExplainUpdate_RejectsUnknownTrailingFlag(t *testing.T) {
 
 	explanationURL := srv.URL + "/v2/bank_transaction_explanations/123"
 
-	err := testApp(srv.URL + "/v2").Run([]string{
+	err := testApp(srv.URL+"/v2").Run(context.Background(), []string{
 		"fa", "--json", "bank", "explain", "update", explanationURL, "--recepit", "bad.pdf",
 	})
 	if err == nil {

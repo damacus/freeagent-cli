@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"runtime/debug"
@@ -54,7 +55,7 @@ func buildVersion() string {
 
 func main() {
 	app := cli.NewApp(buildVersion())
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
 	}
 }

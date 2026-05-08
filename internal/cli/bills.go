@@ -11,14 +11,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func billsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "bills",
 		Usage: "Manage bills",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List bills",
@@ -29,13 +29,13 @@ func billsCommand() *cli.Command {
 					&cli.StringFlag{Name: "to", Usage: "End date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 				},
-				Action: billsList,
+				Action: action(billsList),
 			},
 			{
 				Name:      "get",
 				Usage:     "Get a bill by ID or URL",
 				ArgsUsage: "<id|url>",
-				Action:    billsGet,
+				Action:    action(billsGet),
 			},
 			{
 				Name:  "create",
@@ -50,12 +50,13 @@ func billsCommand() *cli.Command {
 					&cli.StringFlag{Name: "sale-tax-rate", Usage: "Sales tax rate percentage"},
 					&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 				},
-				Action: billsCreate,
+				Action: action(billsCreate),
 			},
 			{
-				Name:      "update",
-				Usage:     "Update a bill",
-				ArgsUsage: "<id|url>",
+				Name:         "update",
+				Usage:        "Update a bill",
+				ArgsUsage:    "<id|url>",
+				StopOnNthArg: &stopFlagParsingAfterResourceID,
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "contact", Usage: "Contact ID, URL, or name"},
 					&cli.StringFlag{Name: "dated-on", Usage: "Date (YYYY-MM-DD)"},
@@ -66,19 +67,19 @@ func billsCommand() *cli.Command {
 					&cli.StringFlag{Name: "sale-tax-rate", Usage: "Sales tax rate percentage"},
 					&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 				},
-				Action: billsUpdate,
+				Action: action(billsUpdate),
 			},
 			{
 				Name:      "delete",
 				Usage:     "Delete a bill",
 				ArgsUsage: "<id|url>",
-				Action:    billsDelete,
+				Action:    action(billsDelete),
 			},
 		},
 	}
 }
 
-func billsList(c *cli.Context) error {
+func billsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -88,14 +89,14 @@ func billsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
 	query := url.Values{}
 	if v := c.String("contact"); v != "" {
-		contactURL, err := resolveContactValue(c.Context, client, profile.BaseURL, v)
+		contactURL, err := resolveContactValue(commandContext(c), client, profile.BaseURL, v)
 		if err != nil {
 			return err
 		}
@@ -119,7 +120,7 @@ func billsList(c *cli.Context) error {
 		path += "?" + query.Encode()
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -148,7 +149,7 @@ func billsList(c *cli.Context) error {
 	return nil
 }
 
-func billsGet(c *cli.Context) error {
+func billsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -158,7 +159,7 @@ func billsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -172,14 +173,14 @@ func billsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, billURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, billURL, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func billsCreate(c *cli.Context) error {
+func billsCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -189,12 +190,12 @@ func billsCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	contactURL, err := resolveContactValue(c.Context, client, profile.BaseURL, c.String("contact"))
+	contactURL, err := resolveContactValue(commandContext(c), client, profile.BaseURL, c.String("contact"))
 	if err != nil {
 		return err
 	}
@@ -227,7 +228,7 @@ func billsCreate(c *cli.Context) error {
 		input.Attachment = att
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/bills", fa.CreateBillRequest{Bill: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/bills", fa.CreateBillRequest{Bill: input})
 	if err != nil {
 		return err
 	}
@@ -244,7 +245,7 @@ func billsCreate(c *cli.Context) error {
 	return nil
 }
 
-func billsUpdate(c *cli.Context) error {
+func billsUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -254,7 +255,7 @@ func billsUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -290,7 +291,7 @@ func billsUpdate(c *cli.Context) error {
 	hasFields := false
 
 	if v := inputArgs.String(c, "contact"); v != "" {
-		contactURL, err := resolveContactValue(c.Context, client, profile.BaseURL, v)
+		contactURL, err := resolveContactValue(commandContext(c), client, profile.BaseURL, v)
 		if err != nil {
 			return err
 		}
@@ -334,14 +335,14 @@ func billsUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, billURL, fa.UpdateBillRequest{Bill: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, billURL, fa.UpdateBillRequest{Bill: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func billsDelete(c *cli.Context) error {
+func billsDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -351,7 +352,7 @@ func billsDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -365,7 +366,7 @@ func billsDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, billURL, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, billURL, nil, "")
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ func TestEstimatesCommand_Subcommands(t *testing.T) {
 		"transition": false,
 	}
 
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if _, ok := want[sub.Name]; ok {
 			want[sub.Name] = true
 		}
@@ -233,4 +233,3 @@ func TestEstimatesResponse_Unmarshal(t *testing.T) {
 		t.Errorf("Status: got %q, want %q", e.Status, "Draft")
 	}
 }
-

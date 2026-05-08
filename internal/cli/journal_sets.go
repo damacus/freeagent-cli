@@ -9,14 +9,14 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func journalSetsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "journal-sets",
 		Usage: "Manage journal sets",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List journal sets",
@@ -25,9 +25,9 @@ func journalSetsCommand() *cli.Command {
 					&cli.StringFlag{Name: "to", Usage: "Filter to date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "tag", Usage: "Filter by tag"},
 				},
-				Action: journalSetsList,
+				Action: action(journalSetsList),
 			},
-			{Name: "get", Usage: "Get a journal set", ArgsUsage: "<id|url>", Action: journalSetsGet},
+			{Name: "get", Usage: "Get a journal set", ArgsUsage: "<id|url>", Action: action(journalSetsGet)},
 			{
 				Name:  "create",
 				Usage: "Create a journal set",
@@ -36,15 +36,15 @@ func journalSetsCommand() *cli.Command {
 					&cli.StringFlag{Name: "description", Required: true, Usage: "Description"},
 					&cli.StringFlag{Name: "tag", Usage: "Tag"},
 				},
-				Action: journalSetsCreate,
+				Action: action(journalSetsCreate),
 			},
-			{Name: "delete", Usage: "Delete a journal set", ArgsUsage: "<id|url>", Action: journalSetsDelete},
-			{Name: "opening-balances", Usage: "Get opening balances", Action: journalSetsOpeningBalances},
+			{Name: "delete", Usage: "Delete a journal set", ArgsUsage: "<id|url>", Action: action(journalSetsDelete)},
+			{Name: "opening-balances", Usage: "Get opening balances", Action: action(journalSetsOpeningBalances)},
 		},
 	}
 }
 
-func journalSetsList(c *cli.Context) error {
+func journalSetsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func journalSetsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func journalSetsList(c *cli.Context) error {
 	appendParam("to_date", c.String("to"))
 	appendParam("tag", c.String("tag"))
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func journalSetsList(c *cli.Context) error {
 	return nil
 }
 
-func journalSetsGet(c *cli.Context) error {
+func journalSetsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func journalSetsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -121,14 +121,14 @@ func journalSetsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func journalSetsCreate(c *cli.Context) error {
+func journalSetsCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func journalSetsCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func journalSetsCreate(c *cli.Context) error {
 		input.Tag = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/journal_sets", fa.CreateJournalSetRequest{JournalSet: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/journal_sets", fa.CreateJournalSetRequest{JournalSet: input})
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func journalSetsCreate(c *cli.Context) error {
 	return nil
 }
 
-func journalSetsDelete(c *cli.Context) error {
+func journalSetsDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -176,7 +176,7 @@ func journalSetsDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func journalSetsDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func journalSetsDelete(c *cli.Context) error {
 	return nil
 }
 
-func journalSetsOpeningBalances(c *cli.Context) error {
+func journalSetsOpeningBalances(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -208,12 +208,12 @@ func journalSetsOpeningBalances(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/journal_sets/opening_balances", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/journal_sets/opening_balances", nil, "")
 	if err != nil {
 		return err
 	}

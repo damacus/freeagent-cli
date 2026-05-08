@@ -153,7 +153,7 @@ func TestContactsCommand_Subcommands(t *testing.T) {
 		"update": false,
 	}
 
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if _, ok := want[sub.Name]; ok {
 			want[sub.Name] = true
 		}

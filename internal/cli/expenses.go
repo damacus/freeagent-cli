@@ -12,14 +12,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func expensesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "expenses",
 		Usage: "Manage expenses",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List expenses",
@@ -29,13 +29,13 @@ func expensesCommand() *cli.Command {
 					&cli.StringFlag{Name: "to", Usage: "End date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 				},
-				Action: expensesList,
+				Action: action(expensesList),
 			},
 			{
 				Name:      "get",
 				Usage:     "Get an expense by ID or URL",
 				ArgsUsage: "<id|url>",
-				Action:    expensesGet,
+				Action:    action(expensesGet),
 			},
 			{
 				Name:  "create",
@@ -52,12 +52,13 @@ func expensesCommand() *cli.Command {
 					&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
 					&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 				},
-				Action: expensesCreate,
+				Action: action(expensesCreate),
 			},
 			{
-				Name:      "update",
-				Usage:     "Update an expense",
-				ArgsUsage: "<id|url>",
+				Name:         "update",
+				Usage:        "Update an expense",
+				ArgsUsage:    "<id|url>",
+				StopOnNthArg: &stopFlagParsingAfterResourceID,
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "dated-on", Usage: "Date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "description", Usage: "Description"},
@@ -68,19 +69,19 @@ func expensesCommand() *cli.Command {
 					&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
 					&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 				},
-				Action: expensesUpdate,
+				Action: action(expensesUpdate),
 			},
 			{
 				Name:      "delete",
 				Usage:     "Delete an expense",
 				ArgsUsage: "<id|url>",
-				Action:    expensesDelete,
+				Action:    action(expensesDelete),
 			},
 		},
 	}
 }
 
-func expensesList(c *cli.Context) error {
+func expensesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -90,7 +91,7 @@ func expensesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -118,7 +119,7 @@ func expensesList(c *cli.Context) error {
 		path += "?" + query.Encode()
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -147,7 +148,7 @@ func expensesList(c *cli.Context) error {
 	return nil
 }
 
-func expensesGet(c *cli.Context) error {
+func expensesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -157,7 +158,7 @@ func expensesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -171,14 +172,14 @@ func expensesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, expURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, expURL, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func expensesCreate(c *cli.Context) error {
+func expensesCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -188,7 +189,7 @@ func expensesCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -236,7 +237,7 @@ func expensesCreate(c *cli.Context) error {
 		input.Attachment = att
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/expenses", fa.CreateExpenseRequest{Expense: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/expenses", fa.CreateExpenseRequest{Expense: input})
 	if err != nil {
 		return err
 	}
@@ -253,7 +254,7 @@ func expensesCreate(c *cli.Context) error {
 	return nil
 }
 
-func expensesUpdate(c *cli.Context) error {
+func expensesUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -263,7 +264,7 @@ func expensesUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -340,14 +341,14 @@ func expensesUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, expURL, fa.UpdateExpenseRequest{Expense: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, expURL, fa.UpdateExpenseRequest{Expense: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func expensesDelete(c *cli.Context) error {
+func expensesDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -357,7 +358,7 @@ func expensesDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -371,7 +372,7 @@ func expensesDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, expURL, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, expURL, nil, "")
 	if err != nil {
 		return err
 	}

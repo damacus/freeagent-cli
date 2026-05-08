@@ -14,14 +14,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/freeagent"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func contactsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "contacts",
 		Usage: "Manage contacts",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List contacts",
@@ -31,7 +31,7 @@ func contactsCommand() *cli.Command {
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "query", Usage: "Local name/email filter"},
 				},
-				Action: contactsList,
+				Action: action(contactsList),
 			},
 			{
 				Name:  "search",
@@ -42,7 +42,7 @@ func contactsCommand() *cli.Command {
 					&cli.StringFlag{Name: "sort", Usage: "API sort field"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 				},
-				Action: contactsSearch,
+				Action: action(contactsSearch),
 			},
 			{
 				Name:  "get",
@@ -51,7 +51,7 @@ func contactsCommand() *cli.Command {
 					&cli.StringFlag{Name: "id", Usage: "Contact ID"},
 					&cli.StringFlag{Name: "url", Usage: "Contact URL"},
 				},
-				Action: contactsGet,
+				Action: action(contactsGet),
 			},
 			{
 				Name:  "create",
@@ -73,7 +73,7 @@ func contactsCommand() *cli.Command {
 					&cli.StringFlag{Name: "postcode"},
 					&cli.StringFlag{Name: "country"},
 				},
-				Action: contactsCreate,
+				Action: action(contactsCreate),
 			},
 			{
 				Name:      "update",
@@ -96,17 +96,17 @@ func contactsCommand() *cli.Command {
 					&cli.StringFlag{Name: "postcode"},
 					&cli.StringFlag{Name: "country"},
 				},
-				Action: contactsUpdate,
+				Action: action(contactsUpdate),
 			},
 		},
 	}
 }
 
-func contactsList(c *cli.Context) error {
+func contactsList(c *cli.Command) error {
 	return contactsListWithQuery(c, c.String("query"), false)
 }
 
-func contactsSearch(c *cli.Context) error {
+func contactsSearch(c *cli.Command) error {
 	query := strings.TrimSpace(c.String("query"))
 	if query == "" {
 		return fmt.Errorf("query is required")
@@ -114,7 +114,7 @@ func contactsSearch(c *cli.Context) error {
 	return contactsListWithQuery(c, query, true)
 }
 
-func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) error {
+func contactsListWithQuery(c *cli.Command, query string, requireQuery bool) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 		path += "?" + queryParams
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func contactsListWithQuery(c *cli.Context, query string, requireQuery bool) erro
 	return nil
 }
 
-func buildContactsQuery(c *cli.Context) string {
+func buildContactsQuery(c *cli.Command) string {
 	query := url.Values{}
 	if v := c.String("view"); v != "" {
 		query.Set("view", v)
@@ -195,7 +195,7 @@ func buildContactsQuery(c *cli.Context) string {
 	return query.Encode()
 }
 
-func contactsGet(c *cli.Context) error {
+func contactsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -207,7 +207,7 @@ func contactsGet(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func contactsGet(c *cli.Context) error {
 		path = fmt.Sprintf("/contacts/%s", id)
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -256,7 +256,7 @@ func contactsGet(c *cli.Context) error {
 	return nil
 }
 
-func contactsCreate(c *cli.Context) error {
+func contactsCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -268,7 +268,7 @@ func contactsCreate(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func contactsCreate(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/contacts", fa.CreateContactRequest{Contact: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/contacts", fa.CreateContactRequest{Contact: input})
 	if err != nil {
 		return err
 	}
@@ -300,7 +300,7 @@ func contactsCreate(c *cli.Context) error {
 	return nil
 }
 
-func contactsUpdate(c *cli.Context) error {
+func contactsUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -312,7 +312,7 @@ func contactsUpdate(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -334,14 +334,14 @@ func contactsUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, contactURL, fa.UpdateContactRequest{Contact: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, contactURL, fa.UpdateContactRequest{Contact: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func buildContactInput(c *cli.Context, requireIdentity bool) (fa.ContactInput, error) {
+func buildContactInput(c *cli.Command, requireIdentity bool) (fa.ContactInput, error) {
 	input := fa.ContactInput{}
 
 	if bodyPath := c.String("body"); bodyPath != "" {

@@ -9,21 +9,21 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func capitalAssetsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "capital-assets",
 		Usage: "View capital assets (read-only)",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List capital assets", Action: capitalAssetsList},
-			{Name: "get", Usage: "Get a capital asset", ArgsUsage: "<id|url>", Action: capitalAssetsGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List capital assets", Action: action(capitalAssetsList)},
+			{Name: "get", Usage: "Get a capital asset", ArgsUsage: "<id|url>", Action: action(capitalAssetsGet)},
 		},
 	}
 }
 
-func capitalAssetsList(c *cli.Context) error {
+func capitalAssetsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -33,12 +33,12 @@ func capitalAssetsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/capital_assets", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/capital_assets", nil, "")
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func capitalAssetsList(c *cli.Context) error {
 	return nil
 }
 
-func capitalAssetsGet(c *cli.Context) error {
+func capitalAssetsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func capitalAssetsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func capitalAssetsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -99,16 +99,16 @@ func capitalAssetTypesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "capital-asset-types",
 		Usage: "Manage capital asset types",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List capital asset types", Action: capitalAssetTypesList},
-			{Name: "get", Usage: "Get a capital asset type", ArgsUsage: "<id|url>", Action: capitalAssetTypesGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List capital asset types", Action: action(capitalAssetTypesList)},
+			{Name: "get", Usage: "Get a capital asset type", ArgsUsage: "<id|url>", Action: action(capitalAssetTypesGet)},
 			{
 				Name:  "create",
 				Usage: "Create a capital asset type",
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "name", Required: true, Usage: "Name"},
 				},
-				Action: capitalAssetTypesCreate,
+				Action: action(capitalAssetTypesCreate),
 			},
 			{
 				Name:      "update",
@@ -117,14 +117,14 @@ func capitalAssetTypesCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "name", Usage: "Name"},
 				},
-				Action: capitalAssetTypesUpdate,
+				Action: action(capitalAssetTypesUpdate),
 			},
-			{Name: "delete", Usage: "Delete a capital asset type", ArgsUsage: "<id|url>", Action: capitalAssetTypesDelete},
+			{Name: "delete", Usage: "Delete a capital asset type", ArgsUsage: "<id|url>", Action: action(capitalAssetTypesDelete)},
 		},
 	}
 }
 
-func capitalAssetTypesList(c *cli.Context) error {
+func capitalAssetTypesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -134,12 +134,12 @@ func capitalAssetTypesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/capital_asset_types", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/capital_asset_types", nil, "")
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func capitalAssetTypesList(c *cli.Context) error {
 	return nil
 }
 
-func capitalAssetTypesGet(c *cli.Context) error {
+func capitalAssetTypesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func capitalAssetTypesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -189,14 +189,14 @@ func capitalAssetTypesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func capitalAssetTypesCreate(c *cli.Context) error {
+func capitalAssetTypesCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -206,13 +206,13 @@ func capitalAssetTypesCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
 	input := fa.CapitalAssetTypeInput{Name: c.String("name")}
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/capital_asset_types", fa.CreateCapitalAssetTypeRequest{CapitalAssetType: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/capital_asset_types", fa.CreateCapitalAssetTypeRequest{CapitalAssetType: input})
 	if err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func capitalAssetTypesCreate(c *cli.Context) error {
 	return nil
 }
 
-func capitalAssetTypesUpdate(c *cli.Context) error {
+func capitalAssetTypesUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -237,7 +237,7 @@ func capitalAssetTypesUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -258,14 +258,14 @@ func capitalAssetTypesUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdateCapitalAssetTypeRequest{CapitalAssetType: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdateCapitalAssetTypeRequest{CapitalAssetType: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func capitalAssetTypesDelete(c *cli.Context) error {
+func capitalAssetTypesDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -275,7 +275,7 @@ func capitalAssetTypesDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func capitalAssetTypesDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}

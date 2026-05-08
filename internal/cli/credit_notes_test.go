@@ -16,7 +16,7 @@ func TestCreditNotesCommand_Subcommands(t *testing.T) {
 		t.Fatal("creditNotesCommand() returned nil")
 	}
 	want := map[string]bool{"list": false, "get": false, "create": false, "update": false, "delete": false, "transition": false}
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if _, ok := want[sub.Name]; ok {
 			want[sub.Name] = true
 		}

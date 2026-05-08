@@ -5,21 +5,21 @@ import (
 	"net/http"
 
 	"github.com/damacus/freeagent-cli/internal/config"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func payrollCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "payroll",
 		Usage: "View payroll data",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "get",
 				Usage: "Get payroll for a tax year",
 				Flags: []cli.Flag{
 					&cli.IntFlag{Name: "year", Required: true, Usage: "Tax year (e.g. 2025)"},
 				},
-				Action: payrollGet,
+				Action: action(payrollGet),
 			},
 			{
 				Name:  "get-period",
@@ -28,13 +28,13 @@ func payrollCommand() *cli.Command {
 					&cli.IntFlag{Name: "year", Required: true, Usage: "Tax year"},
 					&cli.IntFlag{Name: "period", Required: true, Usage: "Period number"},
 				},
-				Action: payrollGetPeriod,
+				Action: action(payrollGetPeriod),
 			},
 		},
 	}
 }
 
-func payrollGet(c *cli.Context) error {
+func payrollGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func payrollGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -55,14 +55,14 @@ func payrollGet(c *cli.Context) error {
 	}
 
 	path := fmt.Sprintf("/payroll/%d", year)
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func payrollGetPeriod(c *cli.Context) error {
+func payrollGetPeriod(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func payrollGetPeriod(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func payrollGetPeriod(c *cli.Context) error {
 	}
 
 	path := fmt.Sprintf("/payroll/%d/%d", year, period)
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func payrollProfilesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "payroll-profiles",
 		Usage: "View payroll profiles",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "get",
 				Usage: "Get payroll profiles for a tax year",
@@ -106,13 +106,13 @@ func payrollProfilesCommand() *cli.Command {
 					&cli.IntFlag{Name: "year", Required: true, Usage: "Tax year"},
 					&cli.StringFlag{Name: "user", Usage: "Filter by user URL"},
 				},
-				Action: payrollProfilesGet,
+				Action: action(payrollProfilesGet),
 			},
 		},
 	}
 }
 
-func payrollProfilesGet(c *cli.Context) error {
+func payrollProfilesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func payrollProfilesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func payrollProfilesGet(c *cli.Context) error {
 		path += "?user=" + v
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}

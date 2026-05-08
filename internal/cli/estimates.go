@@ -9,14 +9,14 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func estimatesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "estimates",
 		Usage: "Manage estimates",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List estimates",
@@ -27,9 +27,9 @@ func estimatesCommand() *cli.Command {
 					&cli.StringFlag{Name: "to", Usage: "Filter to date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Filter by updated since (ISO 8601)"},
 				},
-				Action: estimatesList,
+				Action: action(estimatesList),
 			},
-			{Name: "get", Usage: "Get an estimate by ID or URL", ArgsUsage: "<id|url>", Action: estimatesGet},
+			{Name: "get", Usage: "Get an estimate by ID or URL", ArgsUsage: "<id|url>", Action: action(estimatesGet)},
 			{
 				Name:  "create",
 				Usage: "Create an estimate",
@@ -41,7 +41,7 @@ func estimatesCommand() *cli.Command {
 					&cli.StringFlag{Name: "estimate-type", Usage: "Estimate type"},
 					&cli.StringFlag{Name: "status", Usage: "Status"},
 				},
-				Action: estimatesCreate,
+				Action: action(estimatesCreate),
 			},
 			{
 				Name:      "update",
@@ -55,9 +55,9 @@ func estimatesCommand() *cli.Command {
 					&cli.StringFlag{Name: "estimate-type", Usage: "Estimate type"},
 					&cli.StringFlag{Name: "status", Usage: "Status"},
 				},
-				Action: estimatesUpdate,
+				Action: action(estimatesUpdate),
 			},
-			{Name: "delete", Usage: "Delete an estimate", ArgsUsage: "<id|url>", Action: estimatesDelete},
+			{Name: "delete", Usage: "Delete an estimate", ArgsUsage: "<id|url>", Action: action(estimatesDelete)},
 			{
 				Name:      "transition",
 				Usage:     "Transition an estimate to a new status",
@@ -65,13 +65,13 @@ func estimatesCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "status", Required: true, Usage: "Target status (sent/draft/approved/rejected)"},
 				},
-				Action: estimatesTransition,
+				Action: action(estimatesTransition),
 			},
 		},
 	}
 }
 
-func estimatesList(c *cli.Context) error {
+func estimatesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func estimatesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func estimatesList(c *cli.Context) error {
 	appendParam("to_date", c.String("to"))
 	appendParam("updated_since", c.String("updated-since"))
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func estimatesList(c *cli.Context) error {
 	return nil
 }
 
-func estimatesGet(c *cli.Context) error {
+func estimatesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func estimatesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func estimatesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func estimatesGet(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func estimatesCreate(c *cli.Context) error {
+func estimatesCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -171,7 +171,7 @@ func estimatesCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func estimatesCreate(c *cli.Context) error {
 		input.Status = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/estimates", fa.CreateEstimateRequest{Estimate: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/estimates", fa.CreateEstimateRequest{Estimate: input})
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func estimatesCreate(c *cli.Context) error {
 	return nil
 }
 
-func estimatesUpdate(c *cli.Context) error {
+func estimatesUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -219,7 +219,7 @@ func estimatesUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -259,7 +259,7 @@ func estimatesUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdateEstimateRequest{Estimate: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdateEstimateRequest{Estimate: input})
 	if err != nil {
 		return err
 	}
@@ -267,7 +267,7 @@ func estimatesUpdate(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func estimatesDelete(c *cli.Context) error {
+func estimatesDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -277,7 +277,7 @@ func estimatesDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -292,7 +292,7 @@ func estimatesDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -301,7 +301,7 @@ func estimatesDelete(c *cli.Context) error {
 	return nil
 }
 
-func estimatesTransition(c *cli.Context) error {
+func estimatesTransition(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -311,7 +311,7 @@ func estimatesTransition(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -324,7 +324,7 @@ func estimatesTransition(c *cli.Context) error {
 	u, _ := normalizeResourceURL(rt.BaseURL, "estimates", id)
 	transitionURL := u + "/transitions/mark_as_" + c.String("status")
 
-	resp, _, _, err := client.Do(c.Context, http.MethodPut, transitionURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodPut, transitionURL, nil, "")
 	if err != nil {
 		return err
 	}

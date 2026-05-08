@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func completionCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "completion",
 		Usage: "Generate shell completion scripts",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "fish",
 				Usage: "Generate fish shell completions",
@@ -21,8 +21,8 @@ func completionCommand() *cli.Command {
 						Usage: "Install completions to ~/.config/fish/completions/",
 					},
 				},
-				Action: func(c *cli.Context) error {
-					script, err := c.App.ToFishCompletion()
+				Action: action(func(c *cli.Command) error {
+					script, err := c.Root().ToFishCompletion()
 					if err != nil {
 						return err
 					}
@@ -40,7 +40,7 @@ func completionCommand() *cli.Command {
 					}
 					fmt.Print(script)
 					return nil
-				},
+				}),
 			},
 		},
 	}

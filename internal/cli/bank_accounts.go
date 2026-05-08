@@ -10,16 +10,16 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func bankAccountsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "bank-accounts",
 		Usage: "Manage bank accounts",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List bank accounts", Action: bankAccountsList},
-			{Name: "get", Usage: "Get a bank account", ArgsUsage: "<id|url>", Action: bankAccountsGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List bank accounts", Action: action(bankAccountsList)},
+			{Name: "get", Usage: "Get a bank account", ArgsUsage: "<id|url>", Action: action(bankAccountsGet)},
 			{
 				Name:      "create",
 				Usage:     "Create a bank account",
@@ -30,7 +30,7 @@ func bankAccountsCommand() *cli.Command {
 					&cli.StringFlag{Name: "opening-balance", Usage: "Opening balance (e.g. 0.00)"},
 					&cli.BoolFlag{Name: "personal", Usage: "Mark as personal account"},
 				},
-				Action: bankAccountsCreate,
+				Action: action(bankAccountsCreate),
 			},
 			{
 				Name:      "update",
@@ -41,13 +41,13 @@ func bankAccountsCommand() *cli.Command {
 					&cli.StringFlag{Name: "status", Usage: "Account status (e.g. active, hidden)"},
 					&cli.StringFlag{Name: "opening-balance", Usage: "Opening balance"},
 				},
-				Action: bankAccountsUpdate,
+				Action: action(bankAccountsUpdate),
 			},
 		},
 	}
 }
 
-func bankAccountsList(c *cli.Context) error {
+func bankAccountsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -57,12 +57,12 @@ func bankAccountsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/bank_accounts", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/bank_accounts", nil, "")
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func bankAccountsList(c *cli.Context) error {
 	return nil
 }
 
-func bankAccountsGet(c *cli.Context) error {
+func bankAccountsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func bankAccountsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -112,14 +112,14 @@ func bankAccountsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func bankAccountsCreate(c *cli.Context) error {
+func bankAccountsCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func bankAccountsCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -146,14 +146,14 @@ func bankAccountsCreate(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodPost, "/bank_accounts", bytes.NewReader(payload), "application/json")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodPost, "/bank_accounts", bytes.NewReader(payload), "application/json")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func bankAccountsUpdate(c *cli.Context) error {
+func bankAccountsUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -163,7 +163,7 @@ func bankAccountsUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func bankAccountsUpdate(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodPut, u, bytes.NewReader(payload), "application/json")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodPut, u, bytes.NewReader(payload), "application/json")
 	if err != nil {
 		return err
 	}

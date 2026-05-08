@@ -9,16 +9,16 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func salesTaxPeriodsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "sales-tax-periods",
 		Usage: "Manage sales tax periods",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List sales tax periods", Action: salesTaxPeriodsList},
-			{Name: "get", Usage: "Get a sales tax period", ArgsUsage: "<id|url>", Action: salesTaxPeriodsGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List sales tax periods", Action: action(salesTaxPeriodsList)},
+			{Name: "get", Usage: "Get a sales tax period", ArgsUsage: "<id|url>", Action: action(salesTaxPeriodsGet)},
 			{
 				Name:  "create",
 				Usage: "Create a sales tax period",
@@ -28,7 +28,7 @@ func salesTaxPeriodsCommand() *cli.Command {
 					&cli.StringFlag{Name: "rate", Usage: "Sales tax rate 1"},
 					&cli.StringFlag{Name: "registration-number", Usage: "Sales tax registration number"},
 				},
-				Action: salesTaxPeriodsCreate,
+				Action: action(salesTaxPeriodsCreate),
 			},
 			{
 				Name:      "update",
@@ -40,14 +40,14 @@ func salesTaxPeriodsCommand() *cli.Command {
 					&cli.StringFlag{Name: "rate", Usage: "Sales tax rate 1"},
 					&cli.StringFlag{Name: "registration-number", Usage: "Sales tax registration number"},
 				},
-				Action: salesTaxPeriodsUpdate,
+				Action: action(salesTaxPeriodsUpdate),
 			},
-			{Name: "delete", Usage: "Delete a sales tax period", ArgsUsage: "<id|url>", Action: salesTaxPeriodsDelete},
+			{Name: "delete", Usage: "Delete a sales tax period", ArgsUsage: "<id|url>", Action: action(salesTaxPeriodsDelete)},
 		},
 	}
 }
 
-func salesTaxPeriodsList(c *cli.Context) error {
+func salesTaxPeriodsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -57,12 +57,12 @@ func salesTaxPeriodsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/sales_tax_periods", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/sales_tax_periods", nil, "")
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func salesTaxPeriodsList(c *cli.Context) error {
 	return nil
 }
 
-func salesTaxPeriodsGet(c *cli.Context) error {
+func salesTaxPeriodsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func salesTaxPeriodsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -112,14 +112,14 @@ func salesTaxPeriodsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func salesTaxPeriodsCreate(c *cli.Context) error {
+func salesTaxPeriodsCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func salesTaxPeriodsCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func salesTaxPeriodsCreate(c *cli.Context) error {
 		input.SalesTaxRegistrationNumber = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/sales_tax_periods", fa.CreateSalesTaxPeriodRequest{SalesTaxPeriod: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/sales_tax_periods", fa.CreateSalesTaxPeriodRequest{SalesTaxPeriod: input})
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func salesTaxPeriodsCreate(c *cli.Context) error {
 	return nil
 }
 
-func salesTaxPeriodsUpdate(c *cli.Context) error {
+func salesTaxPeriodsUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func salesTaxPeriodsUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -201,14 +201,14 @@ func salesTaxPeriodsUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdateSalesTaxPeriodRequest{SalesTaxPeriod: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdateSalesTaxPeriodRequest{SalesTaxPeriod: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func salesTaxPeriodsDelete(c *cli.Context) error {
+func salesTaxPeriodsDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func salesTaxPeriodsDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -232,7 +232,7 @@ func salesTaxPeriodsDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}

@@ -9,16 +9,16 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func categoriesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "categories",
 		Usage: "Manage categories",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List categories", Action: categoriesList},
-			{Name: "get", Usage: "Get a category by ID or URL", ArgsUsage: "<id|url>", Action: categoriesGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List categories", Action: action(categoriesList)},
+			{Name: "get", Usage: "Get a category by ID or URL", ArgsUsage: "<id|url>", Action: action(categoriesGet)},
 			{
 				Name: "create", Usage: "Create a category",
 				Flags: []cli.Flag{
@@ -27,7 +27,7 @@ func categoriesCommand() *cli.Command {
 					&cli.StringFlag{Name: "category-group", Usage: "Category group URL"},
 					&cli.StringFlag{Name: "tax-reporting-name", Usage: "Tax reporting name"},
 				},
-				Action: categoriesCreate,
+				Action: action(categoriesCreate),
 			},
 			{
 				Name: "update", Usage: "Update a category", ArgsUsage: "<id|url>",
@@ -35,14 +35,14 @@ func categoriesCommand() *cli.Command {
 					&cli.StringFlag{Name: "description", Usage: "Description"},
 					&cli.StringFlag{Name: "tax-reporting-name", Usage: "Tax reporting name"},
 				},
-				Action: categoriesUpdate,
+				Action: action(categoriesUpdate),
 			},
-			{Name: "delete", Usage: "Delete a category", ArgsUsage: "<id|url>", Action: categoriesDelete},
+			{Name: "delete", Usage: "Delete a category", ArgsUsage: "<id|url>", Action: action(categoriesDelete)},
 		},
 	}
 }
 
-func categoriesList(c *cli.Context) error {
+func categoriesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -52,12 +52,12 @@ func categoriesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/categories", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/categories", nil, "")
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func categoriesList(c *cli.Context) error {
 	return nil
 }
 
-func categoriesGet(c *cli.Context) error {
+func categoriesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func categoriesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func categoriesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func categoriesGet(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func categoriesCreate(c *cli.Context) error {
+func categoriesCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func categoriesCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func categoriesCreate(c *cli.Context) error {
 		input.TaxReportingName = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/categories", fa.CreateCategoryRequest{Category: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/categories", fa.CreateCategoryRequest{Category: input})
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func categoriesCreate(c *cli.Context) error {
 	return nil
 }
 
-func categoriesUpdate(c *cli.Context) error {
+func categoriesUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func categoriesUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -201,7 +201,7 @@ func categoriesUpdate(c *cli.Context) error {
 		return fmt.Errorf("at least one of --description or --tax-reporting-name is required")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdateCategoryRequest{Category: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdateCategoryRequest{Category: input})
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func categoriesUpdate(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func categoriesDelete(c *cli.Context) error {
+func categoriesDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -219,7 +219,7 @@ func categoriesDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -234,7 +234,7 @@ func categoriesDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}

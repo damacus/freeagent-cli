@@ -9,7 +9,7 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // ---- recurring-invoices ----
@@ -18,7 +18,7 @@ func recurringInvoicesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "recurring-invoices",
 		Usage: "View recurring invoices (read-only)",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List recurring invoices",
@@ -26,14 +26,14 @@ func recurringInvoicesCommand() *cli.Command {
 					&cli.StringFlag{Name: "view", Usage: "Filter by view"},
 					&cli.StringFlag{Name: "contact", Usage: "Filter by contact URL"},
 				},
-				Action: recurringInvoicesList,
+				Action: action(recurringInvoicesList),
 			},
-			{Name: "get", Usage: "Get a recurring invoice", ArgsUsage: "<id|url>", Action: recurringInvoicesGet},
+			{Name: "get", Usage: "Get a recurring invoice", ArgsUsage: "<id|url>", Action: action(recurringInvoicesGet)},
 		},
 	}
 }
 
-func recurringInvoicesList(c *cli.Context) error {
+func recurringInvoicesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func recurringInvoicesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func recurringInvoicesList(c *cli.Context) error {
 	appendParam("view", c.String("view"))
 	appendParam("contact", c.String("contact"))
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func recurringInvoicesList(c *cli.Context) error {
 	return nil
 }
 
-func recurringInvoicesGet(c *cli.Context) error {
+func recurringInvoicesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func recurringInvoicesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func recurringInvoicesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -122,14 +122,14 @@ func stockItemsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "stock-items",
 		Usage: "View stock items (read-only)",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List stock items", Action: stockItemsList},
-			{Name: "get", Usage: "Get a stock item", ArgsUsage: "<id|url>", Action: stockItemsGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List stock items", Action: action(stockItemsList)},
+			{Name: "get", Usage: "Get a stock item", ArgsUsage: "<id|url>", Action: action(stockItemsGet)},
 		},
 	}
 }
 
-func stockItemsList(c *cli.Context) error {
+func stockItemsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -139,12 +139,12 @@ func stockItemsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/stock_items", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/stock_items", nil, "")
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func stockItemsList(c *cli.Context) error {
 	return nil
 }
 
-func stockItemsGet(c *cli.Context) error {
+func stockItemsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -180,7 +180,7 @@ func stockItemsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func stockItemsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -207,14 +207,14 @@ func priceListItemsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "price-list-items",
 		Usage: "View price list items (read-only)",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List price list items", Action: priceListItemsList},
-			{Name: "get", Usage: "Get a price list item", ArgsUsage: "<id|url>", Action: priceListItemsGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List price list items", Action: action(priceListItemsList)},
+			{Name: "get", Usage: "Get a price list item", ArgsUsage: "<id|url>", Action: action(priceListItemsGet)},
 		},
 	}
 }
 
-func priceListItemsList(c *cli.Context) error {
+func priceListItemsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -224,12 +224,12 @@ func priceListItemsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/price_list_items", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/price_list_items", nil, "")
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func priceListItemsList(c *cli.Context) error {
 	return nil
 }
 
-func priceListItemsGet(c *cli.Context) error {
+func priceListItemsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -265,7 +265,7 @@ func priceListItemsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -279,7 +279,7 @@ func priceListItemsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}

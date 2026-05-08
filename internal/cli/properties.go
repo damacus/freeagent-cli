@@ -9,16 +9,16 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func propertiesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "properties",
 		Usage: "Manage properties",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List properties", Action: propertiesList},
-			{Name: "get", Usage: "Get a property", ArgsUsage: "<id|url>", Action: propertiesGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List properties", Action: action(propertiesList)},
+			{Name: "get", Usage: "Get a property", ArgsUsage: "<id|url>", Action: action(propertiesGet)},
 			{
 				Name:  "create",
 				Usage: "Create a property",
@@ -29,7 +29,7 @@ func propertiesCommand() *cli.Command {
 					&cli.StringFlag{Name: "region", Usage: "Region"},
 					&cli.StringFlag{Name: "country", Usage: "Country"},
 				},
-				Action: propertiesCreate,
+				Action: action(propertiesCreate),
 			},
 			{
 				Name:      "update",
@@ -42,14 +42,14 @@ func propertiesCommand() *cli.Command {
 					&cli.StringFlag{Name: "region", Usage: "Region"},
 					&cli.StringFlag{Name: "country", Usage: "Country"},
 				},
-				Action: propertiesUpdate,
+				Action: action(propertiesUpdate),
 			},
-			{Name: "delete", Usage: "Delete a property", ArgsUsage: "<id|url>", Action: propertiesDelete},
+			{Name: "delete", Usage: "Delete a property", ArgsUsage: "<id|url>", Action: action(propertiesDelete)},
 		},
 	}
 }
 
-func propertiesList(c *cli.Context) error {
+func propertiesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -59,12 +59,12 @@ func propertiesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/properties", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/properties", nil, "")
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func propertiesList(c *cli.Context) error {
 	return nil
 }
 
-func propertiesGet(c *cli.Context) error {
+func propertiesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func propertiesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -118,14 +118,14 @@ func propertiesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func propertiesCreate(c *cli.Context) error {
+func propertiesCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -135,7 +135,7 @@ func propertiesCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func propertiesCreate(c *cli.Context) error {
 		input.Country = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/properties", fa.CreatePropertyRequest{Property: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/properties", fa.CreatePropertyRequest{Property: input})
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func propertiesCreate(c *cli.Context) error {
 	return nil
 }
 
-func propertiesUpdate(c *cli.Context) error {
+func propertiesUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -179,7 +179,7 @@ func propertiesUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -213,14 +213,14 @@ func propertiesUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdatePropertyRequest{Property: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdatePropertyRequest{Property: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func propertiesDelete(c *cli.Context) error {
+func propertiesDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -230,7 +230,7 @@ func propertiesDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func propertiesDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}

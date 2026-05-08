@@ -9,14 +9,14 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func creditNotesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "credit-notes",
 		Usage: "Manage credit notes",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List credit notes",
@@ -25,9 +25,9 @@ func creditNotesCommand() *cli.Command {
 					&cli.StringFlag{Name: "view", Usage: "Filter by view"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Filter by updated since (ISO 8601)"},
 				},
-				Action: creditNotesList,
+				Action: action(creditNotesList),
 			},
-			{Name: "get", Usage: "Get a credit note", ArgsUsage: "<id|url>", Action: creditNotesGet},
+			{Name: "get", Usage: "Get a credit note", ArgsUsage: "<id|url>", Action: action(creditNotesGet)},
 			{
 				Name:  "create",
 				Usage: "Create a credit note",
@@ -38,7 +38,7 @@ func creditNotesCommand() *cli.Command {
 					&cli.StringFlag{Name: "due-on", Usage: "Due date (YYYY-MM-DD)"},
 					&cli.IntFlag{Name: "payment-terms", Usage: "Payment terms in days"},
 				},
-				Action: creditNotesCreate,
+				Action: action(creditNotesCreate),
 			},
 			{
 				Name:      "update",
@@ -50,9 +50,9 @@ func creditNotesCommand() *cli.Command {
 					&cli.StringFlag{Name: "currency", Usage: "Currency code"},
 					&cli.StringFlag{Name: "due-on", Usage: "Due date (YYYY-MM-DD)"},
 				},
-				Action: creditNotesUpdate,
+				Action: action(creditNotesUpdate),
 			},
-			{Name: "delete", Usage: "Delete a credit note", ArgsUsage: "<id|url>", Action: creditNotesDelete},
+			{Name: "delete", Usage: "Delete a credit note", ArgsUsage: "<id|url>", Action: action(creditNotesDelete)},
 			{
 				Name:      "transition",
 				Usage:     "Transition a credit note to a new status",
@@ -60,13 +60,13 @@ func creditNotesCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "status", Required: true, Usage: "Target status (sent/draft/cancelled)"},
 				},
-				Action: creditNotesTransition,
+				Action: action(creditNotesTransition),
 			},
 		},
 	}
 }
 
-func creditNotesList(c *cli.Context) error {
+func creditNotesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func creditNotesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func creditNotesList(c *cli.Context) error {
 	appendParam("view", c.String("view"))
 	appendParam("updated_since", c.String("updated-since"))
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func creditNotesList(c *cli.Context) error {
 	return nil
 }
 
-func creditNotesGet(c *cli.Context) error {
+func creditNotesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func creditNotesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -143,14 +143,14 @@ func creditNotesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func creditNotesCreate(c *cli.Context) error {
+func creditNotesCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func creditNotesCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func creditNotesCreate(c *cli.Context) error {
 		input.PaymentTermsInDays = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/credit_notes", fa.CreateCreditNoteRequest{CreditNote: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/credit_notes", fa.CreateCreditNoteRequest{CreditNote: input})
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func creditNotesCreate(c *cli.Context) error {
 	return nil
 }
 
-func creditNotesUpdate(c *cli.Context) error {
+func creditNotesUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -204,7 +204,7 @@ func creditNotesUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -235,14 +235,14 @@ func creditNotesUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdateCreditNoteRequest{CreditNote: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdateCreditNoteRequest{CreditNote: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func creditNotesDelete(c *cli.Context) error {
+func creditNotesDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -252,7 +252,7 @@ func creditNotesDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -266,7 +266,7 @@ func creditNotesDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ func creditNotesDelete(c *cli.Context) error {
 	return nil
 }
 
-func creditNotesTransition(c *cli.Context) error {
+func creditNotesTransition(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -284,7 +284,7 @@ func creditNotesTransition(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -301,7 +301,7 @@ func creditNotesTransition(c *cli.Context) error {
 	u, _ := normalizeResourceURL(rt.BaseURL, "credit_notes", id)
 	transitionURL := u + "/transitions/mark_as_" + status
 
-	resp, _, _, err := client.Do(c.Context, http.MethodPut, transitionURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodPut, transitionURL, nil, "")
 	if err != nil {
 		return err
 	}
