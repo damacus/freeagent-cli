@@ -15,24 +15,34 @@ var commit = ""
 var date = ""
 
 func buildVersion() string {
-	if version != "dev" {
-		return version
+	info, _ := debug.ReadBuildInfo()
+	return buildVersionFrom(version, commit, info)
+}
+
+func buildVersionFrom(buildVersion, buildCommit string, info *debug.BuildInfo) string {
+	if buildVersion != "dev" {
+		return buildVersion
 	}
 
-	revision := commit
+	if info != nil {
+		moduleVersion := strings.TrimSpace(info.Main.Version)
+		if moduleVersion != "" && moduleVersion != "(devel)" {
+			return moduleVersion
+		}
+	}
+
+	revision := strings.TrimSpace(buildCommit)
 	dirty := false
 
-	if revision == "" {
-		if info, ok := debug.ReadBuildInfo(); ok {
-			for _, setting := range info.Settings {
-				switch setting.Key {
-				case "vcs.revision":
-					if revision == "" {
-						revision = setting.Value
-					}
-				case "vcs.modified":
-					dirty = setting.Value == "true"
+	if revision == "" && info != nil {
+		for _, setting := range info.Settings {
+			switch setting.Key {
+			case "vcs.revision":
+				if revision == "" {
+					revision = strings.TrimSpace(setting.Value)
 				}
+			case "vcs.modified":
+				dirty = setting.Value == "true"
 			}
 		}
 	}
@@ -49,7 +59,7 @@ func buildVersion() string {
 		return "dev (commit " + revision + ", dirty)"
 	}
 
-	return "dev (commit " + strings.TrimSpace(revision) + ")"
+	return "dev (commit " + revision + ")"
 }
 
 func main() {
