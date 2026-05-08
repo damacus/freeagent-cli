@@ -19,14 +19,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/freeagent"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func bankCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "bank",
 		Usage: "Work with bank transactions",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List bank transactions",
@@ -38,13 +38,13 @@ func bankCommand() *cli.Command {
 					&cli.StringFlag{Name: "view", Usage: "Filter view (e.g. unexplained)"},
 					&cli.IntFlag{Name: "per-page", Value: 100, Usage: "Results per page"},
 				},
-				Action: bankList,
+				Action: action(bankList),
 			},
 			{
 				Name:      "get",
 				Usage:     "Get a bank transaction",
 				ArgsUsage: "<id|url>",
-				Action:    bankGet,
+				Action:    action(bankGet),
 			},
 			{
 				Name:  "approve",
@@ -57,13 +57,13 @@ func bankCommand() *cli.Command {
 					&cli.StringFlag{Name: "ids", Usage: "Comma list or file path with IDs/URLs"},
 					&cli.StringFlag{Name: "ids-type", Value: "transaction", Usage: "ids type: transaction or explanation"},
 				},
-				Action: bankApprove,
+				Action: action(bankApprove),
 			},
 			reviewCommand(),
 			{
 				Name:  "explain",
 				Usage: "Manage bank transaction explanations",
-				Subcommands: []*cli.Command{
+				Commands: []*cli.Command{
 					{
 						Name:  "create",
 						Usage: "Create an explanation for a bank transaction",
@@ -78,18 +78,19 @@ func bankCommand() *cli.Command {
 							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
 							&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 						},
-						Action: bankExplainCreate,
+						Action: action(bankExplainCreate),
 					},
 					{
 						Name:      "get",
 						Usage:     "Get a bank transaction explanation",
 						ArgsUsage: "<id|url>",
-						Action:    bankExplainGet,
+						Action:    action(bankExplainGet),
 					},
 					{
-						Name:      "update",
-						Usage:     "Update a bank transaction explanation",
-						ArgsUsage: "<id|url>",
+						Name:         "update",
+						Usage:        "Update a bank transaction explanation",
+						ArgsUsage:    "<id|url>",
+						StopOnNthArg: &stopFlagParsingAfterResourceID,
 						Flags: []cli.Flag{
 							&cli.StringFlag{Name: "dated-on", Usage: "Date of the transaction (YYYY-MM-DD)"},
 							&cli.StringFlag{Name: "description", Usage: "Description of the transaction"},
@@ -100,7 +101,7 @@ func bankCommand() *cli.Command {
 							&cli.StringFlag{Name: "project", Usage: "Project ID or URL"},
 							&cli.StringFlag{Name: "receipt", Usage: "Path to receipt file to attach"},
 						},
-						Action: bankExplainUpdate,
+						Action: action(bankExplainUpdate),
 					},
 				},
 			},
@@ -108,7 +109,7 @@ func bankCommand() *cli.Command {
 	}
 }
 
-func bankExplainCreate(c *cli.Context) error {
+func bankExplainCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -118,7 +119,7 @@ func bankExplainCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -156,14 +157,14 @@ func bankExplainCreate(c *cli.Context) error {
 		input.Attachment = att
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/bank_transaction_explanations", fa.CreateBankTransactionExplanationRequest{BankTransactionExplanation: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/bank_transaction_explanations", fa.CreateBankTransactionExplanationRequest{BankTransactionExplanation: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func bankExplainGet(c *cli.Context) error {
+func bankExplainGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -173,7 +174,7 @@ func bankExplainGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -187,14 +188,14 @@ func bankExplainGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, explanationURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, explanationURL, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func bankExplainUpdate(c *cli.Context) error {
+func bankExplainUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -204,7 +205,7 @@ func bankExplainUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -275,7 +276,7 @@ func bankExplainUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, explanationURL, fa.UpdateBankTransactionExplanationRequest{BankTransactionExplanation: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, explanationURL, fa.UpdateBankTransactionExplanationRequest{BankTransactionExplanation: input})
 	if err != nil {
 		return err
 	}
@@ -300,7 +301,7 @@ func attachmentPayload(path string) (*fa.AttachmentInput, error) {
 	}, nil
 }
 
-func bankList(c *cli.Context) error {
+func bankList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -310,7 +311,7 @@ func bankList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -339,7 +340,7 @@ func bankList(c *cli.Context) error {
 	}
 
 	path := "/bank_transactions?" + query.Encode()
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -365,7 +366,7 @@ func bankList(c *cli.Context) error {
 	return nil
 }
 
-func bankGet(c *cli.Context) error {
+func bankGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -375,7 +376,7 @@ func bankGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -389,14 +390,14 @@ func bankGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, txnURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, txnURL, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func bankApprove(c *cli.Context) error {
+func bankApprove(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -408,7 +409,7 @@ func bankApprove(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -432,7 +433,7 @@ func bankApprove(c *cli.Context) error {
 			return fmt.Errorf("no ids provided")
 		}
 		if idsType == "transaction" {
-			explanations, err = explanationsForTransactions(c.Context, client, profile.BaseURL, ids)
+			explanations, err = explanationsForTransactions(commandContext(c), client, profile.BaseURL, ids)
 			if err != nil {
 				return err
 			}
@@ -457,7 +458,7 @@ func bankApprove(c *cli.Context) error {
 		return fmt.Errorf("no transactions to approve")
 	}
 
-	result := approveExplanations(c.Context, client, explanations)
+	result := approveExplanations(commandContext(c), client, explanations)
 	if rt.JSONOutput {
 		data, err := json.Marshal(result)
 		if err != nil {
@@ -522,7 +523,7 @@ func approveExplanations(ctx context.Context, client *freeagent.Client, explanat
 	return result
 }
 
-func explanationsForDateRange(c *cli.Context, client *freeagent.Client, baseURL string) ([]string, error) {
+func explanationsForDateRange(c *cli.Command, client *freeagent.Client, baseURL string) ([]string, error) {
 	bankAccount := strings.TrimSpace(c.String("bank-account"))
 	if bankAccount == "" {
 		return nil, fmt.Errorf("bank-account is required when approving by date range")
@@ -548,7 +549,7 @@ func explanationsForDateRange(c *cli.Context, client *freeagent.Client, baseURL 
 		return nil, fmt.Errorf("provide --ids or a date filter (--from/--to/--updated-since)")
 	}
 
-	explanationList, err := client.ListBankTransactionExplanations(c.Context, freeagent.ListBankTransactionExplanationsOptions{
+	explanationList, err := client.ListBankTransactionExplanations(commandContext(c), freeagent.ListBankTransactionExplanationsOptions{
 		BankAccount:  query.Get("bank_account"),
 		FromDate:     query.Get("from_date"),
 		ToDate:       query.Get("to_date"),

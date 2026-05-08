@@ -9,7 +9,7 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // ---- email-addresses ----
@@ -18,13 +18,13 @@ func emailAddressesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "email-addresses",
 		Usage: "List email addresses",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List email addresses", Action: emailAddressesList},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List email addresses", Action: action(emailAddressesList)},
 		},
 	}
 }
 
-func emailAddressesList(c *cli.Context) error {
+func emailAddressesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -34,12 +34,12 @@ func emailAddressesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/email_addresses", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/email_addresses", nil, "")
 	if err != nil {
 		return err
 	}
@@ -71,13 +71,13 @@ func cisBandsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "cis-bands",
 		Usage: "List CIS bands",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List CIS bands", Action: cisBandsList},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List CIS bands", Action: action(cisBandsList)},
 		},
 	}
 }
 
-func cisBandsList(c *cli.Context) error {
+func cisBandsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -87,12 +87,12 @@ func cisBandsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/cis_bands", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/cis_bands", nil, "")
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func cashflowCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "cashflow",
 		Usage: "View cashflow",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "get",
 				Usage: "Get cashflow summary",
@@ -132,13 +132,13 @@ func cashflowCommand() *cli.Command {
 					&cli.StringFlag{Name: "from", Usage: "From date (DD-MM-YYYY)"},
 					&cli.StringFlag{Name: "to", Usage: "To date (DD-MM-YYYY)"},
 				},
-				Action: cashflowGet,
+				Action: action(cashflowGet),
 			},
 		},
 	}
 }
 
-func cashflowGet(c *cli.Context) error {
+func cashflowGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -148,7 +148,7 @@ func cashflowGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func cashflowGet(c *cli.Context) error {
 	appendParam("from_date", c.String("from"))
 	appendParam("to_date", c.String("to"))
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
@@ -177,11 +177,11 @@ func accountingCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "accounting",
 		Usage: "View accounting reports",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:   "profit-and-loss",
 				Usage:  "Get profit and loss summary",
-				Action: accountingProfitAndLoss,
+				Action: action(accountingProfitAndLoss),
 			},
 			{
 				Name:  "trial-balance",
@@ -190,7 +190,7 @@ func accountingCommand() *cli.Command {
 					&cli.StringFlag{Name: "from", Usage: "From date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "to", Usage: "To date (YYYY-MM-DD)"},
 				},
-				Action: accountingTrialBalance,
+				Action: action(accountingTrialBalance),
 			},
 			{
 				Name:  "balance-sheet",
@@ -198,7 +198,7 @@ func accountingCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "as-at", Usage: "As at date (YYYY-MM-DD)"},
 				},
-				Action: accountingBalanceSheet,
+				Action: action(accountingBalanceSheet),
 			},
 			{
 				Name:  "transactions",
@@ -207,18 +207,18 @@ func accountingCommand() *cli.Command {
 					&cli.StringFlag{Name: "from", Usage: "From date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "to", Usage: "To date (YYYY-MM-DD)"},
 				},
-				Action: accountingTransactions,
+				Action: action(accountingTransactions),
 			},
 			{
-				Name:  "final-accounts-reports",
-				Usage: "List final accounts reports",
-				Action: accountingFinalAccountsReports,
+				Name:   "final-accounts-reports",
+				Usage:  "List final accounts reports",
+				Action: action(accountingFinalAccountsReports),
 			},
 		},
 	}
 }
 
-func accountingProfitAndLoss(c *cli.Context) error {
+func accountingProfitAndLoss(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -228,19 +228,19 @@ func accountingProfitAndLoss(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/accounting/profit_and_loss/summary", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/accounting/profit_and_loss/summary", nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func accountingTrialBalance(c *cli.Context) error {
+func accountingTrialBalance(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -250,7 +250,7 @@ func accountingTrialBalance(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -266,14 +266,14 @@ func accountingTrialBalance(c *cli.Context) error {
 	appendParam("from_date", c.String("from"))
 	appendParam("to_date", c.String("to"))
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func accountingBalanceSheet(c *cli.Context) error {
+func accountingBalanceSheet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -283,7 +283,7 @@ func accountingBalanceSheet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -293,14 +293,14 @@ func accountingBalanceSheet(c *cli.Context) error {
 		endpoint += "?as_at_date=" + asAt
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func accountingTransactions(c *cli.Context) error {
+func accountingTransactions(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -310,7 +310,7 @@ func accountingTransactions(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -326,14 +326,14 @@ func accountingTransactions(c *cli.Context) error {
 	appendParam("from_date", c.String("from"))
 	appendParam("to_date", c.String("to"))
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func accountingFinalAccountsReports(c *cli.Context) error {
+func accountingFinalAccountsReports(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -343,12 +343,12 @@ func accountingFinalAccountsReports(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/accounting/final_accounts_reports", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/accounting/final_accounts_reports", nil, "")
 	if err != nil {
 		return err
 	}

@@ -3,16 +3,16 @@ package cli
 import (
 	"fmt"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func versionCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "version",
 		Usage: "Print the CLI version",
-		Action: func(c *cli.Context) error {
-			_, err := fmt.Fprintln(c.App.Writer, c.App.Version)
+		Action: action(func(c *cli.Command) error {
+			_, err := fmt.Fprintln(c.Root().Writer, c.Root().Version)
 			return err
-		},
+		}),
 	}
 }

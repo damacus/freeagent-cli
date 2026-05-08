@@ -11,7 +11,7 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	"github.com/damacus/freeagent-cli/internal/freeagent"
 	"github.com/damacus/freeagent-cli/internal/storage"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 // mockTokenStore is an in-memory TokenStore that always returns a valid token.
@@ -43,26 +43,27 @@ func newTestServer(t *testing.T, _ string, payload any) *httptest.Server {
 	}))
 }
 
-// testApp builds a *cli.App wired to a mock token store pointing at baseURL.
+// testApp builds a *cli.Command wired to a mock token store pointing at baseURL.
 // It overrides newClientFn so that action functions get a client that talks to
 // the test server without needing real credentials.
-func testApp(baseURL string) *cli.App {
+func testApp(baseURL string) *cli.Command {
 	app := NewApp("test")
 
 	origBefore := app.Before
 	origNewClientFn := newClientFn
-	app.Before = func(c *cli.Context) error {
+	app.Before = func(ctx context.Context, c *cli.Command) (context.Context, error) {
 		// Run the original initRuntime first.
-		if err := origBefore(c); err != nil {
-			return err
+		nextCtx, err := origBefore(ctx, c)
+		if err != nil {
+			return nextCtx, err
 		}
 		// Overwrite the runtime's BaseURL with our test server URL.
-		rt, ok := c.App.Metadata["runtime"].(Runtime)
+		rt, ok := c.Root().Metadata["runtime"].(Runtime)
 		if !ok {
-			return nil
+			return nextCtx, nil
 		}
 		rt.BaseURL = baseURL
-		c.App.Metadata["runtime"] = rt
+		c.Root().Metadata["runtime"] = rt
 
 		// Override newClientFn to return a client pointed at the test server
 		// with a mock token store (no disk/keychain access required).
@@ -74,9 +75,9 @@ func testApp(baseURL string) *cli.App {
 			}
 			return client, nil, nil
 		}
-		return nil
+		return nextCtx, nil
 	}
-	app.After = func(*cli.Context) error {
+	app.After = func(context.Context, *cli.Command) error {
 		newClientFn = origNewClientFn
 		return nil
 	}

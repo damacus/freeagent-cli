@@ -10,7 +10,7 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	"github.com/damacus/freeagent-cli/internal/freeagent"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 type reviewSelector struct {
@@ -29,18 +29,18 @@ func reviewCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "review",
 		Usage: "Review marked bank transactions",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:   "list",
 				Usage:  "List marked bank transactions with review metadata",
 				Flags:  reviewSelectorFlags(true),
-				Action: bankReviewList,
+				Action: action(bankReviewList),
 			},
 			{
 				Name:      "get",
 				Usage:     "Get review metadata for a bank transaction",
 				ArgsUsage: "<id|url>",
-				Action:    bankReviewGet,
+				Action:    action(bankReviewGet),
 			},
 			{
 				Name:  "approve",
@@ -49,7 +49,7 @@ func reviewCommand() *cli.Command {
 					&cli.StringFlag{Name: "ids", Usage: "Comma list or file path with IDs/URLs"},
 					&cli.StringFlag{Name: "ids-type", Value: "transaction", Usage: "ids type: transaction or explanation"},
 				),
-				Action: bankReviewApprove,
+				Action: action(bankReviewApprove),
 			},
 			{
 				Name:  "attach-receipt",
@@ -59,7 +59,7 @@ func reviewCommand() *cli.Command {
 					&cli.StringFlag{Name: "file", Required: true, Usage: "Path to receipt file to attach"},
 					&cli.BoolFlag{Name: "approve", Usage: "Also clear marked_for_review on the explanation"},
 				},
-				Action: bankReviewAttachReceipt,
+				Action: action(bankReviewAttachReceipt),
 			},
 		},
 	}
@@ -79,7 +79,7 @@ func reviewSelectorFlags(requireBankAccount bool) []cli.Flag {
 	}
 }
 
-func bankReviewList(c *cli.Context) error {
+func bankReviewList(c *cli.Command) error {
 	rt, profile, client, selector, err := reviewCommandContext(c, true)
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func bankReviewList(c *cli.Context) error {
 	return writer.Flush()
 }
 
-func bankReviewGet(c *cli.Context) error {
+func bankReviewGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func bankReviewGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func bankReviewGet(c *cli.Context) error {
 		return err
 	}
 
-	item, err := client.GetBankReviewItem(c.Context, transactionURL)
+	item, err := client.GetBankReviewItem(commandContext(c), transactionURL)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func bankReviewGet(c *cli.Context) error {
 	return writeJSONOutput(data)
 }
 
-func bankReviewApprove(c *cli.Context) error {
+func bankReviewApprove(c *cli.Command) error {
 	rt, profile, client, selector, err := reviewCommandContext(c, false)
 	if err != nil {
 		return err
@@ -206,7 +206,7 @@ func bankReviewApprove(c *cli.Context) error {
 	return fmt.Errorf("some approvals failed")
 }
 
-func bankReviewAttachReceipt(c *cli.Context) error {
+func bankReviewAttachReceipt(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -216,7 +216,7 @@ func bankReviewAttachReceipt(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func bankReviewAttachReceipt(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	explanation, err := client.GetBankTransactionExplanation(c.Context, explanationURL)
+	explanation, err := client.GetBankTransactionExplanation(commandContext(c), explanationURL)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func bankReviewAttachReceipt(c *cli.Context) error {
 		markedForReview = false
 	}
 
-	updated, err := client.UpdateBankTransactionExplanation(c.Context, explanationURL, fa.BankTransactionExplanationInput{
+	updated, err := client.UpdateBankTransactionExplanation(commandContext(c), explanationURL, fa.BankTransactionExplanationInput{
 		BankTransaction: explanation.BankTransaction,
 		DatedOn:         explanation.DatedOn,
 		Description:     explanation.Description,
@@ -275,7 +275,7 @@ func bankReviewAttachReceipt(c *cli.Context) error {
 	return nil
 }
 
-func reviewCommandContext(c *cli.Context, requireBankAccount bool) (Runtime, config.Profile, *freeagent.Client, reviewSelector, error) {
+func reviewCommandContext(c *cli.Command, requireBankAccount bool) (Runtime, config.Profile, *freeagent.Client, reviewSelector, error) {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return Runtime{}, config.Profile{}, nil, reviewSelector{}, err
@@ -285,7 +285,7 @@ func reviewCommandContext(c *cli.Context, requireBankAccount bool) (Runtime, con
 		return Runtime{}, config.Profile{}, nil, reviewSelector{}, err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return Runtime{}, config.Profile{}, nil, reviewSelector{}, err
 	}
@@ -296,7 +296,7 @@ func reviewCommandContext(c *cli.Context, requireBankAccount bool) (Runtime, con
 	return rt, profile, client, selector, nil
 }
 
-func reviewSelectorFromContext(c *cli.Context, baseURL string, requireBankAccount bool) (reviewSelector, error) {
+func reviewSelectorFromContext(c *cli.Command, baseURL string, requireBankAccount bool) (reviewSelector, error) {
 	selector := reviewSelector{
 		FromDate:            strings.TrimSpace(c.String("from")),
 		ToDate:              strings.TrimSpace(c.String("to")),
@@ -348,8 +348,8 @@ func (s reviewSelector) hasNarrowingFilter() bool {
 		s.CategoryURL != ""
 }
 
-func loadReviewItems(c *cli.Context, client *freeagent.Client, selector reviewSelector) ([]freeagent.BankReviewItem, error) {
-	items, err := client.ListBankReviewItems(c.Context, selector.listOptions())
+func loadReviewItems(c *cli.Command, client *freeagent.Client, selector reviewSelector) ([]freeagent.BankReviewItem, error) {
+	items, err := client.ListBankReviewItems(commandContext(c), selector.listOptions())
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +379,7 @@ func filterReviewItems(items []freeagent.BankReviewItem, selector reviewSelector
 	return filtered
 }
 
-func reviewApproveByIDs(c *cli.Context, client *freeagent.Client, baseURL, idsInput, idsType string) (approveResult, error) {
+func reviewApproveByIDs(c *cli.Command, client *freeagent.Client, baseURL, idsInput, idsType string) (approveResult, error) {
 	ids, err := parseIDList(idsInput)
 	if err != nil {
 		return approveResult{}, err
@@ -397,7 +397,7 @@ func reviewApproveByIDs(c *cli.Context, client *freeagent.Client, baseURL, idsIn
 			}
 			explanations = append(explanations, explanationURL)
 		}
-		return approveExplanations(c.Context, client, dedupeStrings(explanations)), nil
+		return approveExplanations(commandContext(c), client, dedupeStrings(explanations)), nil
 	}
 
 	transactionURLs := make([]string, 0, len(ids))
@@ -412,7 +412,7 @@ func reviewApproveByIDs(c *cli.Context, client *freeagent.Client, baseURL, idsIn
 	return approveTransactions(c, client, transactionURLs)
 }
 
-func reviewApproveBySelector(c *cli.Context, client *freeagent.Client, selector reviewSelector) (approveResult, error) {
+func reviewApproveBySelector(c *cli.Command, client *freeagent.Client, selector reviewSelector) (approveResult, error) {
 	items, err := loadReviewItems(c, client, selector)
 	if err != nil {
 		return approveResult{}, err
@@ -428,8 +428,8 @@ func reviewApproveBySelector(c *cli.Context, client *freeagent.Client, selector 
 	return approveTransactions(c, client, transactionURLs)
 }
 
-func approveTransactions(c *cli.Context, client *freeagent.Client, transactionURLs []string) (approveResult, error) {
-	mapping, err := client.ExplanationURLsForTransactions(c.Context, dedupeStrings(transactionURLs))
+func approveTransactions(c *cli.Command, client *freeagent.Client, transactionURLs []string) (approveResult, error) {
+	mapping, err := client.ExplanationURLsForTransactions(commandContext(c), dedupeStrings(transactionURLs))
 	if err != nil {
 		return approveResult{}, err
 	}
@@ -455,7 +455,7 @@ func approveTransactions(c *cli.Context, client *freeagent.Client, transactionUR
 		return approveResult{}, fmt.Errorf("no transactions to approve")
 	}
 
-	approved := approveExplanations(c.Context, client, explanations)
+	approved := approveExplanations(commandContext(c), client, explanations)
 	result.Approved = append(result.Approved, approved.Approved...)
 	result.Failed = append(result.Failed, approved.Failed...)
 	return result, nil

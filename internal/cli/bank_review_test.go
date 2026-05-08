@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"io"
@@ -336,7 +337,7 @@ func runReviewCLI(t *testing.T, baseURL string, args ...string) (string, error) 
 	}()
 
 	runArgs := append([]string{"fa", "--config", configPath}, args...)
-	runErr := app.Run(runArgs)
+	runErr := app.Run(context.Background(), runArgs)
 	_ = w.Close()
 	<-done
 

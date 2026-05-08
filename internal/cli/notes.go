@@ -10,14 +10,14 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func notesCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "notes",
 		Usage: "Manage notes",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List notes",
@@ -25,9 +25,9 @@ func notesCommand() *cli.Command {
 					&cli.StringFlag{Name: "contact", Usage: "Filter by contact ID or URL"},
 					&cli.StringFlag{Name: "project", Usage: "Filter by project ID or URL"},
 				},
-				Action: notesList,
+				Action: action(notesList),
 			},
-			{Name: "get", Usage: "Get a note", ArgsUsage: "<id|url>", Action: notesGet},
+			{Name: "get", Usage: "Get a note", ArgsUsage: "<id|url>", Action: action(notesGet)},
 			{
 				Name:  "create",
 				Usage: "Create a note",
@@ -35,7 +35,7 @@ func notesCommand() *cli.Command {
 					&cli.StringFlag{Name: "note", Required: true, Usage: "Note text"},
 					&cli.StringFlag{Name: "parent", Required: true, Usage: "Parent URL (contact or project)"},
 				},
-				Action: notesCreate,
+				Action: action(notesCreate),
 			},
 			{
 				Name:      "update",
@@ -44,14 +44,14 @@ func notesCommand() *cli.Command {
 				Flags: []cli.Flag{
 					&cli.StringFlag{Name: "note", Usage: "Note text"},
 				},
-				Action: notesUpdate,
+				Action: action(notesUpdate),
 			},
-			{Name: "delete", Usage: "Delete a note", ArgsUsage: "<id|url>", Action: notesDelete},
+			{Name: "delete", Usage: "Delete a note", ArgsUsage: "<id|url>", Action: action(notesDelete)},
 		},
 	}
 }
 
-func notesList(c *cli.Context) error {
+func notesList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func notesList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func notesList(c *cli.Context) error {
 		path += "?" + query.Encode()
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func notesList(c *cli.Context) error {
 	return nil
 }
 
-func notesGet(c *cli.Context) error {
+func notesGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func notesGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -140,14 +140,14 @@ func notesGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func notesCreate(c *cli.Context) error {
+func notesCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -157,7 +157,7 @@ func notesCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func notesCreate(c *cli.Context) error {
 		ParentURL: c.String("parent"),
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/notes", fa.CreateNoteRequest{Note: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/notes", fa.CreateNoteRequest{Note: input})
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func notesCreate(c *cli.Context) error {
 	return nil
 }
 
-func notesUpdate(c *cli.Context) error {
+func notesUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -192,7 +192,7 @@ func notesUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -213,14 +213,14 @@ func notesUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdateNoteRequest{Note: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdateNoteRequest{Note: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func notesDelete(c *cli.Context) error {
+func notesDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -230,7 +230,7 @@ func notesDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func notesDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}

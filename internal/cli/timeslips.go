@@ -11,14 +11,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func timeslipsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "timeslips",
 		Usage: "Manage timeslips",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List timeslips",
@@ -30,13 +30,13 @@ func timeslipsCommand() *cli.Command {
 					&cli.StringFlag{Name: "to", Usage: "End date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 				},
-				Action: timeslipsList,
+				Action: action(timeslipsList),
 			},
 			{
 				Name:      "get",
 				Usage:     "Get a timeslip by ID or URL",
 				ArgsUsage: "<id|url>",
-				Action:    timeslipsGet,
+				Action:    action(timeslipsGet),
 			},
 			{
 				Name:  "create",
@@ -49,7 +49,7 @@ func timeslipsCommand() *cli.Command {
 					&cli.StringFlag{Name: "user", Usage: "User ID or URL (defaults to authenticated user)"},
 					&cli.StringFlag{Name: "comment", Usage: "Optional comment"},
 				},
-				Action: timeslipsCreate,
+				Action: action(timeslipsCreate),
 			},
 			{
 				Name:      "update",
@@ -61,19 +61,19 @@ func timeslipsCommand() *cli.Command {
 					&cli.StringFlag{Name: "comment", Usage: "Comment"},
 					&cli.StringFlag{Name: "task", Usage: "Task ID or URL"},
 				},
-				Action: timeslipsUpdate,
+				Action: action(timeslipsUpdate),
 			},
 			{
 				Name:      "delete",
 				Usage:     "Delete a timeslip",
 				ArgsUsage: "<id|url>",
-				Action:    timeslipsDelete,
+				Action:    action(timeslipsDelete),
 			},
 		},
 	}
 }
 
-func timeslipsList(c *cli.Context) error {
+func timeslipsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func timeslipsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func timeslipsList(c *cli.Context) error {
 		path += "?" + query.Encode()
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func timeslipsList(c *cli.Context) error {
 	return nil
 }
 
-func timeslipsGet(c *cli.Context) error {
+func timeslipsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -164,7 +164,7 @@ func timeslipsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -178,14 +178,14 @@ func timeslipsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, tsURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, tsURL, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func timeslipsCreate(c *cli.Context) error {
+func timeslipsCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -195,7 +195,7 @@ func timeslipsCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -226,7 +226,7 @@ func timeslipsCreate(c *cli.Context) error {
 		input.Comment = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/timeslips", fa.CreateTimeslipRequest{Timeslip: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/timeslips", fa.CreateTimeslipRequest{Timeslip: input})
 	if err != nil {
 		return err
 	}
@@ -247,7 +247,7 @@ func timeslipsCreate(c *cli.Context) error {
 	return nil
 }
 
-func timeslipsUpdate(c *cli.Context) error {
+func timeslipsUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -257,7 +257,7 @@ func timeslipsUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -297,14 +297,14 @@ func timeslipsUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, tsURL, fa.UpdateTimeslipRequest{Timeslip: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, tsURL, fa.UpdateTimeslipRequest{Timeslip: input})
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func timeslipsDelete(c *cli.Context) error {
+func timeslipsDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -314,7 +314,7 @@ func timeslipsDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -328,7 +328,7 @@ func timeslipsDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, tsURL, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, tsURL, nil, "")
 	if err != nil {
 		return err
 	}

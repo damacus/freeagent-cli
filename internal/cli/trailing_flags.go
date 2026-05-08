@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 type positionalUpdateInput struct {
@@ -12,7 +12,9 @@ type positionalUpdateInput struct {
 	flags map[string]string
 }
 
-func parsePositionalUpdateInput(c *cli.Context, allowedFlags ...string) (positionalUpdateInput, error) {
+var stopFlagParsingAfterResourceID = 1
+
+func parsePositionalUpdateInput(c *cli.Command, allowedFlags ...string) (positionalUpdateInput, error) {
 	args := c.Args().Slice()
 	if len(args) == 0 || strings.TrimSpace(args[0]) == "" {
 		return positionalUpdateInput{}, fmt.Errorf("resource id or url required")
@@ -65,7 +67,7 @@ func (i positionalUpdateInput) ID() string {
 	return i.id
 }
 
-func (i positionalUpdateInput) String(c *cli.Context, name string) string {
+func (i positionalUpdateInput) String(c *cli.Command, name string) string {
 	if value, ok := i.flags[name]; ok {
 		return value
 	}

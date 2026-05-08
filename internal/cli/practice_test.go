@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"testing"
 
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
@@ -12,7 +13,7 @@ func TestAccountManagersList(t *testing.T) {
 	}}
 	srv := newTestServer(t, "/account_managers", data)
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "account-managers", "list"})
+	err := testApp(srv.URL).Run(context.Background(), []string{"fa", "--json", "account-managers", "list"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +25,7 @@ func TestClientsList(t *testing.T) {
 	}}
 	srv := newTestServer(t, "/clients", data)
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "clients", "list"})
+	err := testApp(srv.URL).Run(context.Background(), []string{"fa", "--json", "clients", "list"})
 	if err != nil {
 		t.Fatal(err)
 	}

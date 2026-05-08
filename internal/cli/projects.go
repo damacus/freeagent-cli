@@ -12,14 +12,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func projectsCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "projects",
 		Usage: "Manage projects",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List projects",
@@ -28,13 +28,13 @@ func projectsCommand() *cli.Command {
 					&cli.StringFlag{Name: "status", Usage: "Filter by status (Active, Completed, Cancelled)"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 				},
-				Action: projectsList,
+				Action: action(projectsList),
 			},
 			{
 				Name:      "get",
 				Usage:     "Get a project by ID or URL",
 				ArgsUsage: "<id|url>",
-				Action:    projectsGet,
+				Action:    action(projectsGet),
 			},
 			{
 				Name:  "create",
@@ -50,7 +50,7 @@ func projectsCommand() *cli.Command {
 					&cli.StringFlag{Name: "billing-period", Usage: "Billing period (hour, day)"},
 					&cli.BoolFlag{Name: "is-ir35", Usage: "Mark as IR35 project"},
 				},
-				Action: projectsCreate,
+				Action: action(projectsCreate),
 			},
 			{
 				Name:      "update",
@@ -65,13 +65,13 @@ func projectsCommand() *cli.Command {
 					&cli.StringFlag{Name: "billing-period", Usage: "Billing period (hour, day)"},
 					&cli.BoolFlag{Name: "is-ir35", Usage: "Mark as IR35 project"},
 				},
-				Action: projectsUpdate,
+				Action: action(projectsUpdate),
 			},
 		},
 	}
 }
 
-func projectsList(c *cli.Context) error {
+func projectsList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -81,14 +81,14 @@ func projectsList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
 	query := url.Values{}
 	if v := c.String("contact"); v != "" {
-		contactURL, err := resolveContactValue(c.Context, client, profile.BaseURL, v)
+		contactURL, err := resolveContactValue(commandContext(c), client, profile.BaseURL, v)
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func projectsList(c *cli.Context) error {
 		path += "?" + query.Encode()
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func projectsList(c *cli.Context) error {
 	return nil
 }
 
-func projectsGet(c *cli.Context) error {
+func projectsGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func projectsGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -159,14 +159,14 @@ func projectsGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, projURL, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, projURL, nil, "")
 	if err != nil {
 		return err
 	}
 	return writeJSONOutput(resp)
 }
 
-func projectsCreate(c *cli.Context) error {
+func projectsCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -176,12 +176,12 @@ func projectsCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	contactURL, err := resolveContactValue(c.Context, client, profile.BaseURL, c.String("contact"))
+	contactURL, err := resolveContactValue(commandContext(c), client, profile.BaseURL, c.String("contact"))
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func projectsCreate(c *cli.Context) error {
 		input.IsIR35 = &v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/projects", fa.CreateProjectRequest{Project: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/projects", fa.CreateProjectRequest{Project: input})
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func projectsCreate(c *cli.Context) error {
 	return nil
 }
 
-func projectsUpdate(c *cli.Context) error {
+func projectsUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -240,7 +240,7 @@ func projectsUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -282,7 +282,7 @@ func projectsUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, projURL, fa.UpdateProjectRequest{Project: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, projURL, fa.UpdateProjectRequest{Project: input})
 	if err != nil {
 		return err
 	}

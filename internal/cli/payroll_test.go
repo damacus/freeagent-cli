@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"strings"
 	"testing"
 )
@@ -11,7 +12,7 @@ func TestPayrollCommand_Subcommands(t *testing.T) {
 		t.Fatal("payrollCommand() returned nil")
 	}
 	want := map[string]bool{"get": false, "get-period": false}
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if _, ok := want[sub.Name]; ok {
 			want[sub.Name] = true
 		}
@@ -26,7 +27,7 @@ func TestPayrollCommand_Subcommands(t *testing.T) {
 func TestPayrollGet(t *testing.T) {
 	srv := newTestServer(t, "/payroll/2025", map[string]any{"payroll": map[string]any{"year": 2025}})
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "payroll", "get", "--year", "2025"})
+	err := testApp(srv.URL).Run(context.Background(), []string{"fa", "payroll", "get", "--year", "2025"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +39,7 @@ func TestPayrollProfilesCommand_Subcommands(t *testing.T) {
 		t.Fatal("payrollProfilesCommand() returned nil")
 	}
 	found := false
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if sub.Name == "get" {
 			found = true
 		}

@@ -9,17 +9,17 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func usersCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "users",
 		Usage: "Manage users",
-		Subcommands: []*cli.Command{
-			{Name: "list", Usage: "List users", Action: usersList},
-			{Name: "me", Usage: "Get the authenticated user", Action: usersMe},
-			{Name: "get", Usage: "Get a user by ID or URL", ArgsUsage: "<id|url>", Action: usersGet},
+		Commands: []*cli.Command{
+			{Name: "list", Usage: "List users", Action: action(usersList)},
+			{Name: "me", Usage: "Get the authenticated user", Action: action(usersMe)},
+			{Name: "get", Usage: "Get a user by ID or URL", ArgsUsage: "<id|url>", Action: action(usersGet)},
 			{
 				Name: "create", Usage: "Create a user",
 				Flags: []cli.Flag{
@@ -28,7 +28,7 @@ func usersCommand() *cli.Command {
 					&cli.StringFlag{Name: "last-name", Required: true, Usage: "Last name"},
 					&cli.StringFlag{Name: "role", Usage: "Role (e.g. Director, Employee)"},
 				},
-				Action: usersCreate,
+				Action: action(usersCreate),
 			},
 			{
 				Name: "update", Usage: "Update a user", ArgsUsage: "<id|url>",
@@ -38,14 +38,14 @@ func usersCommand() *cli.Command {
 					&cli.StringFlag{Name: "last-name", Usage: "Last name"},
 					&cli.StringFlag{Name: "role", Usage: "Role"},
 				},
-				Action: usersUpdate,
+				Action: action(usersUpdate),
 			},
-			{Name: "delete", Usage: "Delete a user", ArgsUsage: "<id|url>", Action: usersDelete},
+			{Name: "delete", Usage: "Delete a user", ArgsUsage: "<id|url>", Action: action(usersDelete)},
 		},
 	}
 }
 
-func usersList(c *cli.Context) error {
+func usersList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -55,12 +55,12 @@ func usersList(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/users", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/users", nil, "")
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func usersList(c *cli.Context) error {
 	return nil
 }
 
-func usersMe(c *cli.Context) error {
+func usersMe(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -98,12 +98,12 @@ func usersMe(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, "/users/me", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/users/me", nil, "")
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func usersMe(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func usersGet(c *cli.Context) error {
+func usersGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -121,7 +121,7 @@ func usersGet(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func usersGet(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, u, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, u, nil, "")
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func usersGet(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func usersCreate(c *cli.Context) error {
+func usersCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func usersCreate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func usersCreate(c *cli.Context) error {
 		input.Role = v
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/users", fa.CreateUserRequest{User: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/users", fa.CreateUserRequest{User: input})
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func usersCreate(c *cli.Context) error {
 	return nil
 }
 
-func usersUpdate(c *cli.Context) error {
+func usersUpdate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -197,7 +197,7 @@ func usersUpdate(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func usersUpdate(c *cli.Context) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPut, u, fa.UpdateUserRequest{User: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, u, fa.UpdateUserRequest{User: input})
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func usersUpdate(c *cli.Context) error {
 	return writeJSONOutput(resp)
 }
 
-func usersDelete(c *cli.Context) error {
+func usersDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -248,7 +248,7 @@ func usersDelete(c *cli.Context) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func usersDelete(c *cli.Context) error {
 		return err
 	}
 
-	_, _, _, err = client.Do(c.Context, http.MethodDelete, u, nil, "")
+	_, _, _, err = client.Do(commandContext(c), http.MethodDelete, u, nil, "")
 	if err != nil {
 		return err
 	}

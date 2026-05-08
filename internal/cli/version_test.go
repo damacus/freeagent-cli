@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
 )
@@ -11,7 +12,7 @@ func TestVersionCommand_PrintsAppVersion(t *testing.T) {
 	var stdout bytes.Buffer
 	app.Writer = &stdout
 
-	if err := app.Run([]string{"fa", "version"}); err != nil {
+	if err := app.Run(context.Background(), []string{"fa", "version"}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 

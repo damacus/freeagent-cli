@@ -9,7 +9,7 @@ import (
 
 	"github.com/damacus/freeagent-cli/internal/config"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func rawCommand() *cli.Command {
@@ -21,11 +21,11 @@ func rawCommand() *cli.Command {
 			&cli.StringFlag{Name: "path", Usage: "Path like /v2/invoices"},
 			&cli.StringFlag{Name: "body", Usage: "JSON file to send"},
 		},
-		Action: rawAction,
+		Action: action(rawAction),
 	}
 }
 
-func rawAction(c *cli.Context) error {
+func rawAction(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func rawAction(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -63,9 +63,9 @@ func rawAction(c *cli.Context) error {
 
 	var resp []byte
 	if body != nil {
-		resp, _, _, err = client.Do(c.Context, method, path, bytes.NewReader(body), "application/json")
+		resp, _, _, err = client.Do(commandContext(c), method, path, bytes.NewReader(body), "application/json")
 	} else {
-		resp, _, _, err = client.Do(c.Context, method, path, nil, "")
+		resp, _, _, err = client.Do(commandContext(c), method, path, nil, "")
 	}
 	if err != nil {
 		return err

@@ -2,13 +2,16 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
-func runCLIWithIO(t *testing.T, app interface{ Run([]string) error }, args []string, stdin string) (string, error) {
+func runCLIWithIO(t *testing.T, app interface {
+	Run(context.Context, []string) error
+}, args []string, stdin string) (string, error) {
 	t.Helper()
 
 	oldStdout := os.Stdout
@@ -43,7 +46,7 @@ func runCLIWithIO(t *testing.T, app interface{ Run([]string) error }, args []str
 		close(done)
 	}()
 
-	runErr := app.Run(args)
+	runErr := app.Run(context.Background(), args)
 
 	if err := stdoutW.Close(); err != nil {
 		t.Fatalf("close stdout writer: %v", err)

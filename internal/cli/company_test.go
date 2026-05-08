@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ func TestCompanyCommand_Subcommands(t *testing.T) {
 		"tax-timeline":        false,
 	}
 
-	for _, sub := range cmd.Subcommands {
+	for _, sub := range cmd.Commands {
 		if _, ok := want[sub.Name]; ok {
 			want[sub.Name] = true
 		}
@@ -43,7 +44,7 @@ func TestCompanyGet(t *testing.T) {
 	srv := newTestServer(t, "/company", data)
 	defer srv.Close()
 
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "company", "get"})
+	err := testApp(srv.URL).Run(context.Background(), []string{"fa", "--json", "company", "get"})
 	if err != nil {
 		t.Fatal(err)
 	}

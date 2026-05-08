@@ -18,14 +18,14 @@ import (
 	"github.com/damacus/freeagent-cli/internal/freeagent"
 	fa "github.com/damacus/freeagent-cli/internal/freeagentapi"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 func invoiceCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "invoices",
 		Usage: "Create and send invoices",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "list",
 				Usage: "List invoices",
@@ -37,7 +37,7 @@ func invoiceCommand() *cli.Command {
 					&cli.StringFlag{Name: "status", Usage: "Invoice status"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 				},
-				Action: invoiceList,
+				Action: action(invoiceList),
 			},
 			{
 				Name:  "get",
@@ -46,7 +46,7 @@ func invoiceCommand() *cli.Command {
 					&cli.StringFlag{Name: "id", Usage: "Invoice ID"},
 					&cli.StringFlag{Name: "url", Usage: "Invoice URL"},
 				},
-				Action: invoiceGet,
+				Action: action(invoiceGet),
 			},
 			{
 				Name:  "delete",
@@ -57,7 +57,7 @@ func invoiceCommand() *cli.Command {
 					&cli.BoolFlag{Name: "yes", Usage: "Skip confirmation prompt"},
 					&cli.BoolFlag{Name: "force", Usage: "Allow delete even if not Draft"},
 				},
-				Action: invoiceDelete,
+				Action: action(invoiceDelete),
 			},
 			{
 				Name:  "create",
@@ -72,7 +72,7 @@ func invoiceCommand() *cli.Command {
 					&cli.StringFlag{Name: "lines", Usage: "JSON file with line items"},
 					&cli.StringFlag{Name: "body", Usage: "JSON file with full invoice payload or invoice object"},
 				},
-				Action: invoiceCreate,
+				Action: action(invoiceCreate),
 			},
 			{
 				Name:  "send",
@@ -87,13 +87,13 @@ func invoiceCommand() *cli.Command {
 					&cli.StringFlag{Name: "body", Usage: "JSON file with send payload"},
 					&cli.StringFlag{Name: "message", Usage: "Email body"},
 				},
-				Action: invoiceSend,
+				Action: action(invoiceSend),
 			},
 		},
 	}
 }
 
-func invoiceCreate(c *cli.Context) error {
+func invoiceCreate(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func invoiceCreate(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func invoiceCreate(c *cli.Context) error {
 		return err
 	}
 
-	resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, "/invoices", payload)
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/invoices", payload)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func invoiceCreate(c *cli.Context) error {
 	return nil
 }
 
-func invoiceList(c *cli.Context) error {
+func invoiceList(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -148,7 +148,7 @@ func invoiceList(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -182,7 +182,7 @@ func invoiceList(c *cli.Context) error {
 		path += "?" + encoded
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func invoiceList(c *cli.Context) error {
 	contactCache := make(map[string]string)
 	if len(contactURLs) > 0 {
 		var mu sync.Mutex
-		g, gctx := errgroup.WithContext(c.Context)
+		g, gctx := errgroup.WithContext(commandContext(c))
 		for contactURL := range contactURLs {
 			contactURL := contactURL
 			g.Go(func() error {
@@ -248,7 +248,7 @@ func invoiceList(c *cli.Context) error {
 	return nil
 }
 
-func invoiceGet(c *cli.Context) error {
+func invoiceGet(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -260,7 +260,7 @@ func invoiceGet(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func invoiceGet(c *cli.Context) error {
 		path = fmt.Sprintf("/invoices/%s", id)
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func invoiceGet(c *cli.Context) error {
 	inv := result.Invoice
 	contactDisplay := inv.Contact
 	if inv.Contact != "" {
-		if contactName, err := fetchContactName(c.Context, client, inv.Contact); err == nil && contactName != "" {
+		if contactName, err := fetchContactName(commandContext(c), client, inv.Contact); err == nil && contactName != "" {
 			contactDisplay = fmt.Sprintf("%s (%s)", contactName, inv.Contact)
 		}
 	}
@@ -314,7 +314,7 @@ func invoiceGet(c *cli.Context) error {
 	return nil
 }
 
-func invoiceDelete(c *cli.Context) error {
+func invoiceDelete(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -326,7 +326,7 @@ func invoiceDelete(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -344,7 +344,7 @@ func invoiceDelete(c *cli.Context) error {
 		path = fmt.Sprintf("/invoices/%s", id)
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodGet, path, nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -375,7 +375,7 @@ func invoiceDelete(c *cli.Context) error {
 		}
 	}
 
-	resp, _, _, err = client.Do(c.Context, http.MethodDelete, path, nil, "")
+	resp, _, _, err = client.Do(commandContext(c), http.MethodDelete, path, nil, "")
 	if err != nil {
 		return err
 	}
@@ -417,7 +417,7 @@ func fetchContactName(ctx context.Context, client *freeagent.Client, contactURL 
 	return "", nil
 }
 
-func buildInvoicePayload(c *cli.Context, client *freeagent.Client, baseURL string) (map[string]any, error) {
+func buildInvoicePayload(c *cli.Command, client *freeagent.Client, baseURL string) (map[string]any, error) {
 	var invoice map[string]any
 	payload := map[string]any{}
 
@@ -443,7 +443,7 @@ func buildInvoicePayload(c *cli.Context, client *freeagent.Client, baseURL strin
 	}
 
 	if contact := c.String("contact"); contact != "" {
-		resolved, err := resolveContactValue(c.Context, client, baseURL, contact)
+		resolved, err := resolveContactValue(commandContext(c), client, baseURL, contact)
 		if err != nil {
 			return nil, err
 		}
@@ -500,7 +500,7 @@ func buildInvoicePayload(c *cli.Context, client *freeagent.Client, baseURL strin
 	return payload, nil
 }
 
-func invoiceSend(c *cli.Context) error {
+func invoiceSend(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -512,7 +512,7 @@ func invoiceSend(c *cli.Context) error {
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
 
-	client, _, err := newClient(c.Context, rt, profile)
+	client, _, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -539,7 +539,7 @@ func invoiceSend(c *cli.Context) error {
 		if err := json.Unmarshal(data, &payload); err != nil {
 			return err
 		}
-		resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, path+"/send_email", payload)
+		resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, path+"/send_email", payload)
 		if err != nil {
 			return err
 		}
@@ -567,7 +567,7 @@ func invoiceSend(c *cli.Context) error {
 			email["body"] = message
 		}
 		payload := map[string]any{"invoice": map[string]any{"email": email}}
-		resp, _, _, err := client.DoJSON(c.Context, http.MethodPost, path+"/send_email", payload)
+		resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, path+"/send_email", payload)
 		if err != nil {
 			return err
 		}
@@ -578,7 +578,7 @@ func invoiceSend(c *cli.Context) error {
 		return nil
 	}
 
-	resp, _, _, err := client.Do(c.Context, http.MethodPost, path+"/transitions/mark_as_sent", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodPost, path+"/transitions/mark_as_sent", nil, "")
 	if err != nil {
 		return err
 	}

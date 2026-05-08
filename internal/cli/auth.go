@@ -17,7 +17,7 @@ import (
 	"github.com/damacus/freeagent-cli/internal/config"
 	"github.com/damacus/freeagent-cli/internal/storage"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 const defaultRedirectURI = "http://127.0.0.1:8797/callback"
@@ -26,33 +26,33 @@ func authCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "auth",
 		Usage: "Authenticate with FreeAgent",
-		Subcommands: []*cli.Command{
+		Commands: []*cli.Command{
 			{
 				Name:  "configure",
 				Usage: "Save OAuth app settings to config",
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "redirect",
-						EnvVars: []string{"FREEAGENT_REDIRECT_URI"},
+						Sources: cli.EnvVars("FREEAGENT_REDIRECT_URI"),
 						Usage:   "Override redirect URI",
 					},
 					&cli.StringFlag{
 						Name:    "client-id",
-						EnvVars: []string{"FREEAGENT_CLIENT_ID"},
+						Sources: cli.EnvVars("FREEAGENT_CLIENT_ID"),
 						Usage:   "OAuth client ID",
 					},
 					&cli.StringFlag{
 						Name:    "client-secret",
-						EnvVars: []string{"FREEAGENT_CLIENT_SECRET"},
+						Sources: cli.EnvVars("FREEAGENT_CLIENT_SECRET"),
 						Usage:   "OAuth client secret",
 					},
 					&cli.StringFlag{
 						Name:    "user-agent",
-						EnvVars: []string{"FREEAGENT_USER_AGENT"},
+						Sources: cli.EnvVars("FREEAGENT_USER_AGENT"),
 						Usage:   "Custom User-Agent",
 					},
 				},
-				Action: authConfigure,
+				Action: action(authConfigure),
 			},
 			{
 				Name:  "login",
@@ -64,22 +64,22 @@ func authCommand() *cli.Command {
 					},
 					&cli.StringFlag{
 						Name:    "redirect",
-						EnvVars: []string{"FREEAGENT_REDIRECT_URI"},
+						Sources: cli.EnvVars("FREEAGENT_REDIRECT_URI"),
 						Usage:   "Override redirect URI",
 					},
 					&cli.StringFlag{
 						Name:    "client-id",
-						EnvVars: []string{"FREEAGENT_CLIENT_ID"},
+						Sources: cli.EnvVars("FREEAGENT_CLIENT_ID"),
 						Usage:   "OAuth client ID",
 					},
 					&cli.StringFlag{
 						Name:    "client-secret",
-						EnvVars: []string{"FREEAGENT_CLIENT_SECRET"},
+						Sources: cli.EnvVars("FREEAGENT_CLIENT_SECRET"),
 						Usage:   "OAuth client secret",
 					},
 					&cli.StringFlag{
 						Name:    "user-agent",
-						EnvVars: []string{"FREEAGENT_USER_AGENT"},
+						Sources: cli.EnvVars("FREEAGENT_USER_AGENT"),
 						Usage:   "Custom User-Agent",
 					},
 					&cli.BoolFlag{
@@ -88,28 +88,28 @@ func authCommand() *cli.Command {
 						Usage: "Save OAuth settings to config",
 					},
 				},
-				Action: authLogin,
+				Action: action(authLogin),
 			},
 			{
 				Name:   "status",
 				Usage:  "Show current auth status",
-				Action: authStatus,
+				Action: action(authStatus),
 			},
 			{
 				Name:   "refresh",
 				Usage:  "Refresh access token",
-				Action: authRefresh,
+				Action: action(authRefresh),
 			},
 			{
 				Name:   "logout",
 				Usage:  "Delete stored tokens",
-				Action: authLogout,
+				Action: action(authLogout),
 			},
 		},
 	}
 }
 
-func authLogin(c *cli.Context) error {
+func authLogin(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -151,7 +151,7 @@ func authLogin(c *cli.Context) error {
 		}
 	}
 
-	client, store, err := newClient(c.Context, rt, profile)
+	client, store, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func authLogin(c *cli.Context) error {
 		}
 	}
 
-	token, err := client.ExchangeCode(c.Context, code)
+	token, err := client.ExchangeCode(commandContext(c), code)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func authLogin(c *cli.Context) error {
 	return nil
 }
 
-func authConfigure(c *cli.Context) error {
+func authConfigure(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -246,7 +246,7 @@ func authConfigure(c *cli.Context) error {
 	return nil
 }
 
-func authStatus(c *cli.Context) error {
+func authStatus(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -282,7 +282,7 @@ func authStatus(c *cli.Context) error {
 	return nil
 }
 
-func authRefresh(c *cli.Context) error {
+func authRefresh(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -301,7 +301,7 @@ func authRefresh(c *cli.Context) error {
 		return err
 	}
 
-	client, store, err := newClient(c.Context, rt, profile)
+	client, store, err := newClient(commandContext(c), rt, profile)
 	if err != nil {
 		return err
 	}
@@ -313,7 +313,7 @@ func authRefresh(c *cli.Context) error {
 		return exitf("refresh token missing for profile %s", rt.Profile)
 	}
 
-	refreshed, err := client.Refresh(c.Context, stored.RefreshToken)
+	refreshed, err := client.Refresh(commandContext(c), stored.RefreshToken)
 	if err != nil {
 		return err
 	}
@@ -334,7 +334,7 @@ func authRefresh(c *cli.Context) error {
 	return nil
 }
 
-func authLogout(c *cli.Context) error {
+func authLogout(c *cli.Command) error {
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err

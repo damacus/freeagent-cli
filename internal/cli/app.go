@@ -1,31 +1,32 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v3"
 )
 
 var appVersion = "dev"
 
-func NewApp(version string) *cli.App {
+func NewApp(version string) *cli.Command {
 	appVersion = version
-	app := &cli.App{
-		Name:                 "freeagent",
-		Usage:                "CLI for the FreeAgent API",
-		Version:              version,
-		EnableBashCompletion: true,
+	app := &cli.Command{
+		Name:                  "freeagent",
+		Usage:                 "CLI for the FreeAgent API",
+		Version:               version,
+		EnableShellCompletion: true,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "config",
-				EnvVars: []string{"FREEAGENT_CONFIG"},
+				Sources: cli.EnvVars("FREEAGENT_CONFIG"),
 				Usage:   "Path to config file",
 			},
 			&cli.StringFlag{
 				Name:    "profile",
-				EnvVars: []string{"FREEAGENT_PROFILE"},
+				Sources: cli.EnvVars("FREEAGENT_PROFILE"),
 				Value:   "default",
 				Usage:   "Credential profile name",
 			},
@@ -35,7 +36,7 @@ func NewApp(version string) *cli.App {
 			},
 			&cli.StringFlag{
 				Name:    "base-url",
-				EnvVars: []string{"FREEAGENT_BASE_URL"},
+				Sources: cli.EnvVars("FREEAGENT_BASE_URL"),
 				Usage:   "Override API base URL",
 			},
 			&cli.BoolFlag{
@@ -84,11 +85,30 @@ func NewApp(version string) *cli.App {
 		},
 	}
 
-	cli.AppHelpTemplate = strings.ReplaceAll(cli.AppHelpTemplate, "GLOBAL OPTIONS", "GLOBAL FLAGS")
+	cli.RootCommandHelpTemplate = strings.ReplaceAll(cli.RootCommandHelpTemplate, "GLOBAL OPTIONS", "GLOBAL FLAGS")
 	return app
 }
 
-func initRuntime(c *cli.Context) error {
+func action(fn func(*cli.Command) error) cli.ActionFunc {
+	return func(ctx context.Context, c *cli.Command) error {
+		if c.Metadata == nil {
+			c.Metadata = map[string]any{}
+		}
+		c.Metadata["context"] = ctx
+		return fn(c)
+	}
+}
+
+func commandContext(c *cli.Command) context.Context {
+	if c.Metadata != nil {
+		if ctx, ok := c.Metadata["context"].(context.Context); ok {
+			return ctx
+		}
+	}
+	return context.Background()
+}
+
+func initRuntime(ctx context.Context, c *cli.Command) (context.Context, error) {
 	rt := Runtime{
 		ConfigPath: c.String("config"),
 		Profile:    c.String("profile"),
@@ -98,7 +118,7 @@ func initRuntime(c *cli.Context) error {
 	}
 
 	if rt.Profile == "" {
-		return errors.New("profile cannot be empty")
+		return nil, errors.New("profile cannot be empty")
 	}
 
 	if rt.BaseURL == "" {
@@ -109,22 +129,22 @@ func initRuntime(c *cli.Context) error {
 		}
 	}
 
-	c.App.Metadata = map[string]interface{}{
+	c.Root().Metadata = map[string]interface{}{
 		"runtime": rt,
 	}
 
 	if !strings.HasSuffix(rt.BaseURL, "/v2") {
-		return fmt.Errorf("base-url must include /v2 (got %s)", rt.BaseURL)
+		return nil, fmt.Errorf("base-url must include /v2 (got %s)", rt.BaseURL)
 	}
 
-	return nil
+	return ctx, nil
 }
 
-func runtimeFrom(c *cli.Context) (Runtime, error) {
-	if c.App.Metadata == nil {
+func runtimeFrom(c *cli.Command) (Runtime, error) {
+	if c.Root().Metadata == nil {
 		return Runtime{}, errors.New("runtime not initialized")
 	}
-	if v, ok := c.App.Metadata["runtime"]; ok {
+	if v, ok := c.Root().Metadata["runtime"]; ok {
 		if rt, ok := v.(Runtime); ok {
 			return rt, nil
 		}

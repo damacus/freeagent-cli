@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -13,7 +14,7 @@ func TestRecurringInvoicesList(t *testing.T) {
 	}}
 	srv := newTestServer(t, "/recurring_invoices", data)
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "recurring-invoices", "list"})
+	err := testApp(srv.URL).Run(context.Background(), []string{"fa", "--json", "recurring-invoices", "list"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +26,7 @@ func TestStockItemsList(t *testing.T) {
 	}}
 	srv := newTestServer(t, "/stock_items", data)
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "stock-items", "list"})
+	err := testApp(srv.URL).Run(context.Background(), []string{"fa", "--json", "stock-items", "list"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +38,7 @@ func TestPriceListItemsList(t *testing.T) {
 	}}
 	srv := newTestServer(t, "/price_list_items", data)
 	defer srv.Close()
-	err := testApp(srv.URL).Run([]string{"fa", "--json", "price-list-items", "list"})
+	err := testApp(srv.URL).Run(context.Background(), []string{"fa", "--json", "price-list-items", "list"})
 	if err != nil {
 		t.Fatal(err)
 	}
