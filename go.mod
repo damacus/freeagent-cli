@@ -3,7 +3,7 @@ module github.com/damacus/freeagent-cli
 go 1.25.0
 
 require (
-	github.com/urfave/cli/v3 v3.9.0
+	github.com/urfave/cli/v3 v3.10.0
 	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/sync v0.21.0
 )
