@@ -37,6 +37,19 @@ func TestFileStore_SetGet(t *testing.T) {
 	}
 }
 
+func TestFileStore_RejectsTraversalProfile(t *testing.T) {
+	dir := t.TempDir()
+	fs := &FileStore{Dir: dir}
+	outsidePath := filepath.Join(dir, "..", "outside.json")
+
+	if err := fs.Set("../outside", &Token{AccessToken: "tok"}); err == nil {
+		t.Fatal("expected traversal profile to be rejected")
+	}
+	if _, err := os.Stat(outsidePath); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("expected no file outside token directory, got %v", err)
+	}
+}
+
 func TestFileStore_Get_NotFound(t *testing.T) {
 	fs := &FileStore{Dir: t.TempDir()}
 	_, err := fs.Get("missing")

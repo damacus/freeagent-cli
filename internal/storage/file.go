@@ -16,7 +16,14 @@ func (s *FileStore) tokenPath(profile string) string {
 	return filepath.Join(s.Dir, fmt.Sprintf("%s.json", profile))
 }
 
+func validProfile(profile string) bool {
+	return profile != "" && profile != "." && profile != ".." && filepath.Base(profile) == profile
+}
+
 func (s *FileStore) Get(profile string) (*Token, error) {
+	if !validProfile(profile) {
+		return nil, errors.New("invalid profile name")
+	}
 	data, err := os.ReadFile(s.tokenPath(profile))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -32,6 +39,9 @@ func (s *FileStore) Get(profile string) (*Token, error) {
 }
 
 func (s *FileStore) Set(profile string, token *Token) error {
+	if !validProfile(profile) {
+		return errors.New("invalid profile name")
+	}
 	if err := os.MkdirAll(s.Dir, 0o700); err != nil {
 		return err
 	}
@@ -43,6 +53,9 @@ func (s *FileStore) Set(profile string, token *Token) error {
 }
 
 func (s *FileStore) Delete(profile string) error {
+	if !validProfile(profile) {
+		return errors.New("invalid profile name")
+	}
 	if err := os.Remove(s.tokenPath(profile)); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return ErrNotFound
