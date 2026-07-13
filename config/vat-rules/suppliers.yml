@@ -1,0 +1,122 @@
+---
+version: 1
+reviewed_on: "2026-06-17"
+company: "Webb Agile Solutions Ltd"
+source: "FreeAgent VAT review"
+
+suppliers:
+  windsurf_codeium:
+    name: "Windsurf/Codeium"
+    match:
+      - "Windsurf"
+      - "Codeium"
+      - "WINDSURF"
+    vat_status: "OUT_OF_SCOPE"
+    evidence: "Receipt checked: subtotal equals total, no VAT line."
+    categories:
+      - "Computer Software"
+
+  grammarly:
+    name: "Grammarly"
+    match:
+      - "Grammarly"
+      - "GRAMMARLY"
+    vat_status: "OUT_OF_SCOPE"
+    evidence: "User manually confirmed and changed."
+    categories:
+      - "Computer Software"
+
+  openai:
+    name: "OpenAI"
+    match:
+      - "OpenAI"
+      - "OPENAI"
+    vat_status: "OUT_OF_SCOPE"
+    evidence: "Receipt says Tax 0% and tax to be paid on reverse charge basis; user confirmed OpenAI does not charge VAT."
+    categories:
+      - "Computer Software"
+
+  anthropic:
+    name: "Anthropic"
+    match:
+      - "Anthropic"
+      - "ANTHROPIC"
+    vat_status: "OUT_OF_SCOPE"
+    evidence: "Receipt checked: subtotal equals total, no VAT line."
+    categories:
+      - "Computer Software"
+
+  google_cloud:
+    name: "Google Cloud"
+    match:
+      - "Google Cloud"
+      - "Google CLOUD"
+    vat_status: "OUT_OF_SCOPE"
+    evidence: "User confirmed Google Cloud is a US supplier / 0% treatment."
+    categories:
+      - "Computer Software"
+      - "Web Hosting"
+
+  github:
+    name: "GitHub"
+    match:
+      - "GitHub"
+      - "GITHUB"
+    vat_status: "OUT_OF_SCOPE"
+    evidence: "User supplied GitHub Developer Plan evidence: $4.00 USD, no VAT stated."
+    categories:
+      - "Computer Software"
+
+  cloudflare:
+    name: "Cloudflare"
+    match:
+      - "Cloudflare"
+      - "CLOUDFLARE"
+    vat_status: "OUT_OF_SCOPE"
+    evidence: "Invoice IN-53676341 checked: Cloudflare, Inc., San Francisco, United States; subtotal $45.00 equals total $45.00, with no VAT line."
+    categories:
+      - "Web Hosting"
+
+  nextdns:
+    name: "NextDNS"
+    match:
+      - "NextDNS"
+      - "NEXTDNS"
+    vat_status: "TAXABLE"
+    vat_rate: "20.0"
+    evidence: "Screenshot shows VAT 20%, GBP0.30 on GBP1.49."
+    categories:
+      - "Computer Software"
+
+  google_play_one:
+    name: "Google Play/One"
+    match:
+      - "Google Play"
+      - "Google One"
+      - "Google Commerce Limited"
+    vat_status: "TAXABLE"
+    vat_rate: "20.0"
+    evidence: "Screenshot shows VAT included, GBP33.33."
+    categories:
+      - "Computer Software"
+
+  onepassword:
+    name: "1Password"
+    match:
+      - "1Password"
+    vat_status: "TAXABLE"
+    vat_rate: "20.0"
+    evidence: "Invoice shows Tax 20%, $11.97 on $59.85."
+    categories:
+      - "Computer Software"
+
+  cleverbridge_parallels:
+    name: "Cleverbridge/Parallels"
+    match:
+      - "Cleverbridge"
+      - "Parallels"
+    vat_status: "TAXABLE"
+    vat_rate: "20.0"
+    evidence: "Invoice shows VAT 20%, GBP9.17 on GBP45.82."
+    categories:
+      - "Computer Software"
