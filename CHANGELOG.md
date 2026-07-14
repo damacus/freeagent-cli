@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.3](https://github.com/damacus/freeagent-cli/compare/v0.5.2...v0.5.3) (2026-07-14)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/urfave/cli/v3 to v3.10.0 ([#29](https://github.com/damacus/freeagent-cli/issues/29)) ([c84e466](https://github.com/damacus/freeagent-cli/commit/c84e4660013c79c622c5e7928b338b56aad17859))
+* **deps:** update module github.com/urfave/cli/v3 to v3.10.1 ([#32](https://github.com/damacus/freeagent-cli/issues/32)) ([5e23e9a](https://github.com/damacus/freeagent-cli/commit/5e23e9aa04aea09726bb11c756f018524f937636))
+* **deps:** update module golang.org/x/sync to v0.22.0 ([#34](https://github.com/damacus/freeagent-cli/issues/34)) ([3829926](https://github.com/damacus/freeagent-cli/commit/3829926824275e34f8ba13f4f675c49ad65dfbed))
+* validate token profile paths ([#35](https://github.com/damacus/freeagent-cli/issues/35)) ([3b7b6a1](https://github.com/damacus/freeagent-cli/commit/3b7b6a15b0523c6dc7b0490366a4e51802adf2ee))
+
 ## [0.5.2](https://github.com/damacus/freeagent-cli/compare/v0.5.1...v0.5.2) (2026-06-10)
 
 
