@@ -25,12 +25,15 @@ func TestBankReviewList_JSON(t *testing.T) {
 			if got := r.URL.Query().Get("bank_account"); got != baseURL+"/bank_accounts/1" {
 				t.Fatalf("bank_account query = %q, want %q", got, baseURL+"/bank_accounts/1")
 			}
+			if got := r.URL.Query().Get("view"); got != "marked_for_review" {
+				t.Fatalf("view query = %q, want marked_for_review", got)
+			}
 			if r.Method != http.MethodGet {
 				t.Fatalf("method = %s, want GET", r.Method)
 			}
 			writeJSON(t, w, fa.BankTransactionsResponse{BankTransactions: []fa.BankTransaction{
-				reviewTransaction(baseURL, "1", "Windsurf", "Windsurf August charge", "-12.34", true, "101"),
-				reviewTransaction(baseURL, "2", "Cloudflare", "Cloudflare DNS", "-8.00", true, "102"),
+				reviewTransaction(baseURL, "1", "Windsurf", "Windsurf August charge", "-12.34", false, "101"),
+				reviewTransaction(baseURL, "2", "Cloudflare", "Cloudflare DNS", "-8.00", false, "102"),
 				reviewTransaction(baseURL, "3", "Unmarked", "Should not appear", "-1.00", false),
 			}})
 		case "/bank_transaction_explanations/101":
