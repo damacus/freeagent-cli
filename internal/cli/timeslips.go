@@ -186,6 +186,7 @@ func timeslipsGet(c *cli.Command) error {
 }
 
 func timeslipsCreate(c *cli.Command) error {
+	ctx := commandContext(c)
 	rt, err := runtimeFrom(c)
 	if err != nil {
 		return err
@@ -195,7 +196,7 @@ func timeslipsCreate(c *cli.Command) error {
 		return err
 	}
 	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
-	client, _, err := newClient(commandContext(c), rt, profile)
+	client, _, err := newClient(ctx, rt, profile)
 	if err != nil {
 		return err
 	}
@@ -215,18 +216,32 @@ func timeslipsCreate(c *cli.Command) error {
 		DatedOn: c.String("dated-on"),
 		Hours:   c.String("hours"),
 	}
-	if v := c.String("user"); v != "" {
-		userURL, err := normalizeResourceURL(profile.BaseURL, "users", v)
+	if user := c.String("user"); user != "" {
+		userURL, err := normalizeResourceURL(profile.BaseURL, "users", user)
 		if err != nil {
 			return err
 		}
 		input.User = userURL
+	} else {
+		resp, _, _, err := client.Do(ctx, http.MethodGet, "/users/me", nil, "")
+		if err != nil {
+			return fmt.Errorf("get authenticated user: %w", err)
+		}
+
+		var decoded fa.UserResponse
+		if err := json.Unmarshal(resp, &decoded); err != nil {
+			return fmt.Errorf("decode authenticated user: %w", err)
+		}
+		if decoded.User.URL == "" {
+			return fmt.Errorf("authenticated user response did not include a URL; pass --user explicitly")
+		}
+		input.User = decoded.User.URL
 	}
 	if v := c.String("comment"); v != "" {
 		input.Comment = v
 	}
 
-	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/timeslips", fa.CreateTimeslipRequest{Timeslip: input})
+	resp, _, _, err := client.DoJSON(ctx, http.MethodPost, "/timeslips", fa.CreateTimeslipRequest{Timeslip: input})
 	if err != nil {
 		return err
 	}
