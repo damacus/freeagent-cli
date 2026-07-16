@@ -89,24 +89,52 @@ func TestTimeslipsGetJSON(t *testing.T) {
 	}
 }
 
-func TestTimeslipsCreateJSON(t *testing.T) {
+func TestTimeslipsCreateDefaultsToAuthenticatedUser(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			t.Errorf("expected POST, got %s", r.Method)
-			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
-			return
-		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		_ = json.NewEncoder(w).Encode(fa.TimeslipResponse{
-			Timeslip: fa.Timeslip{
-				URL:     "http://x/v2/timeslips/2",
-				DatedOn: "2024-02-01",
-				Hours:   "4.5",
-				Project: "http://x/v2/projects/1",
-				Task:    "http://x/v2/tasks/1",
-			},
-		})
+
+		switch r.URL.Path {
+		case "/v2/users/me":
+			if r.Method != http.MethodGet {
+				t.Errorf("expected GET, got %s", r.Method)
+				http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+				return
+			}
+			_ = json.NewEncoder(w).Encode(fa.UserResponse{
+				User: fa.User{URL: "http://x/v2/users/1"},
+			})
+		case "/v2/timeslips":
+			if r.Method != http.MethodPost {
+				t.Errorf("expected POST, got %s", r.Method)
+				http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+				return
+			}
+
+			var request fa.CreateTimeslipRequest
+			if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+				t.Errorf("decode request: %v", err)
+				http.Error(w, "invalid request", http.StatusBadRequest)
+				return
+			}
+			if got := request.Timeslip.User; got != "http://x/v2/users/1" {
+				t.Errorf("expected authenticated user URL, got %q", got)
+			}
+
+			w.WriteHeader(http.StatusCreated)
+			_ = json.NewEncoder(w).Encode(fa.TimeslipResponse{
+				Timeslip: fa.Timeslip{
+					URL:     "http://x/v2/timeslips/2",
+					User:    request.Timeslip.User,
+					DatedOn: "2024-02-01",
+					Hours:   "4.5",
+					Project: "http://x/v2/projects/1",
+					Task:    "http://x/v2/tasks/1",
+				},
+			})
+		default:
+			t.Errorf("unexpected request path %q", r.URL.Path)
+			http.NotFound(w, r)
+		}
 	}))
 	defer srv.Close()
 
@@ -122,6 +150,86 @@ func TestTimeslipsCreateJSON(t *testing.T) {
 	}
 	if !strings.Contains(out, "4.5") {
 		t.Errorf("expected hours in output, got: %s", out)
+	}
+}
+
+func TestTimeslipsCreateUsesExplicitUser(t *testing.T) {
+	var srv *httptest.Server
+	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v2/timeslips" {
+			t.Errorf("unexpected request path %q", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+			http.Error(w, "wrong method", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var request fa.CreateTimeslipRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Errorf("decode request: %v", err)
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			return
+		}
+		if got := request.Timeslip.User; got != srv.URL+"/v2/users/2" {
+			t.Errorf("expected explicit user URL, got %q", got)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(fa.TimeslipResponse{
+			Timeslip: fa.Timeslip{
+				URL:     srv.URL + "/v2/timeslips/2",
+				User:    request.Timeslip.User,
+				DatedOn: "2024-02-01",
+				Hours:   "4.5",
+				Project: srv.URL + "/v2/projects/1",
+				Task:    srv.URL + "/v2/tasks/1",
+			},
+		})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "--json", "timeslips", "create",
+		"--project", "1",
+		"--task", "1",
+		"--dated-on", "2024-02-01",
+		"--hours", "4.5",
+		"--user", "2",
+	), "")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTimeslipsCreateRejectsMissingAuthenticatedUserURL(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v2/users/me" {
+			t.Errorf("unexpected request path %q", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(fa.UserResponse{})
+	}))
+	defer srv.Close()
+
+	app := testApp(srv.URL + "/v2")
+	_, err := runCLIWithIO(t, app, cliArgsWithConfig(t, "timeslips", "create",
+		"--project", "1",
+		"--task", "1",
+		"--dated-on", "2024-02-01",
+		"--hours", "4.5",
+	), "")
+	if err == nil {
+		t.Fatal("expected missing authenticated user URL error")
+	}
+	if !strings.Contains(err.Error(), "pass --user explicitly") {
+		t.Fatalf("expected actionable error, got: %v", err)
 	}
 }
 
