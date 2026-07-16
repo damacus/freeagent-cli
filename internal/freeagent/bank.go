@@ -182,19 +182,24 @@ func (c *Client) UpdateBankTransactionExplanation(ctx context.Context, explanati
 }
 
 func (c *Client) ListBankReviewItems(ctx context.Context, opts ListBankTransactionsOptions) ([]BankReviewItem, error) {
+	opts.View = "marked_for_review"
 	transactions, err := c.ListBankTransactions(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	var marked []fa.BankTransaction
-	for _, transaction := range transactions {
-		if transaction.MarkedForReview {
-			marked = append(marked, transaction)
-		}
+	items, err := c.BuildBankReviewItems(ctx, transactions)
+	if err != nil {
+		return nil, err
 	}
 
-	return c.BuildBankReviewItems(ctx, marked)
+	marked := make([]BankReviewItem, 0, len(items))
+	for _, item := range items {
+		if item.MarkedForReview {
+			marked = append(marked, item)
+		}
+	}
+	return marked, nil
 }
 
 func (c *Client) GetBankReviewItem(ctx context.Context, transactionURL string) (BankReviewItem, error) {
@@ -228,7 +233,6 @@ func (c *Client) BuildBankReviewItems(ctx context.Context, transactions []fa.Ban
 			Amount:          transaction.Amount,
 			Description:     transaction.Description,
 			FullDescription: transaction.FullDescription,
-			MarkedForReview: transaction.MarkedForReview,
 		}
 
 		for _, ref := range transaction.BankTransactionExplanations {
@@ -255,6 +259,9 @@ func (c *Client) BuildBankReviewItems(ctx context.Context, transactions []fa.Ban
 			}
 			if explanation.Attachment != nil {
 				item.AttachmentFilenames = append(item.AttachmentFilenames, explanation.Attachment.FileName)
+			}
+			if explanation.MarkedForReview {
+				item.MarkedForReview = true
 			}
 		}
 

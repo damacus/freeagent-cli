@@ -318,22 +318,25 @@ func newBankTestClientFromServer(t *testing.T, srv *httptest.Server) *Client {
 
 func TestListBankReviewItems(t *testing.T) {
 	// The handler serves:
-	//   GET /v2/bank_transactions                 -> list with one marked_for_review transaction
-	//   GET /v2/bank_transaction_explanations/99  -> the explanation for that transaction
+	//   GET /v2/bank_transactions                  -> list with nested review state
+	//   GET /v2/bank_transaction_explanations/99   -> marked explanation
+	//   GET /v2/bank_transaction_explanations/100  -> unmarked explanation
 	//
 	// We need srv.URL inside the handler, so we build the server first.
 	var srvURL string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/v2/bank_transactions":
+			if got := r.URL.Query().Get("view"); got != "marked_for_review" {
+				t.Fatalf("view query = %q, want marked_for_review", got)
+			}
 			json.NewEncoder(w).Encode(fa.BankTransactionsResponse{ //nolint:errcheck
 				BankTransactions: []fa.BankTransaction{
 					{
-						URL:             srvURL + "/v2/bank_transactions/10",
-						Description:     "Supermarket",
-						Amount:          "-42.00",
-						DatedOn:         "2024-05-01",
-						MarkedForReview: true,
+						URL:         srvURL + "/v2/bank_transactions/10",
+						Description: "Supermarket",
+						Amount:      "-42.00",
+						DatedOn:     "2024-05-01",
 						BankTransactionExplanations: []fa.BankTransactionReference{
 							{URL: srvURL + "/v2/bank_transaction_explanations/99"},
 						},
@@ -341,17 +344,31 @@ func TestListBankReviewItems(t *testing.T) {
 					{
 						URL:             srvURL + "/v2/bank_transactions/11",
 						Description:     "Not reviewed",
-						MarkedForReview: false,
+						MarkedForReview: true,
+						BankTransactionExplanations: []fa.BankTransactionReference{
+							{URL: srvURL + "/v2/bank_transaction_explanations/100"},
+						},
 					},
 				},
 			})
 		case "/v2/bank_transaction_explanations/99":
 			json.NewEncoder(w).Encode(fa.BankTransactionExplanationResponse{ //nolint:errcheck
 				BankTransactionExplanation: fa.BankTransactionExplanation{
-					URL:         srvURL + "/v2/bank_transaction_explanations/99",
-					Description: "Grocery shopping",
-					GrossValue:  "-42.00",
-					Category:    "https://api.freeagent.com/v2/categories/283",
+					URL:             srvURL + "/v2/bank_transaction_explanations/99",
+					Description:     "Grocery shopping",
+					GrossValue:      "-42.00",
+					Category:        "https://api.freeagent.com/v2/categories/283",
+					MarkedForReview: true,
+				},
+			})
+		case "/v2/bank_transaction_explanations/100":
+			json.NewEncoder(w).Encode(fa.BankTransactionExplanationResponse{ //nolint:errcheck
+				BankTransactionExplanation: fa.BankTransactionExplanation{
+					URL:             srvURL + "/v2/bank_transaction_explanations/100",
+					Description:     "Approved purchase",
+					GrossValue:      "-10.00",
+					Category:        "https://api.freeagent.com/v2/categories/283",
+					MarkedForReview: false,
 				},
 			})
 		default:
@@ -381,17 +398,42 @@ func TestListBankReviewItems(t *testing.T) {
 	if !item.MarkedForReview {
 		t.Error("expected MarkedForReview to be true")
 	}
+	if len(item.Explanations) != 1 || !item.Explanations[0].MarkedForReview {
+		t.Fatalf("expected one marked explanation, got %+v", item.Explanations)
+	}
 }
 
 func TestListBankReviewItems_NoMarked(t *testing.T) {
-	client, srv := newBankTestClient(t, func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(fa.BankTransactionsResponse{ //nolint:errcheck
-			BankTransactions: []fa.BankTransaction{
-				{URL: "https://api.freeagent.com/v2/bank_transactions/1", MarkedForReview: false},
-			},
-		})
-	})
+	var srvURL string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v2/bank_transactions":
+			json.NewEncoder(w).Encode(fa.BankTransactionsResponse{ //nolint:errcheck
+				BankTransactions: []fa.BankTransaction{
+					{
+						URL:             srvURL + "/v2/bank_transactions/1",
+						MarkedForReview: true,
+						BankTransactionExplanations: []fa.BankTransactionReference{
+							{URL: srvURL + "/v2/bank_transaction_explanations/101"},
+						},
+					},
+				},
+			})
+		case "/v2/bank_transaction_explanations/101":
+			json.NewEncoder(w).Encode(fa.BankTransactionExplanationResponse{ //nolint:errcheck
+				BankTransactionExplanation: fa.BankTransactionExplanation{
+					URL:             srvURL + "/v2/bank_transaction_explanations/101",
+					MarkedForReview: false,
+				},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
 	defer srv.Close()
+	srvURL = srv.URL
+
+	client := newBankTestClientFromServer(t, srv)
 
 	items, err := client.ListBankReviewItems(context.Background(), ListBankTransactionsOptions{})
 	if err != nil {
