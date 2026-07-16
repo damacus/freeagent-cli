@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.4](https://github.com/damacus/freeagent-cli/compare/v0.5.3...v0.5.4) (2026-07-16)
+
+
+### Bug Fixes
+
+* list nested marked bank reviews ([#38](https://github.com/damacus/freeagent-cli/issues/38)) ([0f1e600](https://github.com/damacus/freeagent-cli/commit/0f1e600250b82e517ace30e35f57f5abc8f5cae5))
+
 ## [0.5.3](https://github.com/damacus/freeagent-cli/compare/v0.5.2...v0.5.3) (2026-07-14)
 
 
