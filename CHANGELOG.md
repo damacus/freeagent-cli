@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.5](https://github.com/damacus/freeagent-cli/compare/v0.5.4...v0.5.5) (2026-07-16)
+
+
+### Bug Fixes
+
+* default timeslips to current user ([#41](https://github.com/damacus/freeagent-cli/issues/41)) ([0e11695](https://github.com/damacus/freeagent-cli/commit/0e116957fb01ed6a554e8c75d69998e949d3fd52))
+
 ## [0.5.4](https://github.com/damacus/freeagent-cli/compare/v0.5.3...v0.5.4) (2026-07-16)
 
 
