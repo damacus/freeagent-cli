@@ -64,9 +64,12 @@ func propertiesList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/properties", nil, "")
+	resp, _, _, err := listRequest(c, client, "/properties")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)

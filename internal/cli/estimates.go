@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"text/tabwriter"
 
@@ -87,11 +88,10 @@ func estimatesList(c *cli.Command) error {
 	}
 
 	endpoint := "/estimates"
-	sep := "?"
+	query := url.Values{}
 	appendParam := func(key, value string) {
 		if value != "" {
-			endpoint += sep + key + "=" + value
-			sep = "&"
+			query.Set(key, value)
 		}
 	}
 	appendParam("view", c.String("view"))
@@ -100,11 +100,17 @@ func estimatesList(c *cli.Command) error {
 	appendParam("to_date", c.String("to"))
 	appendParam("updated_since", c.String("updated-since"))
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
+	if len(query) > 0 {
+		endpoint += "?" + query.Encode()
+	}
+	resp, _, _, err := listRequest(c, client, endpoint)
 	if err != nil {
 		return err
 	}
 
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
+	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
 	}

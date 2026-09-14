@@ -38,9 +38,12 @@ func capitalAssetsList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/capital_assets", nil, "")
+	resp, _, _, err := listRequest(c, client, "/capital_assets")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
@@ -139,9 +142,12 @@ func capitalAssetTypesList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/capital_asset_types", nil, "")
+	resp, _, _, err := listRequest(c, client, "/capital_asset_types")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)

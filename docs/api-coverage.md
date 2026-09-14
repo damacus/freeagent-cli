@@ -327,7 +327,7 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `account-managers list` | `--page`, `--per-page` |
 | `account-managers get` | — |
 | `account-managers me` | — |
-| `bank-accounts list` | — |
+| `bank-accounts list` | `--view`, `--page`, `--per-page` |
 | `bank-accounts get` | — |
 | `bank-accounts create` | `--name`, `--type`, `--opening-balance`, `--personal` |
 | `bank-accounts update` | `--name`, `--status`, `--opening-balance` |
@@ -371,41 +371,41 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `bank explain update` | `--dated-on`, `--description`, `--gross-value`, `--category`, `--sales-tax-status`, `--sales-tax-rate`, `--project`, `--receipt` |
 | `bank explain delete` | `--dry-run`, `--yes` |
 | `bank import-statement` | `--dry-run`, `--body`, `--file`, `--bank-account` |
-| `bills list` | `--contact`, `--view`, `--from`, `--to`, `--updated-since` |
+| `bills list` | `--contact`, `--view`, `--from`, `--to`, `--updated-since`, `--project`, `--nested-bill-items`, `--page`, `--per-page` |
 | `bills get` | — |
 | `bills create` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt`, `--body`, `--dry-run` |
 | `bills update` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt`, `--body`, `--dry-run` |
 | `bills delete` | — |
-| `capital-assets list` | — |
+| `capital-assets list` | `--view`, `--include-history`, `--page`, `--per-page` |
 | `capital-assets get` | — |
-| `capital-asset-types list` | — |
+| `capital-asset-types list` | `--page`, `--per-page` |
 | `capital-asset-types get` | — |
 | `capital-asset-types create` | `--name` |
 | `capital-asset-types update` | `--name` |
 | `capital-asset-types delete` | — |
 | `cashflow get` | `--from`, `--to` |
-| `categories list` | — |
+| `categories list` | `--sub-accounts`, `--page`, `--per-page` |
 | `categories get` | — |
 | `categories create` | `--description`, `--nominal-code`, `--category-group`, `--tax-reporting-name` |
 | `categories update` | `--description`, `--tax-reporting-name` |
 | `categories delete` | — |
-| `cis-bands list` | — |
+| `cis-bands list` | `--page`, `--per-page` |
 | `clients list` | `--view`, `--sort`, `--from`, `--to`, `--updated-since`, `--minimal-data`, `--page`, `--per-page` |
 | `company get` | — |
 | `company business-categories` | — |
 | `company tax-timeline` | — |
-| `contacts list` | `--view`, `--sort`, `--updated-since`, `--query` |
+| `contacts list` | `--view`, `--sort`, `--updated-since`, `--query`, `--page`, `--per-page` |
 | `contacts search` | `--query`, `--view`, `--sort`, `--updated-since` |
 | `contacts get` | `--id`, `--url` |
 | `contacts create` | `--body`, `--organisation`, `--first-name`, `--last-name`, `--email`, `--billing-email`, `--phone`, `--mobile`, `--address1`, `--address2`, `--address3`, `--town`, `--region`, `--postcode`, `--country` |
 | `contacts update` | `--body`, `--organisation`, `--first-name`, `--last-name`, `--email`, `--billing-email`, `--phone`, `--mobile`, `--address1`, `--address2`, `--address3`, `--town`, `--region`, `--postcode`, `--country` |
 | `contacts delete` | `--dry-run`, `--yes` |
-| `credit-note-reconciliations list` | `--from`, `--to`, `--updated-since` |
+| `credit-note-reconciliations list` | `--from`, `--to`, `--updated-since`, `--page`, `--per-page` |
 | `credit-note-reconciliations get` | — |
 | `credit-note-reconciliations create` | `--credit-note`, `--invoice`, `--dated-on`, `--gross-value`, `--currency`, `--exchange-rate` |
 | `credit-note-reconciliations update` | `--dated-on`, `--gross-value`, `--currency`, `--exchange-rate` |
 | `credit-note-reconciliations delete` | — |
-| `credit-notes list` | `--contact`, `--view`, `--updated-since` |
+| `credit-notes list` | `--contact`, `--view`, `--updated-since`, `--project`, `--nested-credit-note-items`, `--sort`, `--page`, `--per-page` |
 | `credit-notes get` | — |
 | `credit-notes create` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--payment-terms`, `--body`, `--dry-run` |
 | `credit-notes update` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--body`, `--dry-run` |
@@ -413,8 +413,8 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `credit-notes transition` | `--status` |
 | `credit-notes pdf` | `--output` |
 | `credit-notes send` | `--dry-run`, `--body` |
-| `email-addresses list` | — |
-| `estimates list` | `--view`, `--contact`, `--from`, `--to`, `--updated-since` |
+| `email-addresses list` | `--page`, `--per-page` |
+| `estimates list` | `--view`, `--contact`, `--from`, `--to`, `--updated-since`, `--project`, `--invoice`, `--nested-estimate-items`, `--page`, `--per-page` |
 | `estimates get` | — |
 | `estimates create` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status`, `--body`, `--dry-run` |
 | `estimates update` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status`, `--body`, `--dry-run` |
@@ -427,13 +427,13 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `estimates default-text delete` | `--dry-run` |
 | `estimates send` | `--dry-run`, `--body` |
 | `estimates convert-to-invoice` | `--dry-run` |
-| `expenses list` | `--user`, `--from`, `--to`, `--updated-since` |
+| `expenses list` | `--user`, `--from`, `--to`, `--updated-since`, `--project`, `--view`, `--page`, `--per-page` |
 | `expenses get` | — |
 | `expenses create` | `--dated-on`, `--description`, `--gross-value`, `--category`, `--user`, `--currency`, `--sales-tax-status`, `--sales-tax-rate`, `--project`, `--receipt` |
 | `expenses update` | `--dated-on`, `--description`, `--gross-value`, `--category`, `--sales-tax-status`, `--sales-tax-rate`, `--project`, `--receipt` |
 | `expenses delete` | — |
 | `expenses mileage-settings` | — |
-| `invoices list` | `--view`, `--contact`, `--from`, `--to`, `--status`, `--updated-since` |
+| `invoices list` | `--view`, `--contact`, `--from`, `--to`, `--status`, `--updated-since`, `--project`, `--nested-invoice-items`, `--sort`, `--page`, `--per-page` |
 | `invoices get` | `--id`, `--url` |
 | `invoices delete` | `--id`, `--url`, `--yes`, `--force` |
 | `invoices create` | `--contact`, `--reference`, `--currency`, `--date`, `--due`, `--payment-terms-days`, `--lines`, `--body` |
@@ -451,13 +451,13 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `invoices mark-sent` | `--dry-run` |
 | `invoices mark-scheduled` | `--dry-run` |
 | `invoices mark-cancelled` | `--dry-run` |
-| `journal-sets list` | `--from`, `--to`, `--tag` |
+| `journal-sets list` | `--from`, `--to`, `--tag`, `--updated-since`, `--page`, `--per-page` |
 | `journal-sets get` | — |
 | `journal-sets create` | `--dated-on`, `--description`, `--tag`, `--body`, `--dry-run` |
 | `journal-sets delete` | — |
 | `journal-sets opening-balances` | — |
 | `journal-sets update` | `--dry-run`, `--body` |
-| `notes list` | `--contact`, `--project` |
+| `notes list` | `--contact`, `--project`, `--page`, `--per-page` |
 | `notes get` | — |
 | `notes create` | `--note`, `--parent` |
 | `notes update` | `--note` |
@@ -466,42 +466,42 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `payroll get-period` | `--year`, `--period` |
 | `payroll mark-paid` | `--dry-run`, `--year`, `--payment-date` |
 | `payroll-profiles get` | `--year`, `--user` |
-| `price-list-items list` | — |
+| `price-list-items list` | `--sort`, `--page`, `--per-page` |
 | `price-list-items get` | — |
 | `price-list-items create` | `--dry-run`, `--code`, `--description`, `--item-type`, `--quantity`, `--price`, `--vat-status`, `--sales-tax-rate`, `--second-sales-tax-rate`, `--category`, `--stock-item` |
 | `price-list-items update` | `--dry-run`, `--code`, `--description`, `--item-type`, `--quantity`, `--price`, `--vat-status`, `--sales-tax-rate`, `--second-sales-tax-rate`, `--category`, `--stock-item` |
-| `projects list` | `--contact`, `--status`, `--updated-since` |
+| `projects list` | `--contact`, `--status`, `--updated-since`, `--view`, `--nested`, `--sort`, `--page`, `--per-page` |
 | `projects get` | — |
 | `projects create` | `--name`, `--contact`, `--currency`, `--status`, `--starts-on`, `--ends-on`, `--billing-rate`, `--billing-period`, `--is-ir35` |
 | `projects update` | `--name`, `--status`, `--starts-on`, `--ends-on`, `--billing-rate`, `--billing-period`, `--is-ir35` |
 | `projects delete` | `--dry-run`, `--yes` |
-| `properties list` | — |
+| `properties list` | `--page`, `--per-page` |
 | `properties get` | — |
 | `properties create` | `--address1`, `--address2`, `--town`, `--region`, `--country` |
 | `properties update` | `--address1`, `--address2`, `--town`, `--region`, `--country` |
 | `properties delete` | — |
-| `recurring-invoices list` | `--view`, `--contact` |
+| `recurring-invoices list` | `--view`, `--contact`, `--page`, `--per-page` |
 | `recurring-invoices get` | — |
-| `sales-tax-periods list` | — |
+| `sales-tax-periods list` | `--page`, `--per-page` |
 | `sales-tax-periods get` | — |
 | `sales-tax-periods create` | `--effective-date`, `--sales-tax-name`, `--rate`, `--registration-number` |
 | `sales-tax-periods update` | `--effective-date`, `--sales-tax-name`, `--rate`, `--registration-number` |
 | `sales-tax-periods delete` | — |
-| `stock-items list` | — |
+| `stock-items list` | `--sort`, `--page`, `--per-page` |
 | `stock-items get` | — |
-| `tasks list` | `--project`, `--view`, `--updated-since` |
+| `tasks list` | `--project`, `--view`, `--updated-since`, `--sort`, `--page`, `--per-page` |
 | `tasks get` | — |
 | `tasks create` | `--project`, `--name`, `--billable`, `--billing-rate`, `--billing-period`, `--status` |
 | `tasks update` | `--name`, `--billing-rate`, `--billing-period`, `--status` |
 | `tasks delete` | — |
-| `timeslips list` | `--project`, `--task`, `--user`, `--from`, `--to`, `--updated-since` |
+| `timeslips list` | `--project`, `--task`, `--user`, `--from`, `--to`, `--updated-since`, `--view`, `--nested`, `--page`, `--per-page` |
 | `timeslips get` | — |
 | `timeslips create` | `--project`, `--task`, `--dated-on`, `--hours`, `--user`, `--comment` |
 | `timeslips update` | `--dated-on`, `--hours`, `--comment`, `--task` |
 | `timeslips delete` | — |
 | `timeslips start-timer` | `--dry-run` |
 | `timeslips stop-timer` | `--dry-run` |
-| `users list` | — |
+| `users list` | `--view`, `--page`, `--per-page` |
 | `users me` | — |
 | `users get` | — |
 | `users create` | `--email`, `--first-name`, `--last-name`, `--role` |
@@ -531,3 +531,24 @@ Task creation sends `--project` as the project query parameter. Note creation se
 ### Complete write bodies (#48)
 
 Estimates, credit notes and bills accept `--body FILE` for create/update; journal sets accept it for create as well as the existing update operation. Use the documented singular root object. Nested items, journal entries, money/tax values and bill hire-purchase attributes pass through without scalar-model filtering, preserving false, zero and null. Body mode rejects mixed scalar flags and supports dry-run. Validation checks the envelope, required creation fields, dates and nested array/object shape; FreeAgent remains responsible for account-specific business rules. Existing scalar flags retain their behaviour.
+
+### List options (#49)
+
+Existing one-page resource lists now expose `--page` and `--per-page` (1–100), including contact search. Banking review retains its existing aggregation behaviour. Clients keep their separate minimal-data pagination limit.
+
+| Resource | Additional options |
+| --- | --- |
+| Invoices | project, nested-invoice-items, sort |
+| Estimates | project, invoice, nested-estimate-items |
+| Credit notes | project, nested-credit-note-items, sort |
+| Bills | project, nested-bill-items |
+| Projects | view, nested, sort; status remains an alias for view |
+| Timeslips | view, nested |
+| Expenses | project, view |
+| Stock items, price-list items, tasks | sort |
+| Capital assets | view, include-history |
+| Categories | sub-accounts |
+| Bank accounts, users | view |
+| Journal sets | updated-since |
+
+Date inputs and pagination limits are checked before requests. Nested human output uses labelled nested values; ordinary human tables and raw JSON output remain available. API filters are URL-encoded, and new resource references use the selected profile origin.
