@@ -554,3 +554,7 @@ Date inputs and pagination limits are checked before requests. Nested human outp
 The reference specification now includes the audited missing operations and list query options, corrects the double slash in statement upload and the old accounting-prefixed final-accounts paths, records multipart uploads and complete write envelopes, and models the documented account-manager name. Runtime compatibility models also include minimal clients, stock quantities, price-list attributes and asset history. Legacy fields remain for compatibility. Regenerate with `go generate ./internal/freeagentapi`; generated reference types remain excluded from runtime builds. This is an operation/query audit, not a claim that every response field has a closed schema.
 
 The current bank transaction documentation announces a 1 December 2026 attachment transition: an attachments array and dedicated explanation-attachment writes under API version 2026-09-01. Existing receipt behaviour is preserved; migration needs separate implementation and verification.
+
+### Unresolved mutation contracts (#52)
+
+See [the dated evidence record](api-contract-ambiguities.md). The four contradictions remain unresolved in current official documentation. No speculative mutation routes were added, and #52 remains open for authoritative clarification.
