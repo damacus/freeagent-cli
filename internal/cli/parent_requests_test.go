@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -62,5 +63,42 @@ func TestCreationRejectsInvalidParents(t *testing.T) {
 		if err == nil {
 			t.Errorf("accepted %s", parent)
 		}
+	}
+}
+
+func TestEquivalentAPIOrigins(t *testing.T) {
+	for _, tc := range []struct {
+		a, b string
+		want bool
+	}{
+		{"https://API.EXAMPLE:443/v2", "https://api.example/v2", true},
+		{"http://API.EXAMPLE:80/v2", "http://api.example/v2", true},
+		{"https://[::1]:443/v2", "https://[::1]/v2", true},
+		{"https://api.example:444/v2", "https://api.example/v2", false},
+		{"http://api.example/v2", "https://api.example/v2", false},
+		{"https://other.example/v2", "https://api.example/v2", false},
+	} {
+		a, _ := url.Parse(tc.a)
+		b, _ := url.Parse(tc.b)
+		if sameAPIOrigin(a, b) != tc.want {
+			t.Errorf("%s %s", tc.a, tc.b)
+		}
+	}
+}
+func TestCreationParentProxyPrefix(t *testing.T) {
+	calls := 0
+	var base string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if r.URL.Path != "/proxy/v2/tasks" || r.URL.Query().Get("project") != base+"/projects/7" {
+			t.Errorf("bad request %s", r.URL)
+		}
+		w.Write([]byte(`{"task":{}}`))
+	}))
+	defer srv.Close()
+	base = srv.URL + "/proxy/v2"
+	_, err := runCLIWithIO(t, testApp(base), cliArgsWithConfig(t, "tasks", "create", "--project", base+"/projects/7", "--name", "Task"), "")
+	if err != nil || calls != 1 {
+		t.Fatalf("calls=%d %v", calls, err)
 	}
 }
