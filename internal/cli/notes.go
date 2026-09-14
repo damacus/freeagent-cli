@@ -162,12 +162,23 @@ func notesCreate(c *cli.Command) error {
 		return err
 	}
 
-	input := fa.NoteInput{
-		Note:      c.String("note"),
-		ParentURL: c.String("parent"),
+	parent, err := url.Parse(c.String("parent"))
+	if err != nil || !parent.IsAbs() {
+		return fmt.Errorf("parent must be a contact or project URL")
 	}
+	query := url.Values{}
+	for _, resource := range []string{"contacts", "projects"} {
+		if canonical, err := documentedResourceURL(c, resource, c.String("parent")); err == nil {
+			query.Set(resource[:len(resource)-1], canonical)
+			break
+		}
+	}
+	if len(query) != 1 {
+		return fmt.Errorf("parent must be a contact or project URL on the configured API origin")
+	}
+	input := fa.NoteInput{Note: c.String("note")}
 
-	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/notes", fa.CreateNoteRequest{Note: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/notes?"+query.Encode(), fa.CreateNoteRequest{Note: input})
 	if err != nil {
 		return err
 	}

@@ -515,3 +515,7 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `attachments get` | — |
 | `attachments delete` | `--dry-run`, `--yes` |
 | `sales-tax-rates get` | `--country`, `--date` |
+
+### Parent selection (#51)
+
+Task creation sends `--project` as the project query parameter. Note creation sends the contact or project selected by `--parent` as a query parameter, accepting only matching API-origin URLs. Parent references are omitted from write bodies. Request tests verify both note parent types; live account compatibility remains unverified.

@@ -271,3 +271,20 @@ func paginatedEndpoint(c *cli.Command, endpoint string) (string, error) {
 	}
 	return endpoint, nil
 }
+
+func documentedResourceURL(c *cli.Command, resource, value string) (string, error) {
+	id, err := documentedResourceID(c, resource, value)
+	if err != nil {
+		return "", err
+	}
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return "", err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return "", err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	return strings.TrimRight(profile.BaseURL, "/") + "/" + resource + "/" + id, nil
+}
