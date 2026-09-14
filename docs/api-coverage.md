@@ -523,3 +523,7 @@ Task creation sends `--project` as the project query parameter. Note creation se
 ### Statement file uploads (#47)
 
 `bank import-statement --bank-account ID --file statement.ofx` sends a multipart `statement` file. OFX/QBO, QIF and supported CSV formats are accepted; `--body` retains JSON import and cannot be mixed with `--file`. Dry-run shows file metadata without uploading. Upload success is not import verification: recheck `bank list` for the account and dates. Include every transaction for each day in one upload to avoid incorrect deduplication.
+
+### Complete write bodies (#48)
+
+Estimates, credit notes and bills accept `--body FILE` for create/update; journal sets accept it for create as well as the existing update operation. Use the documented singular root object. Nested items, journal entries, money/tax values and bill hire-purchase attributes pass through without scalar-model filtering, preserving false, zero and null. Body mode rejects mixed scalar flags and supports dry-run. Validation checks the envelope, required creation fields, dates and nested array/object shape; FreeAgent remains responsible for account-specific business rules. Existing scalar flags retain their behaviour.

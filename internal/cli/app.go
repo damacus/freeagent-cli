@@ -92,6 +92,7 @@ func NewApp(version string) *cli.Command {
 	}
 
 	addWorkflowEndpoints(app)
+	addDocumentBodies(app)
 	cli.RootCommandHelpTemplate = strings.ReplaceAll(cli.RootCommandHelpTemplate, "GLOBAL OPTIONS", "GLOBAL FLAGS")
 	return app
 }
