@@ -38,14 +38,15 @@ does not establish that the transactions were imported.
 | [bank_feeds](https://dev.freeagent.com/docs/bank_feeds) | `GET /bank_feeds` | Missing | Supported | `bank-feeds list` |  |
 | [bank_feeds](https://dev.freeagent.com/docs/bank_feeds) | `GET /bank_feeds/:id` | Missing | Supported | `bank-feeds get` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations` | Partial | Supported | `bank explain list` | One page; bank-account, date and updated-since filters; page/per-page. |
-| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `POST /bank_transaction_explanations` | Supported | Supported | `bank explain create` |  |
+| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `POST /bank_transaction_explanations` | Supported | Supported | `bank explain list` | `--bank-account`, `--from`, `--to`, `--updated-since`, `--page`, `--per-page` |
+| `bank explain create` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `DELETE /bank_transaction_explanations/:id` | Missing | Supported | `bank explain delete` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations/:id` | Supported | Supported | `bank explain get` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `PUT /bank_transaction_explanations/:id` | Supported | Supported | `bank explain update` |  |
 | [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `DELETE /bank_transaction/:id` | Missing | Ambiguous | — | Ambiguous: singular delete path conflicts with plural resource paths; not implemented. |
 | [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `GET /bank_transactions` | Supported | Supported | `bank list` |  |
 | [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `GET /bank_transactions/:id` | Supported | Supported | `bank get` |  |
-| [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `POST /bank_transactions/statement` | Missing | Partial | `bank import-statement` | Partial: JSON array import supported; multipart OFX/QIF/CSV upload remains missing. A successful upload does not verify completed import. |
+| [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `POST /bank_transactions/statement` | Missing | Supported | `bank import-statement` | JSON and multipart OFX/QBO/QIF/CSV uploads supported (file limit 16 MiB). A successful upload does not verify completed import. |
 | [bills](https://dev.freeagent.com/docs/bills) | `GET /bills` | Supported | Supported | `bills list` |  |
 | [bills](https://dev.freeagent.com/docs/bills) | `POST /bills` | Supported | Supported | `bills create` |  |
 | [bills](https://dev.freeagent.com/docs/bills) | `DELETE /bills/:id` | Supported | Supported | `bills delete` |  |
@@ -87,7 +88,7 @@ does not establish that the transactions were imported.
 | [credit_note_reconciliations](https://dev.freeagent.com/docs/credit_note_reconciliations) | `GET /credit_note_reconciliations/:id` | Supported | Supported | `credit-note-reconciliations get` |  |
 | [credit_note_reconciliations](https://dev.freeagent.com/docs/credit_note_reconciliations) | `PUT /credit_note_reconciliations/:id` | Supported | Supported | `credit-note-reconciliations update` |  |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `GET /credit_notes` | Supported | Supported | `credit-notes list` |  |
-| [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `POST /credit_notes` | Partial | Partial | `credit-notes create` | Partial fields: existing create flags do not expose line items/journal entries; see field limits below. |
+| [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `POST /credit_notes` | Partial | Supported | `credit-notes create` | Complete --body payload input; legacy scalar flags retained. |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `DELETE /credit_notes/:id` | Supported | Supported | `credit-notes delete` |  |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `GET /credit_notes/:id` | Supported | Supported | `credit-notes get` |  |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `PUT /credit_notes/:id` | Supported | Supported | `credit-notes update` |  |
@@ -100,7 +101,7 @@ does not establish that the transactions were imported.
 | [estimates](https://dev.freeagent.com/docs/estimates) | `DELETE /estimate_items/:id` | Missing | Supported | `estimate-items delete` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `PUT /estimate_items/:id` | Missing | Supported | `estimate-items update` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `GET /estimates` | Supported | Supported | `estimates list` |  |
-| [estimates](https://dev.freeagent.com/docs/estimates) | `POST /estimates` | Partial | Partial | `estimates create` | Partial fields: existing create flags do not expose line items/journal entries; see field limits below. |
+| [estimates](https://dev.freeagent.com/docs/estimates) | `POST /estimates` | Partial | Supported | `estimates create` | Complete --body payload input; legacy scalar flags retained. |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `DELETE /estimates/:id` | Supported | Supported | `estimates delete` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `GET /estimates/:id` | Supported | Supported | `estimates get` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `PUT /estimates/:id` | Supported | Supported | `estimates update` |  |
@@ -152,7 +153,7 @@ does not establish that the transactions were imported.
 | [invoices](https://dev.freeagent.com/docs/invoices) | `PUT /invoices/default_additional_text` | Missing | Supported | `invoices default-text set` |  |
 | [invoices](https://dev.freeagent.com/docs/invoices) | `GET /invoices/timeline` | Missing | Supported | `invoices timeline` |  |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `GET /journal_sets` | Supported | Supported | `journal-sets list` |  |
-| [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `POST /journal_sets` | Partial | Partial | `journal-sets create` | Partial fields: existing create flags do not expose line items/journal entries; see field limits below. |
+| [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `POST /journal_sets` | Partial | Supported | `journal-sets create` | Complete --body payload input; legacy scalar flags retained. |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `DELETE /journal_sets/:id` | Supported | Supported | `journal-sets delete` |  |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `GET /journal_sets/:id` | Supported | Supported | `journal-sets get` |  |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `PUT /journal_sets/:id` | Missing | Supported | `journal-sets update` |  |
@@ -233,7 +234,7 @@ These are query parameters shown in the fetched endpoint examples, compared with
 | [balance_sheet](https://dev.freeagent.com/docs/balance_sheet) | `as_at_date` | `accounting balance-sheet`: `--as-at` |
 | [bank_accounts](https://dev.freeagent.com/docs/bank_accounts) | `view` | `bank-accounts list`: none |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `bank_account`, `from_date`, `to_date`, `updated_since` | `bank review list`: `--bank-account`, `--from`, `--to`, `--updated-since`, `--description-contains`, `--has-attachment`, `--has-explanation`, `--category`, `--per-page` |
-| [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `bank_account`, `from_date`, `last_uploaded`, `to_date`, `updated_since`, `view` | `bank list`: `--bank-account`, `--from`, `--to`, `--updated-since`, `--view`, `--per-page`; `bank import-statement`: `--dry-run`, `--body`, `--bank-account` |
+| [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `bank_account`, `from_date`, `last_uploaded`, `to_date`, `updated_since`, `view` | `bank list`: `--bank-account`, `--from`, `--to`, `--updated-since`, `--view`, `--per-page`; `bank import-statement`: `--dry-run`, `--body`, `--file`, `--bank-account` |
 | [bills](https://dev.freeagent.com/docs/bills) | `contact`, `from_date`, `nested_bill_items`, `project`, `to_date`, `updated_since`, `view` | `bills list`: `--contact`, `--view`, `--from`, `--to`, `--updated-since` |
 | [capital_assets](https://dev.freeagent.com/docs/capital_assets) | `include_history`, `view` | `capital-assets list`: none |
 | [cashflow](https://dev.freeagent.com/docs/cashflow) | `from_date`, `to_date` | `cashflow get`: `--from`, `--to` |
@@ -257,13 +258,15 @@ These are query parameters shown in the fetched endpoint examples, compared with
 | [trial_balance](https://dev.freeagent.com/docs/trial_balance) | `from_date`, `to_date` | `accounting trial-balance`: `--from`, `--to` |
 | [users](https://dev.freeagent.com/docs/users) | `view` | `users list`: none |
 
+`bank explain list` sends `bank_account`, `from_date`, `to_date`, `updated_since`, `page` and `per_page` to the plain explanations endpoint.
+
 ## Remaining gaps and limits
 
 Tracked follow-ups:
 
 | Gap | GitHub issue |
 | --- | --- |
-| Multipart OFX/QIF/CSV statement uploads | [#47](https://github.com/damacus/freeagent-cli/issues/47) |
+| Statement uploads implemented (JSON and files up to 16 MiB) | [#47](https://github.com/damacus/freeagent-cli/issues/47) |
 | Nested document and journal write fields | [#48](https://github.com/damacus/freeagent-cli/issues/48) |
 | Remaining list pagination, filters and nested results | [#49](https://github.com/damacus/freeagent-cli/issues/49) |
 | Plain bank explanation listing | [#50](https://github.com/damacus/freeagent-cli/issues/50) |
@@ -284,7 +287,7 @@ Standalone `attachments get` returns metadata and expiring `content_src` URLs;
 is documented. See the README for examples.
 
 - Dedicated wrappers now cover the unambiguous operations in this matrix. Price-list deletion, bank-transaction deletion and payroll unpaid marking are held back for the documentation inconsistencies shown above. The Tasks page also incorrectly shows a users delete path; the existing tasks delete command is retained but not counted as confirmation of that example.
-- Bank statement import accepts the documented JSON transaction-array payload. Multipart OFX/QIF/CSV file upload remains missing. HTTP success confirms upload only: use `bank list --bank-account ID` or the FreeAgent application to check whether import completed. Include all transactions for each day to avoid incorrect deduplication.
+- Bank statement import accepts the documented JSON transaction-array payload. Multipart OFX/QBO/QIF/CSV file upload is supported up to 16 MiB. HTTP success confirms upload only: use `bank list --bank-account ID` or the FreeAgent application to check whether import completed. Include all transactions for each day to avoid incorrect deduplication.
 - Estimate items, document email and CIS updates accept wrapped JSON files via `--body`. Validation checks object shape, required fields and selected date/decimal/enum constraints; FreeAgent remains responsible for full domain validation, attachment limits and company-specific eligibility. `invoices direct-debit` actually collects payment when eligible, so it requires `--yes` or `--dry-run`; it is distinct from tax payment status markers.
 - Existing estimate and credit-note create/update flags omit nested line items and several money/tax fields. Existing journal creation omits journal entries. The new invoice and journal update commands accept a JSON object or wrapped payload via `--body`; they preserve nested data, false, zero and null. They check object shape and dates, but FreeAgent still validates domain rules and account permissions. Invoice status changes use the explicit marker commands.
 - Many existing lists still lack explicit pagination controls, nested record flags, project filters or sort options. In particular: invoices (project, nested items, sort); estimates (project, invoice, nested items); credit notes (project, nested items, sort); bills (project, nested items); projects (view, nested, sort); timeslips (view, nested); stock/price lists (sort); capital assets (view, history); categories (sub-accounts). Their endpoint rows must not be read as full filter parity.
@@ -362,15 +365,16 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `bank review get` | — |
 | `bank review approve` | `--bank-account`, `--from`, `--to`, `--updated-since`, `--description-contains`, `--has-attachment`, `--has-explanation`, `--category`, `--per-page`, `--ids`, `--ids-type` |
 | `bank review attach-receipt` | `--explanation`, `--file`, `--approve` |
+| `bank explain list` | `--bank-account`, `--from`, `--to`, `--updated-since`, `--page`, `--per-page` |
 | `bank explain create` | `--bank-transaction`, `--dated-on`, `--description`, `--gross-value`, `--category`, `--sales-tax-status`, `--sales-tax-rate`, `--project`, `--receipt` |
 | `bank explain get` | — |
 | `bank explain update` | `--dated-on`, `--description`, `--gross-value`, `--category`, `--sales-tax-status`, `--sales-tax-rate`, `--project`, `--receipt` |
 | `bank explain delete` | `--dry-run`, `--yes` |
-| `bank import-statement` | `--dry-run`, `--body`, `--bank-account` |
+| `bank import-statement` | `--dry-run`, `--body`, `--file`, `--bank-account` |
 | `bills list` | `--contact`, `--view`, `--from`, `--to`, `--updated-since` |
 | `bills get` | — |
-| `bills create` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt` |
-| `bills update` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt` |
+| `bills create` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt`, `--body`, `--dry-run` |
+| `bills update` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt`, `--body`, `--dry-run` |
 | `bills delete` | — |
 | `capital-assets list` | — |
 | `capital-assets get` | — |
@@ -403,8 +407,8 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `credit-note-reconciliations delete` | — |
 | `credit-notes list` | `--contact`, `--view`, `--updated-since` |
 | `credit-notes get` | — |
-| `credit-notes create` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--payment-terms` |
-| `credit-notes update` | `--contact`, `--dated-on`, `--currency`, `--due-on` |
+| `credit-notes create` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--payment-terms`, `--body`, `--dry-run` |
+| `credit-notes update` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--body`, `--dry-run` |
 | `credit-notes delete` | — |
 | `credit-notes transition` | `--status` |
 | `credit-notes pdf` | `--output` |
@@ -412,8 +416,8 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `email-addresses list` | — |
 | `estimates list` | `--view`, `--contact`, `--from`, `--to`, `--updated-since` |
 | `estimates get` | — |
-| `estimates create` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status` |
-| `estimates update` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status` |
+| `estimates create` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status`, `--body`, `--dry-run` |
+| `estimates update` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status`, `--body`, `--dry-run` |
 | `estimates delete` | — |
 | `estimates transition` | `--status` |
 | `estimates pdf` | `--output` |
@@ -449,7 +453,7 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `invoices mark-cancelled` | `--dry-run` |
 | `journal-sets list` | `--from`, `--to`, `--tag` |
 | `journal-sets get` | — |
-| `journal-sets create` | `--dated-on`, `--description`, `--tag` |
+| `journal-sets create` | `--dated-on`, `--description`, `--tag`, `--body`, `--dry-run` |
 | `journal-sets delete` | — |
 | `journal-sets opening-balances` | — |
 | `journal-sets update` | `--dry-run`, `--body` |
@@ -522,7 +526,7 @@ Task creation sends `--project` as the project query parameter. Note creation se
 
 ### Statement file uploads (#47)
 
-`bank import-statement --bank-account ID --file statement.ofx` sends a multipart `statement` file. OFX/QBO, QIF and supported CSV formats are accepted; `--body` retains JSON import and cannot be mixed with `--file`. Dry-run shows file metadata without uploading. Upload success is not import verification: recheck `bank list` for the account and dates. Include every transaction for each day in one upload to avoid incorrect deduplication.
+`bank import-statement --bank-account ID --file statement.ofx` sends a multipart `statement` file. OFX/QBO, QIF and supported CSV formats up to 16 MiB are accepted; `--body` retains JSON import and cannot be mixed with `--file`. Dry-run shows file metadata without uploading. Upload success is not import verification: recheck `bank list` for the account and dates. Include every transaction for each day in one upload to avoid incorrect deduplication.
 
 ### Complete write bodies (#48)
 
