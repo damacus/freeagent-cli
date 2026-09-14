@@ -56,6 +56,9 @@ Manual flow:
 
 ## Usage
 
+The [API coverage matrix](docs/api-coverage.md) compares documented operations,
+flags and remaining gaps. It distinguishes dedicated commands from raw API access.
+
 View tax returns and their breakdowns:
 
 ```sh
@@ -100,6 +103,40 @@ base64 PDF API envelope. Invoice and journal updates accept either a JSON object
 of fields or an object wrapped in `invoice` / `journal_set`. Existing CLI flags
 and JSON output remain available. Use each command's `--help` for required flags.
 
+Account locks and practice administration:
+
+```sh
+./freeagent account-locks list
+./freeagent account-locks set --dry-run --locked-to-date 2026-03-31
+./freeagent account-locks delete --dry-run
+./freeagent account-managers list --page 1 --per-page 100
+./freeagent account-managers get 123
+./freeagent account-managers get me
+./freeagent clients list --view active --sort=-updated_at
+./freeagent clients list --minimal-data --page 1 --per-page 500
+./freeagent practice get
+```
+
+`practise get` is an alias for `practice get`. Practice endpoints require a
+practice-enabled application and an authorised account manager. Client lists
+fetch one page per request and support `--from`, `--to` and `--updated-since`.
+The usual maximum is 100 clients per page, rising to 500 with `--minimal-data`.
+Only the user account lock can be set or removed; deletion requires `--yes`
+unless using `--dry-run`. FreeAgent validates the permitted lock date range.
+
+Receipt uploads already attach files through their parent records:
+
+- `bills create/update --receipt FILE`
+- `expenses create/update --receipt FILE`
+- `bank explain create/update --receipt FILE`
+- `bank review attach-receipt --explanation ID --file FILE`
+
+These commands embed the file contents, filename and detected content type in
+the parent request. Standalone `attachments get ID` returns metadata, expiring
+`content_src` download URLs and `expires_at`; it does not download the file.
+`attachments delete --yes ID` removes the attachment. Use `--dry-run` to preview
+deletion. The documented standalone attachment API has no list or upload route.
+
 Nested operations use the documented wrapped JSON payload with `--body`:
 
 ```sh
@@ -129,7 +166,7 @@ Example `estimate-email.json`, using an existing FreeAgent email template:
 Credit-note email payloads use `credit_note.email` with `to`, `from`, `subject`
 and `body`. The sender must be a registered user. CIS updates use a
 `cis_settings` object; setting a registration section to `null` deregisters it.
-See the [FreeAgent API documentation](https://dev.freeagent.com/docs) for payload details.
+See the linked [coverage matrix](docs/api-coverage.md) for official payload details.
 
 Example `statement.json`:
 
