@@ -84,3 +84,19 @@ func TestListInvalidOptionsDoNotRequest(t *testing.T) {
 		}
 	}
 }
+
+func TestLegacyListFiltersEscapeReservedCharacters(t *testing.T) {
+	for _, tc := range []struct{ group, flag, key string }{{"journal-sets", "tag", "tag"}, {"estimates", "view", "view"}, {"credit-notes", "view", "view"}, {"recurring-invoices", "view", "view"}} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if len(r.URL.Query()) != 1 || r.URL.Query().Get(tc.key) != "sales & marketing+50%#x" {
+				t.Errorf("corrupt query %s", r.URL)
+			}
+			w.Write([]byte(`{}`))
+		}))
+		_, err := runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, "--json", tc.group, "list", "--"+tc.flag, "sales & marketing+50%#x"), "")
+		srv.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}

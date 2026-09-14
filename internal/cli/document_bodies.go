@@ -24,6 +24,7 @@ func addDocumentBodies(app *cli.Command) {
 				continue
 			}
 			resource := strings.ReplaceAll(group.Name, "-", "_")
+			cmd.StopOnNthArg = nil
 			original := cmd.Action
 			required := []string{}
 			scalar := []string{}
@@ -79,7 +80,7 @@ func documentBodyValidator(envelope string, create bool) payloadValidator {
 			return err
 		}
 		if create {
-			fields := map[string][]string{"estimate": {"contact", "dated_on", "currency", "reference", "status", "estimate_type"}, "credit_note": {"contact", "dated_on"}, "bill": {"contact", "dated_on", "due_on", "reference"}, "journal_set": {"dated_on", "description"}}[envelope]
+			fields := map[string][]string{"estimate": {"contact", "dated_on", "currency"}, "credit_note": {"contact", "dated_on"}, "bill": {"contact", "dated_on"}, "journal_set": {"dated_on", "description"}}[envelope]
 			for _, field := range fields {
 				if _, err := requiredPayloadString(object, field); err != nil {
 					return err
@@ -88,7 +89,7 @@ func documentBodyValidator(envelope string, create bool) payloadValidator {
 			if envelope == "credit_note" {
 				raw, ok := object["payment_terms_in_days"]
 				var days int
-				if !ok || json.Unmarshal(raw, &days) != nil || string(raw) == "null" || days < 0 {
+				if ok && (json.Unmarshal(raw, &days) != nil || string(raw) == "null" || days < 0) {
 					return fmt.Errorf("payment_terms_in_days must be a non-negative integer")
 				}
 			}

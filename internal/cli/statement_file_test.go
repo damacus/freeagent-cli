@@ -11,7 +11,7 @@ import (
 )
 
 func TestStatementFileUpload(t *testing.T) {
-	for _, ext := range []string{"ofx", "qif", "csv"} {
+	for _, ext := range []string{"ofx", "qbo", "qif", "csv"} {
 		t.Run(ext, func(t *testing.T) {
 			content := []byte("sample statement\r\nwith bytes\x00")
 			name := "September accounts." + ext
@@ -33,7 +33,7 @@ func TestStatementFileUpload(t *testing.T) {
 					t.Fatal(err)
 				}
 				data, _ := io.ReadAll(part)
-				wantType := map[string]string{"ofx": "application/x-ofx", "qif": "application/x-qif", "csv": "text/csv"}[ext]
+				wantType := map[string]string{"ofx": "application/x-ofx", "qbo": "application/x-ofx", "qif": "application/x-qif", "csv": "text/csv"}[ext]
 				if part.FormName() != "statement" || part.FileName() != name || string(data) != string(content) || part.Header.Get("Content-Type") != wantType {
 					t.Error("multipart content mismatch")
 				}
@@ -69,5 +69,22 @@ func TestStatementFileAPIError(t *testing.T) {
 	out, err := runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, "bank", "import-statement", "--bank-account", "7", "--file", file), "")
 	if err == nil || strings.Contains(out, "Uploaded: true") {
 		t.Fatalf("%s %v", out, err)
+	}
+}
+
+func TestStatementRejectsOversizedFiles(t *testing.T) {
+	file, err := os.Create(filepath.Join(t.TempDir(), "large.ofx"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = file.Truncate(maxStatementFileSize + 1); err != nil {
+		t.Fatal(err)
+	}
+	file.Close()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { t.Error("unexpected request") }))
+	defer srv.Close()
+	_, err = runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, "bank", "import-statement", "--bank-account", "7", "--file", file.Name()), "")
+	if err == nil || !strings.Contains(err.Error(), "16 MiB") {
+		t.Fatalf("%v", err)
 	}
 }

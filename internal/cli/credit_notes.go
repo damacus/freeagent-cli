@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"text/tabwriter"
 
@@ -82,17 +83,19 @@ func creditNotesList(c *cli.Command) error {
 	}
 
 	endpoint := "/credit_notes"
-	sep := "?"
+	query := url.Values{}
 	appendParam := func(key, value string) {
 		if value != "" {
-			endpoint += sep + key + "=" + value
-			sep = "&"
+			query.Set(key, value)
 		}
 	}
 	appendParam("contact", c.String("contact"))
 	appendParam("view", c.String("view"))
 	appendParam("updated_since", c.String("updated-since"))
 
+	if len(query) > 0 {
+		endpoint += "?" + query.Encode()
+	}
 	resp, _, _, err := listRequest(c, client, endpoint)
 	if err != nil {
 		return err

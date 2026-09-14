@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"text/tabwriter"
 
@@ -49,16 +50,18 @@ func recurringInvoicesList(c *cli.Command) error {
 	}
 
 	endpoint := "/recurring_invoices"
-	sep := "?"
+	query := url.Values{}
 	appendParam := func(key, value string) {
 		if value != "" {
-			endpoint += sep + key + "=" + value
-			sep = "&"
+			query.Set(key, value)
 		}
 	}
 	appendParam("view", c.String("view"))
 	appendParam("contact", c.String("contact"))
 
+	if len(query) > 0 {
+		endpoint += "?" + query.Encode()
+	}
 	resp, _, _, err := listRequest(c, client, endpoint)
 	if err != nil {
 		return err
