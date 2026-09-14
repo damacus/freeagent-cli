@@ -519,3 +519,7 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 ### Parent selection (#51)
 
 Task creation sends `--project` as the project query parameter. Note creation sends the contact or project selected by `--parent` as a query parameter, accepting only matching API-origin URLs. Parent references are omitted from write bodies. Request tests verify both note parent types; live account compatibility remains unverified.
+
+### Statement file uploads (#47)
+
+`bank import-statement --bank-account ID --file statement.ofx` sends a multipart `statement` file. OFX/QBO, QIF and supported CSV formats are accepted; `--body` retains JSON import and cannot be mixed with `--file`. Dry-run shows file metadata without uploading. Upload success is not import verification: recheck `bank list` for the account and dates. Include every transaction for each day in one upload to avoid incorrect deduplication.
