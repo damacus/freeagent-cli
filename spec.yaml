@@ -646,6 +646,18 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bank_transaction_explanation
+              properties:
+                bank_transaction_explanation:
+                  type: object
+                  additionalProperties: true
   /v2/bank_transactions:
     get:
       tags:
@@ -936,32 +948,6 @@ paths:
       responses:
         "200":
           description: ""
-  /v2/capital_assets/{id}/:
-    get:
-      tags:
-        - Capital Assets
-      summary: Get a single capital asset
-      description: Get a single capital asset
-      operationId: getASingleCapitalAsset
-      parameters:
-        - name: include_history
-          in: query
-          schema:
-            type: string
-            example: "true"
-          description: >-
-            Retrieves information about events in the capital asset life cycle
-            (such as purchase, depreciation, and disposal).
-      responses:
-        "200":
-          description: ""
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          example: ""
   /v2/capital_asset_types:
     get:
       tags:
@@ -2403,6 +2389,18 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - expense
+              properties:
+                expense:
+                  type: object
+                  additionalProperties: true
   /v2/expenses/mileage_settings:
     get:
       tags:
@@ -4613,6 +4611,18 @@ paths:
       responses:
         '200':
           description: Successful response; raw API fields are preserved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user
+              properties:
+                user:
+                  type: object
+                  additionalProperties: true
   /v2/bank_transactions/statement:
     post:
       tags:
@@ -4727,6 +4737,18 @@ paths:
       responses:
         '200':
           description: Successful response; raw API fields are preserved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - account_lock
+              properties:
+                account_lock:
+                  type: object
+                  additionalProperties: true
   /v2/account_managers/me:
     get:
       operationId: getVAccountManagersMe
@@ -4797,19 +4819,30 @@ paths:
             type: string
   /v2/capital_assets/{id}:
     get:
-      operationId: getVCapitalAssetsId
-      summary: capital-assets get
-      externalDocs:
-        url: https://dev.freeagent.com/docs/capital_assets
-      responses:
-        '200':
-          description: Successful response; raw API fields are preserved.
+      tags:
+        - Capital Assets
+      summary: Get a single capital asset
+      description: Get a single capital asset
+      operationId: getASingleCapitalAsset
       parameters:
-        - name: id
-          in: path
-          required: true
+        - name: include_history
+          in: query
           schema:
             type: string
+            example: "true"
+          description: >-
+            Retrieves information about events in the capital asset life cycle
+            (such as purchase, depreciation, and disposal).
+      responses:
+        "200":
+          description: ""
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          example: ""
   /v2/cis_settings:
     get:
       operationId: getVCisSettings
@@ -4827,6 +4860,18 @@ paths:
       responses:
         '200':
           description: Successful response; raw API fields are preserved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cis_settings
+              properties:
+                cis_settings:
+                  type: object
+                  additionalProperties: true
   /v2/corporation_tax_returns:
     get:
       operationId: getVCorporationTaxReturns
@@ -4981,6 +5026,17 @@ paths:
       responses:
         '200':
           description: Successful response; raw API fields are preserved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - default_additional_text
+              properties:
+                default_additional_text:
+                  type: string
   /v2/final_accounts_reports/{period_ends_on}/mark_as_filed:
     put:
       operationId: putVFinalAccountsReportsPeriodEndsOnMarkAsFiled
@@ -5217,6 +5273,17 @@ paths:
       responses:
         '200':
           description: Successful response; raw API fields are preserved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - default_additional_text
+              properties:
+                default_additional_text:
+                  type: string
   /v2/payroll/{year}/payments/{payment_date}/mark_as_paid:
     put:
       operationId: putVPayrollYearPaymentsPaymentDateMarkAsPaid
@@ -5356,3 +5423,47 @@ components:
         email:
           type: string
       additionalProperties: true
+security:
+  - oauth2: []
+tags:
+  - name: _Authorization
+  - name: Accountancy Practice API
+  - name: Attachments
+  - name: Bank Accounts
+  - name: Bank Transaction Explanations
+  - name: Bank Transactions
+  - name: Bills
+  - name: Bill Items
+  - name: Capital Assets
+  - name: Capital Asset Types
+  - name: Cashflow
+  - name: Categories
+  - name: CIS Bands
+  - name: Company
+  - name: Contacts
+  - name: Credit Notes
+  - name: Credit Note Transitions
+  - name: Credit Note Reconciliations
+  - name: Email Addresses
+  - name: Estimates
+  - name: Estimate Transitions
+  - name: Estimates Items
+  - name: Expenses
+  - name: Invoices
+  - name: Invoice Transitions
+  - name: Journal Sets
+  - name: Notes
+  - name: Payroll
+  - name: Payroll Profiles
+  - name: Price List Items
+  - name: Profit & Loss
+  - name: Properties
+  - name: Projects
+  - name: Recurring Invoices
+  - name: Sales Tax Periods
+  - name: Stock Items
+  - name: Tasks
+  - name: Timeslips
+  - name: Timers
+  - name: Trial Balance
+  - name: Users

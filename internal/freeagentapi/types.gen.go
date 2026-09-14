@@ -24,6 +24,11 @@ type DocumentedAccountManager struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
+// PutVAccountLocksJSONBody defines parameters for PutVAccountLocks.
+type PutVAccountLocksJSONBody struct {
+	AccountLock map[string]interface{} `json:"account_lock"`
+}
+
 // ListAllAccountManagersParams defines parameters for ListAllAccountManagers.
 type ListAllAccountManagersParams struct {
 	Page    *int `form:"page,omitempty" json:"page,omitempty"`
@@ -152,6 +157,11 @@ type DeleteABankTransactionExplanationJSONBody struct {
 		RebillFactor    *string `json:"rebill_factor,omitempty"`
 		RebillType      *string `json:"rebill_type,omitempty"`
 	} `json:"bank_transaction_explanation,omitempty"`
+}
+
+// PutVBankTransactionExplanationsIdJSONBody defines parameters for PutVBankTransactionExplanationsId.
+type PutVBankTransactionExplanationsIdJSONBody struct {
+	BankTransactionExplanation map[string]interface{} `json:"bank_transaction_explanation"`
 }
 
 // ListAllBankTransactionsUnderACertainBankAccountParams defines parameters for ListAllBankTransactionsUnderACertainBankAccount.
@@ -287,6 +297,11 @@ type UpdateCategoryJSONBody struct {
 		NominalCode      *string `json:"nominal_code,omitempty"`
 		TaxReportingName *string `json:"tax_reporting_name,omitempty"`
 	} `json:"category,omitempty"`
+}
+
+// PutVCisSettingsJSONBody defines parameters for PutVCisSettings.
+type PutVCisSettingsJSONBody struct {
+	CisSettings map[string]interface{} `json:"cis_settings"`
 }
 
 // ListAllClientsParams defines parameters for ListAllClients.
@@ -460,6 +475,11 @@ type CreateEstimateJSONBody struct {
 	Estimate map[string]interface{} `json:"estimate"`
 }
 
+// PutVEstimatesDefaultAdditionalTextJSONBody defines parameters for PutVEstimatesDefaultAdditionalText.
+type PutVEstimatesDefaultAdditionalTextJSONBody struct {
+	DefaultAdditionalText string `json:"default_additional_text"`
+}
+
 // DeleteEstimateJSONBody defines parameters for DeleteEstimate.
 type DeleteEstimateJSONBody struct {
 	Estimate *struct {
@@ -505,6 +525,11 @@ type CreateExpenseJSONBody struct {
 // DeleteExpenseMultipartBody defines parameters for DeleteExpense.
 type DeleteExpenseMultipartBody = map[string]interface{}
 
+// PutVExpensesIdJSONBody defines parameters for PutVExpensesId.
+type PutVExpensesIdJSONBody struct {
+	Expense map[string]interface{} `json:"expense"`
+}
+
 // CreateInvoiceItemJSONBody defines parameters for CreateInvoiceItem.
 type CreateInvoiceItemJSONBody struct {
 	Invoice     *string `json:"invoice,omitempty"`
@@ -540,6 +565,11 @@ type CreateInvoiceJSONBody struct {
 		OmitHeader           *bool    `json:"omit_header,omitempty"`
 		PaymentTermsInDays   *float32 `json:"payment_terms_in_days,omitempty"`
 	} `json:"invoice,omitempty"`
+}
+
+// PutVInvoicesDefaultAdditionalTextJSONBody defines parameters for PutVInvoicesDefaultAdditionalText.
+type PutVInvoicesDefaultAdditionalTextJSONBody struct {
+	DefaultAdditionalText string `json:"default_additional_text"`
 }
 
 // DeleteInvoiceMultipartBody defines parameters for DeleteInvoice.
@@ -942,6 +972,11 @@ type CreateAUserJSONBody struct {
 	} `json:"user,omitempty"`
 }
 
+// PutVUsersMeJSONBody defines parameters for PutVUsersMe.
+type PutVUsersMeJSONBody struct {
+	User map[string]interface{} `json:"user"`
+}
+
 // UpdateAUserJSONBody defines parameters for UpdateAUser.
 type UpdateAUserJSONBody struct {
 	User *struct {
@@ -955,6 +990,9 @@ type UpdateAUserJSONBody struct {
 		UniqueTaxReference *string  `json:"unique_tax_reference,omitempty"`
 	} `json:"user,omitempty"`
 }
+
+// PutVAccountLocksJSONRequestBody defines body for PutVAccountLocks for application/json ContentType.
+type PutVAccountLocksJSONRequestBody PutVAccountLocksJSONBody
 
 // CreateBankAccountJSONRequestBody defines body for CreateBankAccount for application/json ContentType.
 type CreateBankAccountJSONRequestBody CreateBankAccountJSONBody
@@ -970,6 +1008,9 @@ type UpdateABankTransactionExplanationJSONRequestBody UpdateABankTransactionExpl
 
 // DeleteABankTransactionExplanationJSONRequestBody defines body for DeleteABankTransactionExplanation for application/json ContentType.
 type DeleteABankTransactionExplanationJSONRequestBody DeleteABankTransactionExplanationJSONBody
+
+// PutVBankTransactionExplanationsIdJSONRequestBody defines body for PutVBankTransactionExplanationsId for application/json ContentType.
+type PutVBankTransactionExplanationsIdJSONRequestBody PutVBankTransactionExplanationsIdJSONBody
 
 // UploadABankStatementJSONRequestBody defines body for UploadABankStatement for application/json ContentType.
 type UploadABankStatementJSONRequestBody UploadABankStatementJSONBody
@@ -997,6 +1038,9 @@ type CreateCategoryJSONRequestBody CreateCategoryJSONBody
 
 // UpdateCategoryJSONRequestBody defines body for UpdateCategory for application/json ContentType.
 type UpdateCategoryJSONRequestBody UpdateCategoryJSONBody
+
+// PutVCisSettingsJSONRequestBody defines body for PutVCisSettings for application/json ContentType.
+type PutVCisSettingsJSONRequestBody PutVCisSettingsJSONBody
 
 // CreateContactJSONRequestBody defines body for CreateContact for application/json ContentType.
 type CreateContactJSONRequestBody CreateContactJSONBody
@@ -1040,6 +1084,9 @@ type UpdateEstimateItemJSONRequestBody UpdateEstimateItemJSONBody
 // CreateEstimateJSONRequestBody defines body for CreateEstimate for application/json ContentType.
 type CreateEstimateJSONRequestBody CreateEstimateJSONBody
 
+// PutVEstimatesDefaultAdditionalTextJSONRequestBody defines body for PutVEstimatesDefaultAdditionalText for application/json ContentType.
+type PutVEstimatesDefaultAdditionalTextJSONRequestBody PutVEstimatesDefaultAdditionalTextJSONBody
+
 // DeleteEstimateJSONRequestBody defines body for DeleteEstimate for application/json ContentType.
 type DeleteEstimateJSONRequestBody DeleteEstimateJSONBody
 
@@ -1052,11 +1099,17 @@ type CreateExpenseJSONRequestBody CreateExpenseJSONBody
 // DeleteExpenseMultipartRequestBody defines body for DeleteExpense for multipart/form-data ContentType.
 type DeleteExpenseMultipartRequestBody = DeleteExpenseMultipartBody
 
+// PutVExpensesIdJSONRequestBody defines body for PutVExpensesId for application/json ContentType.
+type PutVExpensesIdJSONRequestBody PutVExpensesIdJSONBody
+
 // CreateInvoiceItemJSONRequestBody defines body for CreateInvoiceItem for application/json ContentType.
 type CreateInvoiceItemJSONRequestBody CreateInvoiceItemJSONBody
 
 // CreateInvoiceJSONRequestBody defines body for CreateInvoice for application/json ContentType.
 type CreateInvoiceJSONRequestBody CreateInvoiceJSONBody
+
+// PutVInvoicesDefaultAdditionalTextJSONRequestBody defines body for PutVInvoicesDefaultAdditionalText for application/json ContentType.
+type PutVInvoicesDefaultAdditionalTextJSONRequestBody PutVInvoicesDefaultAdditionalTextJSONBody
 
 // DeleteInvoiceMultipartRequestBody defines body for DeleteInvoice for multipart/form-data ContentType.
 type DeleteInvoiceMultipartRequestBody = DeleteInvoiceMultipartBody
@@ -1144,6 +1197,9 @@ type RefreshAccessTokenFormdataRequestBody RefreshAccessTokenFormdataBody
 
 // CreateAUserJSONRequestBody defines body for CreateAUser for application/json ContentType.
 type CreateAUserJSONRequestBody CreateAUserJSONBody
+
+// PutVUsersMeJSONRequestBody defines body for PutVUsersMe for application/json ContentType.
+type PutVUsersMeJSONRequestBody PutVUsersMeJSONBody
 
 // UpdateAUserJSONRequestBody defines body for UpdateAUser for application/json ContentType.
 type UpdateAUserJSONRequestBody UpdateAUserJSONBody

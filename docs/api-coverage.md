@@ -562,3 +562,4 @@ The current bank transaction documentation announces a 1 December 2026 attachmen
 ### Unresolved mutation contracts (#52)
 
 See [the dated evidence record](api-contract-ambiguities.md). The four contradictions remain unresolved in current official documentation. No speculative mutation routes were added, and #52 remains open for authoritative clarification.
+The [generated operation inventory](api-spec-operations.md) lists every declared method/path. Reference type generation only emits declarations for schema-bearing operations. First-time regeneration requires network access to download the pinned generator and its dependencies; cached modules allow offline regeneration. Normal builds use the committed reference artifact and do not run generation.
