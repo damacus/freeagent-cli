@@ -232,47 +232,47 @@ These are query parameters shown in the fetched endpoint examples, compared with
 | --- | --- | --- |
 | [accountancy_practice_api](https://dev.freeagent.com/docs/accountancy_practice_api) | `from_date`, `minimal_data`, `per_page`, `sort`, `to_date`, `updated_since`, `view` | `clients list`: `--view`, `--sort`, `--from`, `--to`, `--updated-since`, `--minimal-data`, `--page`, `--per-page` |
 | [balance_sheet](https://dev.freeagent.com/docs/balance_sheet) | `as_at_date` | `accounting balance-sheet`: `--as-at` |
-| [bank_accounts](https://dev.freeagent.com/docs/bank_accounts) | `view` | `bank-accounts list`: none |
+| [bank_accounts](https://dev.freeagent.com/docs/bank_accounts) | `view` | `bank-accounts list`: `--view`, `--page`, `--per-page` |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `bank_account`, `from_date`, `to_date`, `updated_since` | `bank review list`: `--bank-account`, `--from`, `--to`, `--updated-since`, `--description-contains`, `--has-attachment`, `--has-explanation`, `--category`, `--per-page` |
-| [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `bank_account`, `from_date`, `last_uploaded`, `to_date`, `updated_since`, `view` | `bank list`: `--bank-account`, `--from`, `--to`, `--updated-since`, `--view`, `--per-page`; `bank import-statement`: `--dry-run`, `--body`, `--file`, `--bank-account` |
-| [bills](https://dev.freeagent.com/docs/bills) | `contact`, `from_date`, `nested_bill_items`, `project`, `to_date`, `updated_since`, `view` | `bills list`: `--contact`, `--view`, `--from`, `--to`, `--updated-since` |
-| [capital_assets](https://dev.freeagent.com/docs/capital_assets) | `include_history`, `view` | `capital-assets list`: none |
+| [bank_transactions](https://dev.freeagent.com/docs/bank_transactions) | `bank_account`, `from_date`, `last_uploaded`, `to_date`, `updated_since`, `view` | `bank list`: `--bank-account`, `--from`, `--to`, `--updated-since`, `--view`, `--per-page`; `bank import-statement`: `--dry-run`, `--body`, `--file`, `--bank-account`  |
+| [bills](https://dev.freeagent.com/docs/bills) | `contact`, `from_date`, `nested_bill_items`, `project`, `to_date`, `updated_since`, `view` | `bills list`: `--contact`, `--view`, `--from`, `--to`, `--updated-since`, `--project`, `--nested-bill-items`, `--page`, `--per-page` |
+| [capital_assets](https://dev.freeagent.com/docs/capital_assets) | `include_history`, `view` | `capital-assets list`: `--view`, `--include-history`, `--page`, `--per-page` |
 | [cashflow](https://dev.freeagent.com/docs/cashflow) | `from_date`, `to_date` | `cashflow get`: `--from`, `--to` |
-| [categories](https://dev.freeagent.com/docs/categories) | `sub_accounts` | `categories list`: none |
-| [contacts](https://dev.freeagent.com/docs/contacts) | `sort`, `updated_since`, `view` | `contacts list`: `--view`, `--sort`, `--updated-since`, `--query` |
-| [credit_note_reconciliations](https://dev.freeagent.com/docs/credit_note_reconciliations) | `from_date`, `to_date`, `updated_since` | `credit-note-reconciliations list`: `--from`, `--to`, `--updated-since` |
-| [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `contact`, `nested_credit_note_items`, `project`, `sort`, `updated_since`, `view` | `credit-notes list`: `--contact`, `--view`, `--updated-since` |
-| [estimates](https://dev.freeagent.com/docs/estimates) | `contact`, `from_date`, `invoice`, `nested_estimate_items`, `project`, `to_date`, `updated_since`, `view` | `estimates list`: `--view`, `--contact`, `--from`, `--to`, `--updated-since` |
-| [expenses](https://dev.freeagent.com/docs/expenses) | `from_date`, `project`, `to_date`, `updated_since`, `view` | `expenses list`: `--user`, `--from`, `--to`, `--updated-since` |
-| [invoices](https://dev.freeagent.com/docs/invoices) | `contact`, `nested_invoice_items`, `project`, `sort`, `updated_since`, `view` | `invoices list`: `--view`, `--contact`, `--from`, `--to`, `--status`, `--updated-since` |
-| [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `from_date`, `tag`, `to_date`, `updated_since` | `journal-sets list`: `--from`, `--to`, `--tag` |
-| [notes](https://dev.freeagent.com/docs/notes) | `contact`, `project` | `notes list`: `--contact`, `--project`; `notes create`: `--note`, `--parent` |
+| [categories](https://dev.freeagent.com/docs/categories) | `sub_accounts` | `categories list`: `--sub-accounts`, `--page`, `--per-page` |
+| [contacts](https://dev.freeagent.com/docs/contacts) | `sort`, `updated_since`, `view` | `contacts list`: `--view`, `--sort`, `--updated-since`, `--query`, `--page`, `--per-page` |
+| [credit_note_reconciliations](https://dev.freeagent.com/docs/credit_note_reconciliations) | `from_date`, `to_date`, `updated_since` | `credit-note-reconciliations list`: `--from`, `--to`, `--updated-since`, `--page`, `--per-page` |
+| [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `contact`, `nested_credit_note_items`, `project`, `sort`, `updated_since`, `view` | `credit-notes list`: `--contact`, `--view`, `--updated-since`, `--project`, `--nested-credit-note-items`, `--sort`, `--page`, `--per-page` |
+| [estimates](https://dev.freeagent.com/docs/estimates) | `contact`, `from_date`, `invoice`, `nested_estimate_items`, `project`, `to_date`, `updated_since`, `view` | `estimates list`: `--view`, `--contact`, `--from`, `--to`, `--updated-since`, `--project`, `--invoice`, `--nested-estimate-items`, `--page`, `--per-page` |
+| [expenses](https://dev.freeagent.com/docs/expenses) | `from_date`, `project`, `to_date`, `updated_since`, `view` | `expenses list`: `--user`, `--from`, `--to`, `--updated-since`, `--project`, `--view`, `--page`, `--per-page` |
+| [invoices](https://dev.freeagent.com/docs/invoices) | `contact`, `nested_invoice_items`, `project`, `sort`, `updated_since`, `view` | `invoices list`: `--view`, `--contact`, `--from`, `--to`, `--status`, `--updated-since`, `--project`, `--nested-invoice-items`, `--sort`, `--page`, `--per-page` |
+| [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `from_date`, `tag`, `to_date`, `updated_since` | `journal-sets list`: `--from`, `--to`, `--tag`, `--updated-since`, `--page`, `--per-page` |
+| [notes](https://dev.freeagent.com/docs/notes) | `contact`, `project` | `notes list`: `--contact`, `--project`, `--page`, `--per-page`; `notes create`: `--note`, `--parent`  |
 | [payroll_profiles](https://dev.freeagent.com/docs/payroll_profiles) | `user` | `payroll-profiles get`: `--year`, `--user` |
-| [price_list_items](https://dev.freeagent.com/docs/price_list_items) | `sort` | `price-list-items list`: none |
-| [projects](https://dev.freeagent.com/docs/projects) | `contact`, `nested`, `sort`, `view` | `projects list`: `--contact`, `--status`, `--updated-since` |
-| [recurring_invoices](https://dev.freeagent.com/docs/recurring_invoices) | `contact`, `view` | `recurring-invoices list`: `--view`, `--contact` |
+| [price_list_items](https://dev.freeagent.com/docs/price_list_items) | `sort` | `price-list-items list`: `--sort`, `--page`, `--per-page` |
+| [projects](https://dev.freeagent.com/docs/projects) | `contact`, `nested`, `sort`, `view` | `projects list`: `--contact`, `--status`, `--updated-since`, `--view`, `--nested`, `--sort`, `--page`, `--per-page` |
+| [recurring_invoices](https://dev.freeagent.com/docs/recurring_invoices) | `contact`, `view` | `recurring-invoices list`: `--view`, `--contact`, `--page`, `--per-page` |
 | [sales_tax](https://dev.freeagent.com/docs/sales_tax) | `country`, `date` | `sales-tax-rates get`: `--country`, `--date` |
-| [stock_items](https://dev.freeagent.com/docs/stock_items) | `sort` | `stock-items list`: none |
-| [tasks](https://dev.freeagent.com/docs/tasks) | `project`, `sort`, `updated_since`, `view` | `tasks list`: `--project`, `--view`, `--updated-since`; `tasks create`: `--project`, `--name`, `--billable`, `--billing-rate`, `--billing-period`, `--status` |
-| [timeslips](https://dev.freeagent.com/docs/timeslips) | `from_date`, `nested`, `project`, `task`, `to_date`, `updated_since`, `user`, `view` | `timeslips list`: `--project`, `--task`, `--user`, `--from`, `--to`, `--updated-since` |
+| [stock_items](https://dev.freeagent.com/docs/stock_items) | `sort` | `stock-items list`: `--sort`, `--page`, `--per-page` |
+| [tasks](https://dev.freeagent.com/docs/tasks) | `project`, `sort`, `updated_since`, `view` | `tasks list`: `--project`, `--view`, `--updated-since`, `--sort`, `--page`, `--per-page`; `tasks create`: `--project`, `--name`, `--billable`, `--billing-rate`, `--billing-period`, `--status`  |
+| [timeslips](https://dev.freeagent.com/docs/timeslips) | `from_date`, `nested`, `project`, `task`, `to_date`, `updated_since`, `user`, `view` | `timeslips list`: `--project`, `--task`, `--user`, `--from`, `--to`, `--updated-since`, `--view`, `--nested`, `--page`, `--per-page` |
 | [trial_balance](https://dev.freeagent.com/docs/trial_balance) | `from_date`, `to_date` | `accounting trial-balance`: `--from`, `--to` |
-| [users](https://dev.freeagent.com/docs/users) | `view` | `users list`: none |
+| [users](https://dev.freeagent.com/docs/users) | `view` | `users list`: `--view`, `--page`, `--per-page` |
 
 `bank explain list` sends `bank_account`, `from_date`, `to_date`, `updated_since`, `page` and `per_page` to the plain explanations endpoint.
 
 ## Remaining gaps and limits
 
-Tracked follow-ups:
+Tracked delivery status (implemented changes remain in the open stack):
 
-| Gap | GitHub issue |
-| --- | --- |
-| Statement uploads implemented (JSON and files up to 16 MiB) | [#47](https://github.com/damacus/freeagent-cli/issues/47) |
-| Nested document and journal write fields | [#48](https://github.com/damacus/freeagent-cli/issues/48) |
-| Remaining list pagination, filters and nested results | [#49](https://github.com/damacus/freeagent-cli/issues/49) |
-| Plain bank explanation listing | [#50](https://github.com/damacus/freeagent-cli/issues/50) |
-| Task and note parent request parameters | [#51](https://github.com/damacus/freeagent-cli/issues/51) |
-| Contradictory mutation endpoint examples | [#52](https://github.com/damacus/freeagent-cli/issues/52) |
-| Outdated API specification and models | [#53](https://github.com/damacus/freeagent-cli/issues/53) |
+| Work | GitHub issue | Status |
+| --- | --- | --- |
+| Statement uploads implemented (JSON and files up to 16 MiB) | [#47](https://github.com/damacus/freeagent-cli/issues/47) | Implemented in stack #57 |
+| Nested document and journal write fields | [#48](https://github.com/damacus/freeagent-cli/issues/48) | Implemented in stack #57 |
+| Remaining list pagination, filters and nested results | [#49](https://github.com/damacus/freeagent-cli/issues/49) | Implemented in stack #57 |
+| Plain bank explanation listing | [#50](https://github.com/damacus/freeagent-cli/issues/50) | Implemented in stack #57 |
+| Task and note parent request parameters | [#51](https://github.com/damacus/freeagent-cli/issues/51) | Implemented in stack #57 |
+| Contradictory mutation endpoint examples | [#52](https://github.com/damacus/freeagent-cli/issues/52) | Awaiting authoritative clarification |
+| Outdated API specification and models | [#53](https://github.com/damacus/freeagent-cli/issues/53) | Implemented in stack #57 |
 
 The practice commands now expose client view/date/sort/minimal-data filters and
 pagination. Account-manager lists expose pagination and display the documented
@@ -289,10 +289,10 @@ is documented. See the README for examples.
 - Dedicated wrappers now cover the unambiguous operations in this matrix. Price-list deletion, bank-transaction deletion and payroll unpaid marking are held back for the documentation inconsistencies shown above. The Tasks page also incorrectly shows a users delete path; the existing tasks delete command is retained but not counted as confirmation of that example.
 - Bank statement import accepts the documented JSON transaction-array payload. Multipart OFX/QBO/QIF/CSV file upload is supported up to 16 MiB. HTTP success confirms upload only: use `bank list --bank-account ID` or the FreeAgent application to check whether import completed. Include all transactions for each day to avoid incorrect deduplication.
 - Estimate items, document email and CIS updates accept wrapped JSON files via `--body`. Validation checks object shape, required fields and selected date/decimal/enum constraints; FreeAgent remains responsible for full domain validation, attachment limits and company-specific eligibility. `invoices direct-debit` actually collects payment when eligible, so it requires `--yes` or `--dry-run`; it is distinct from tax payment status markers.
-- Existing estimate and credit-note create/update flags omit nested line items and several money/tax fields. Existing journal creation omits journal entries. The new invoice and journal update commands accept a JSON object or wrapped payload via `--body`; they preserve nested data, false, zero and null. They check object shape and dates, but FreeAgent still validates domain rules and account permissions. Invoice status changes use the explicit marker commands.
-- Many existing lists still lack explicit pagination controls, nested record flags, project filters or sort options. In particular: invoices (project, nested items, sort); estimates (project, invoice, nested items); credit notes (project, nested items, sort); bills (project, nested items); projects (view, nested, sort); timeslips (view, nested); stock/price lists (sort); capital assets (view, history); categories (sub-accounts). Their endpoint rows must not be read as full filter parity.
-- Existing bank review output is a review workflow, not an unmodified bank explanation listing. Existing tasks create and notes create should be checked against the documented parent/project query forms before claiming full request parity. No existing mutation was tested against a live account.
-- `spec.yaml` and generated API models predate parts of this audit and contain historical inaccuracies. They were not used as authority. New wrappers use the shared client and preserve JSON without requiring speculative generated schemas.
+- Estimates, credit notes and bills support complete wrapped JSON create/update bodies; journal creation supports journal entries. Scalar flags retain their established behaviour. Body mode preserves nested data, false, zero and null. FreeAgent still validates account-specific rules and permissions.
+- The list options and registered flags below include the implemented pagination, nested records, project/view/sort filters, capital-asset history and category sub-accounts. Banking aggregation retains its existing behaviour; the documented bank last_uploaded filter is not exposed by the legacy bank list.
+- `bank explain list` provides a plain, one-page explanation listing alongside the existing enriched review workflow. Task and note creation select parents through documented query parameters. No live account mutations were used for verification.
+- `spec.yaml` and reference types have been reconciled with the operation/query audit. Runtime models preserve compatibility fields, while raw CLI JSON is not filtered through reference models. Unresolved mutation contracts remain separately documented.
 - The previous `accounting final-accounts-reports` route incorrectly used `/accounting/final_accounts_reports`. It now uses `/final_accounts_reports`, preserving the old command and output alongside the new full command group.
 - The existing `invoices send --id ID` path without email used POST for mark-as-sent. It now sends the documented PUT. The existing focused test was corrected to assert PUT; email sending still uses POST.
 
