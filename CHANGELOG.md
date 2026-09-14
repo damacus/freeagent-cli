@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.6.0](https://github.com/damacus/freeagent-cli/compare/v0.5.5...v0.6.0) (2026-09-14)
+
+
+### Features
+
+* accept complete document write bodies ([#61](https://github.com/damacus/freeagent-cli/issues/61)) ([354183a](https://github.com/damacus/freeagent-cli/commit/354183af981ed78a422b63cf180a2b5ba6e1a608))
+* add document and account workflows ([#55](https://github.com/damacus/freeagent-cli/issues/55)) ([a3182ab](https://github.com/damacus/freeagent-cli/commit/a3182abc56a2b2c27ee3576a27a8a801d40a6578))
+* add tax return inspection and status markers ([#54](https://github.com/damacus/freeagent-cli/issues/54)) ([3e41594](https://github.com/damacus/freeagent-cli/commit/3e41594b8729c39b3ede027f47ccdcd63f42fd94))
+* complete practice and client commands ([#56](https://github.com/damacus/freeagent-cli/issues/56)) ([5a56ca0](https://github.com/damacus/freeagent-cli/commit/5a56ca0c263a1e8ab866bc39a74e61e500362613))
+* complete resource list query options ([#62](https://github.com/damacus/freeagent-cli/issues/62)) ([9237e4b](https://github.com/damacus/freeagent-cli/commit/9237e4b3f1d8c7d59c42b93c0ae9b776f7975278))
+* list bank explanations with filters ([#59](https://github.com/damacus/freeagent-cli/issues/59)) ([c01a8c4](https://github.com/damacus/freeagent-cli/commit/c01a8c490a86d6679edc83df02f4ea04f206f119))
+* upload bank statement files ([#60](https://github.com/damacus/freeagent-cli/issues/60)) ([8756b2b](https://github.com/damacus/freeagent-cli/commit/8756b2bc02bfa52da376a9e0dd8aa434236f27c3))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/urfave/cli/v3 to v3.11.0 ([#44](https://github.com/damacus/freeagent-cli/issues/44)) ([3778d0a](https://github.com/damacus/freeagent-cli/commit/3778d0a95141cdbb2c4391ab1fab4c78c022d54b))
+* **deps:** update module github.com/urfave/cli/v3 to v3.12.0 ([#67](https://github.com/damacus/freeagent-cli/issues/67)) ([cda389c](https://github.com/damacus/freeagent-cli/commit/cda389c1c8b5753bfa8130938d274a21b3ca9fe8))
+* **deps:** update module golang.org/x/sync to v0.23.0 ([#45](https://github.com/damacus/freeagent-cli/issues/45)) ([8cd0438](https://github.com/damacus/freeagent-cli/commit/8cd0438cde75f71920088c2e335cce21d08aede6))
+* send task and note parent queries ([#58](https://github.com/damacus/freeagent-cli/issues/58)) ([bf3dd02](https://github.com/damacus/freeagent-cli/commit/bf3dd02835c993dc9d4d60e52c719998c1452a4d))
+
 ## [0.5.5](https://github.com/damacus/freeagent-cli/compare/v0.5.4...v0.5.5) (2026-07-16)
 
 
