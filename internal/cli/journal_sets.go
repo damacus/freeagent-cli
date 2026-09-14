@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"text/tabwriter"
 
@@ -60,17 +61,19 @@ func journalSetsList(c *cli.Command) error {
 	}
 
 	endpoint := "/journal_sets"
-	sep := "?"
+	query := url.Values{}
 	appendParam := func(key, value string) {
 		if value != "" {
-			endpoint += sep + key + "=" + value
-			sep = "&"
+			query.Set(key, value)
 		}
 	}
 	appendParam("from_date", c.String("from"))
 	appendParam("to_date", c.String("to"))
 	appendParam("tag", c.String("tag"))
 
+	if len(query) > 0 {
+		endpoint += "?" + query.Encode()
+	}
 	resp, _, _, err := listRequest(c, client, endpoint)
 	if err != nil {
 		return err
