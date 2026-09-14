@@ -115,28 +115,6 @@ type CreateABankTransactionExplanationJSONBody struct {
 	} `json:"bank_transaction_explanation,omitempty"`
 }
 
-// UpdateABankTransactionExplanationJSONBody defines parameters for UpdateABankTransactionExplanation.
-type UpdateABankTransactionExplanationJSONBody struct {
-	BankTransactionExplanation *struct {
-		Attachment *struct {
-			ContentSrc  *string  `json:"content_src,omitempty"`
-			ContentType *string  `json:"content_type,omitempty"`
-			FileName    *string  `json:"file_name,omitempty"`
-			FileSize    *float32 `json:"file_size,omitempty"`
-			Url         *string  `json:"url,omitempty"`
-		} `json:"attachment,omitempty"`
-		BankAccount     *string `json:"bank_account,omitempty"`
-		BankTransaction *string `json:"bank_transaction,omitempty"`
-		Category        *string `json:"category,omitempty"`
-		DatedOn         *string `json:"dated_on,omitempty"`
-		Description     *string `json:"description,omitempty"`
-		GrossValue      *string `json:"gross_value,omitempty"`
-		Project         *string `json:"project,omitempty"`
-		RebillFactor    *string `json:"rebill_factor,omitempty"`
-		RebillType      *string `json:"rebill_type,omitempty"`
-	} `json:"bank_transaction_explanation,omitempty"`
-}
-
 // DeleteABankTransactionExplanationJSONBody defines parameters for DeleteABankTransactionExplanation.
 type DeleteABankTransactionExplanationJSONBody struct {
 	BankTransactionExplanation *struct {
@@ -612,23 +590,6 @@ type CreateAJournalSetJSONBody struct {
 	JournalSet map[string]interface{} `json:"journal_set"`
 }
 
-// UpdateAJournalSetJSONBody defines parameters for UpdateAJournalSet.
-type UpdateAJournalSetJSONBody struct {
-	JournalSet *struct {
-		DatedOn        *string `json:"dated_on,omitempty"`
-		Description    *string `json:"description,omitempty"`
-		JournalEntries *[]struct {
-			Category    *string `json:"category,omitempty"`
-			DebitValue  *string `json:"debit_value,omitempty"`
-			Description *string `json:"description,omitempty"`
-			Url         *string `json:"url,omitempty"`
-			User        *string `json:"user,omitempty"`
-		} `json:"journal_entries,omitempty"`
-		Tag *string `json:"tag,omitempty"`
-		Url *string `json:"url,omitempty"`
-	} `json:"journal_set,omitempty"`
-}
-
 // PutVJournalSetsIdJSONBody defines parameters for PutVJournalSetsId.
 type PutVJournalSetsIdJSONBody struct {
 	JournalSet map[string]interface{} `json:"journal_set"`
@@ -651,23 +612,6 @@ type PostVNotesParams struct {
 	Contact *string `form:"contact,omitempty" json:"contact,omitempty"`
 
 	// Project Select exactly one contact or project parent URL.
-	Project *string `form:"project,omitempty" json:"project,omitempty"`
-}
-
-// CreateANoteJSONBody defines parameters for CreateANote.
-type CreateANoteJSONBody struct {
-	Note *struct {
-		Author    *string `json:"author,omitempty"`
-		CreatedAt *string `json:"created_at,omitempty"`
-		Note      *string `json:"note,omitempty"`
-		ParentUrl *string `json:"parent_url,omitempty"`
-		UpdatedAt *string `json:"updated_at,omitempty"`
-	} `json:"note,omitempty"`
-}
-
-// CreateANoteParams defines parameters for CreateANote.
-type CreateANoteParams struct {
-	Contact *string `form:"contact,omitempty" json:"contact,omitempty"`
 	Project *string `form:"project,omitempty" json:"project,omitempty"`
 }
 
@@ -1003,9 +947,6 @@ type UpdateBankAccountJSONRequestBody UpdateBankAccountJSONBody
 // CreateABankTransactionExplanationJSONRequestBody defines body for CreateABankTransactionExplanation for application/json ContentType.
 type CreateABankTransactionExplanationJSONRequestBody CreateABankTransactionExplanationJSONBody
 
-// UpdateABankTransactionExplanationJSONRequestBody defines body for UpdateABankTransactionExplanation for application/json ContentType.
-type UpdateABankTransactionExplanationJSONRequestBody UpdateABankTransactionExplanationJSONBody
-
 // DeleteABankTransactionExplanationJSONRequestBody defines body for DeleteABankTransactionExplanation for application/json ContentType.
 type DeleteABankTransactionExplanationJSONRequestBody DeleteABankTransactionExplanationJSONBody
 
@@ -1126,17 +1067,11 @@ type SendInvoiceEmailJSONRequestBody SendInvoiceEmailJSONBody
 // CreateAJournalSetJSONRequestBody defines body for CreateAJournalSet for application/json ContentType.
 type CreateAJournalSetJSONRequestBody CreateAJournalSetJSONBody
 
-// UpdateAJournalSetJSONRequestBody defines body for UpdateAJournalSet for application/json ContentType.
-type UpdateAJournalSetJSONRequestBody UpdateAJournalSetJSONBody
-
 // PutVJournalSetsIdJSONRequestBody defines body for PutVJournalSetsId for application/json ContentType.
 type PutVJournalSetsIdJSONRequestBody PutVJournalSetsIdJSONBody
 
 // PostVNotesJSONRequestBody defines body for PostVNotes for application/json ContentType.
 type PostVNotesJSONRequestBody PostVNotesJSONBody
-
-// CreateANoteJSONRequestBody defines body for CreateANote for application/json ContentType.
-type CreateANoteJSONRequestBody CreateANoteJSONBody
 
 // UpdateANoteJSONRequestBody defines body for UpdateANote for application/json ContentType.
 type UpdateANoteJSONRequestBody UpdateANoteJSONBody

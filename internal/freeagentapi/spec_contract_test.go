@@ -41,3 +41,24 @@ func TestSpecificationPreservesAuthenticatedWrites(t *testing.T) {
 		t.Fatal("duplicate trailing-slash asset route")
 	}
 }
+
+func TestSpecificationOmitsObsoleteCollectionWrites(t *testing.T) {
+	data, err := os.ReadFile("../../spec.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	spec := string(data)
+	for _, tc := range []struct{ path, method string }{{"/v2/notes/{id}", "post"}, {"/v2/bank_transaction_explanations", "put"}, {"/v2/journal_sets", "put"}} {
+		start := strings.Index(spec, "  "+tc.path+":\n")
+		if start < 0 {
+			t.Fatal("missing resource")
+		}
+		section := spec[start:]
+		if end := strings.Index(section[1:], "\n  /"); end >= 0 {
+			section = section[:end+1]
+		}
+		if strings.Contains(section, "    "+tc.method+":\n") {
+			t.Errorf("obsolete %s %s", tc.method, tc.path)
+		}
+	}
+}

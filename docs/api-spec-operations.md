@@ -16,7 +16,6 @@ Generated from spec.yaml by scripts/generate-api.sh. This lists declared operati
 | PUT | `/v2/bank_accounts/{id}` |
 | DELETE | `/v2/bank_accounts/{id}` |
 | GET | `/v2/bank_transaction_explanations` |
-| PUT | `/v2/bank_transaction_explanations` |
 | POST | `/v2/bank_transaction_explanations` |
 | GET | `/v2/bank_transaction_explanations/{id}` |
 | DELETE | `/v2/bank_transaction_explanations/{id}` |
@@ -101,7 +100,6 @@ Generated from spec.yaml by scripts/generate-api.sh. This lists declared operati
 | POST | `/v2/invoices/{id}/direct_debit` |
 | POST | `/v2/invoice_items` |
 | GET | `/v2/journal_sets` |
-| PUT | `/v2/journal_sets` |
 | POST | `/v2/journal_sets` |
 | GET | `/v2/journal_sets/{id}` |
 | DELETE | `/v2/journal_sets/{id}` |
@@ -111,7 +109,6 @@ Generated from spec.yaml by scripts/generate-api.sh. This lists declared operati
 | POST | `/v2/notes` |
 | GET | `/v2/notes/{id}` |
 | PUT | `/v2/notes/{id}` |
-| POST | `/v2/notes/{id}` |
 | DELETE | `/v2/notes/{id}` |
 | GET | `/v2/payroll/{year}` |
 | GET | `/v2/payroll/{year}/{period}` |
