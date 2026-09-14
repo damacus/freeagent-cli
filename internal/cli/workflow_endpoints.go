@@ -72,7 +72,7 @@ func addWorkflowEndpoints(app *cli.Command) {
 	}
 	app.Commands = append(app.Commands,
 		estimateItemsCommand(),
-		&cli.Command{Name: "practice", Usage: "View accountancy practice details", Commands: []*cli.Command{
+		&cli.Command{Name: "practice", Aliases: []string{"practise"}, Usage: "View accountancy practice details", Commands: []*cli.Command{
 			endpointCommand("get", "Get practice details", http.MethodGet, fixedEndpoint("/practice")),
 		}},
 		&cli.Command{Name: "cis-settings", Usage: "View Construction Industry Scheme registration", Commands: []*cli.Command{
