@@ -114,11 +114,12 @@ func commandContext(c *cli.Command) context.Context {
 
 func initRuntime(ctx context.Context, c *cli.Command) (context.Context, error) {
 	rt := Runtime{
-		ConfigPath: c.String("config"),
-		Profile:    c.String("profile"),
-		Sandbox:    c.Bool("sandbox"),
-		BaseURL:    c.String("base-url"),
-		JSONOutput: c.Bool("json"),
+		ConfigPath:      c.String("config"),
+		Profile:         c.String("profile"),
+		Sandbox:         c.Bool("sandbox"),
+		BaseURL:         c.String("base-url"),
+		BaseURLOverride: c.String("base-url") != "" || c.IsSet("sandbox"),
+		JSONOutput:      c.Bool("json"),
 	}
 
 	if rt.Profile == "" {
