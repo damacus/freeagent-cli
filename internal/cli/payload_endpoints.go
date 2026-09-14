@@ -17,7 +17,7 @@ import (
 
 type payloadValidator func(map[string]json.RawMessage) error
 
-func payloadEndpointCommand(name, usage, method string, route func(*cli.Command) (string, error), validate payloadValidator) *cli.Command {
+func payloadEndpointCommand(name, usage, method string, route func(*cli.Command) (string, error), validate payloadValidator, contextual ...func(*cli.Command, map[string]json.RawMessage) error) *cli.Command {
 	cmd := endpointCommand(name, usage, method, route)
 	cmd.Flags = append(cmd.Flags, &cli.StringFlag{Name: "body", Required: true, Usage: "JSON file with the documented wrapped API payload"})
 	cmd.Action = action(func(c *cli.Command) error {
@@ -38,6 +38,11 @@ func payloadEndpointCommand(name, usage, method string, route func(*cli.Command)
 		}
 		if err := validate(payload); err != nil {
 			return err
+		}
+		for _, validateContext := range contextual {
+			if err := validateContext(c, payload); err != nil {
+				return err
+			}
 		}
 		return runDocumentedEndpoint(c, method, endpoint, payload)
 	})
@@ -99,6 +104,13 @@ func estimateItemsCommand() *cli.Command {
 			return fmt.Errorf("estimate_item price is required")
 		}
 		return validateEstimateItem(payload)
+	}, func(c *cli.Command, payload map[string]json.RawMessage) error {
+		estimate, err := requiredPayloadString(payload, "estimate")
+		if err != nil {
+			return err
+		}
+		_, err = documentedResourceID(c, "estimates", estimate)
+		return err
 	})
 	update := payloadEndpointCommand("update", "Update estimate item fields", http.MethodPut, resourceEndpoint("estimate_items", ""), func(payload map[string]json.RawMessage) error {
 		if len(payload) != 1 {

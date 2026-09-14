@@ -49,6 +49,10 @@ func TestNestedWorkflowPayloads(t *testing.T) {
 			}))
 			defer srv.Close()
 			serverURL = srv.URL
+			tc.body = strings.ReplaceAll(tc.body, "https://api.freeagent.com/v2/estimates/7", serverURL+"/v2/estimates/7")
+			if err := os.WriteFile(file, []byte(tc.body), 0600); err != nil {
+				t.Fatal(err)
+			}
 			args := append(append([]string{}, tc.args...), "--body", file)
 			result, err := runCLIWithIO(t, testApp(serverURL+"/v2"), cliArgsWithConfig(t, args...), "")
 			if err != nil || calls != 1 {
@@ -77,6 +81,8 @@ func TestNestedPayloadValidationPreventsRequests(t *testing.T) {
 	for _, tc := range []struct{ args, body string }{
 		{"estimate-items create", `{"estimate_item":{"price":"1"}}`},
 		{"estimate-items create", `{"estimate":"wrong","estimate_item":{"price":"1"}}`},
+		{"estimate-items create", `{"estimate":"https://foreign.example/v2/estimates/7","estimate_item":{"item_type":"Days","description":"Work","price":"1"}}`},
+		{"estimate-items create", `{"estimate":"https://api.freeagent.com/v2/estimates/7?query=1","estimate_item":{"item_type":"Days","description":"Work","price":"1"}}`},
 		{"estimate-items update 7", `{"estimate_item":{"quantity":"NaN"}}`},
 		{"estimates send 7", `{"estimate":{"email":{"use_template":true,"to":"test@example.com"}}}`},
 		{"estimates send 7", `{"estimate":{"email":{"use_template":"true"}}}`},

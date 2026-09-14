@@ -23,6 +23,9 @@ func loadConfig(rt Runtime) (*config.Config, string, error) {
 
 func ensureProfile(cfg *config.Config, profileName string, rt Runtime, overrides config.Profile) config.Profile {
 	profile := cfg.Profile(profileName)
+	if rt.BaseURLOverride {
+		profile.BaseURL = rt.BaseURL
+	}
 
 	if overrides.ClientID != "" {
 		profile.ClientID = overrides.ClientID
