@@ -181,14 +181,13 @@ func tasksCreate(c *cli.Command) error {
 		return err
 	}
 
-	projURL, err := normalizeResourceURL(profile.BaseURL, "projects", c.String("project"))
+	projURL, err := documentedResourceURL(c, "projects", c.String("project"))
 	if err != nil {
 		return err
 	}
 
 	billable := c.Bool("billable")
 	input := fa.TaskInput{
-		Project:    projURL,
 		Name:       c.String("name"),
 		IsBillable: &billable,
 		Status:     c.String("status"),
@@ -201,7 +200,7 @@ func tasksCreate(c *cli.Command) error {
 		input.BillingPeriod = v
 	}
 
-	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/tasks", fa.CreateTaskRequest{Task: input})
+	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/tasks?"+url.Values{"project": {projURL}}.Encode(), fa.CreateTaskRequest{Task: input})
 	if err != nil {
 		return err
 	}

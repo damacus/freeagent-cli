@@ -113,7 +113,7 @@ func TestNotesCreateJSON(t *testing.T) {
 
 	out, err := runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, "--json", "notes", "create",
 		"--note", "New note",
-		"--parent", "http://x/v2/contacts/1",
+		"--parent", srv.URL+"/v2/contacts/1",
 	), "")
 	if err != nil {
 		t.Fatal(err)

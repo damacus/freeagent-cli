@@ -205,10 +205,10 @@ func documentedResourceID(c *cli.Command, resource, value string) (string, error
 		if err != nil {
 			return "", err
 		}
-		if (parsed.IsAbs() || parsed.Host != "") && (parsed.Scheme != base.Scheme || parsed.Host != base.Host) {
+		if (parsed.IsAbs() || parsed.Host != "") && !sameAPIOrigin(parsed, base) {
 			return "", fmt.Errorf("%s URL must use the configured API origin", resource)
 		}
-		prefix := "/v2/" + resource + "/"
+		prefix := strings.TrimRight(base.Path, "/") + "/" + resource + "/"
 		if !strings.HasPrefix(parsed.Path, prefix) || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.User != nil {
 			return "", fmt.Errorf("expected a %s resource URL", resource)
 		}
@@ -270,4 +270,34 @@ func paginatedEndpoint(c *cli.Command, endpoint string) (string, error) {
 		endpoint += "?" + query.Encode()
 	}
 	return endpoint, nil
+}
+
+func documentedResourceURL(c *cli.Command, resource, value string) (string, error) {
+	id, err := documentedResourceID(c, resource, value)
+	if err != nil {
+		return "", err
+	}
+	rt, err := runtimeFrom(c)
+	if err != nil {
+		return "", err
+	}
+	cfg, _, err := loadConfig(rt)
+	if err != nil {
+		return "", err
+	}
+	profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+	return strings.TrimRight(profile.BaseURL, "/") + "/" + resource + "/" + id, nil
+}
+
+func sameAPIOrigin(a, b *url.URL) bool {
+	effectivePort := func(u *url.URL) string {
+		if u.Port() != "" {
+			return u.Port()
+		}
+		if strings.EqualFold(u.Scheme, "https") {
+			return "443"
+		}
+		return "80"
+	}
+	return (strings.EqualFold(a.Scheme, "http") || strings.EqualFold(a.Scheme, "https")) && strings.EqualFold(a.Scheme, b.Scheme) && strings.EqualFold(a.Hostname(), b.Hostname()) && effectivePort(a) == effectivePort(b)
 }
