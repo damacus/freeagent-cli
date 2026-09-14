@@ -50,6 +50,10 @@ func NewApp(version string) *cli.Command {
 			accountManagersCommand(),
 			authCommand(),
 			bankAccountsCommand(),
+			taxReturnsCommand("vat-returns", "vat_returns", false, true, true),
+			taxReturnsCommand("corporation-tax-returns", "corporation_tax_returns", false, true, false),
+			taxReturnsCommand("self-assessment-returns", "self_assessment_returns", true, true, true),
+			taxReturnsCommand("final-accounts-reports", "final_accounts_reports", false, false, false),
 			bankCommand(),
 			billsCommand(),
 			capitalAssetsCommand(),
@@ -110,11 +114,12 @@ func commandContext(c *cli.Command) context.Context {
 
 func initRuntime(ctx context.Context, c *cli.Command) (context.Context, error) {
 	rt := Runtime{
-		ConfigPath: c.String("config"),
-		Profile:    c.String("profile"),
-		Sandbox:    c.Bool("sandbox"),
-		BaseURL:    c.String("base-url"),
-		JSONOutput: c.Bool("json"),
+		ConfigPath:      c.String("config"),
+		Profile:         c.String("profile"),
+		Sandbox:         c.Bool("sandbox"),
+		BaseURL:         c.String("base-url"),
+		BaseURLOverride: c.String("base-url") != "" || c.IsSet("sandbox"),
+		JSONOutput:      c.Bool("json"),
 	}
 
 	if rt.Profile == "" {
