@@ -37,7 +37,7 @@ does not establish that the transactions were imported.
 | [bank_accounts](https://dev.freeagent.com/docs/bank_accounts) | `PUT /bank_accounts/:id` | Supported | Supported | `bank-accounts update` |  |
 | [bank_feeds](https://dev.freeagent.com/docs/bank_feeds) | `GET /bank_feeds` | Missing | Supported | `bank-feeds list` |  |
 | [bank_feeds](https://dev.freeagent.com/docs/bank_feeds) | `GET /bank_feeds/:id` | Missing | Supported | `bank-feeds get` |  |
-| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations` | Partial | Partial | `bank review list` | Partial: review workflow retrieves explanations, but there is no dedicated plain explanations list. |
+| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations` | Partial | Supported | `bank explain list` | One page; bank-account, date and updated-since filters; page/per-page. |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `POST /bank_transaction_explanations` | Supported | Supported | `bank explain create` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `DELETE /bank_transaction_explanations/:id` | Missing | Supported | `bank explain delete` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations/:id` | Supported | Supported | `bank explain get` |  |
