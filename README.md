@@ -123,3 +123,12 @@ Bank transactions (bulk approve):
 ## License
 
 MIT. See `LICENSE`.
+
+## Tax returns
+
+List or inspect VAT, corporation tax, Self Assessment and final accounts returns.
+Use `vat-returns get YYYY-MM-DD` (and `--user ID` for Self Assessment).
+Payment markers also require `--payment-date YYYY-MM-DD` for VAT/Self Assessment.
+`mark-filed` and `mark-paid` update FreeAgent status only; they do not submit
+returns or transfer money. Every marker supports `--dry-run`.
+Use `--json` for the complete response and `--page`/`--per-page` for lists.
