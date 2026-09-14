@@ -7,13 +7,16 @@ A small CLI for the FreeAgent API, built in Go.
 - OAuth login (local callback or manual paste)
 - Keychain-backed token storage with file fallback
 - Create and send invoices
+- Inspect VAT, corporation tax and Self Assessment returns, deadlines and payment status
+- Export invoice, estimate and credit-note PDFs; duplicate and convert documents
+- Manage FreeAgent filing/payment markers, default text, price-list items and timers
 - Break-glass `raw` command for any FreeAgent endpoint
 - JSON output mode for scripting / agents
 
 ## Install
 
 ```bash
-go build ./cmd/freeagent
+go build -o freeagent .
 ```
 
 ## Configure
@@ -52,6 +55,95 @@ Manual flow:
 ```
 
 ## Usage
+
+View tax returns and their breakdowns:
+
+```sh
+./freeagent vat-returns list --page 1 --per-page 100
+./freeagent vat-returns get 2026-06-30
+./freeagent corporation-tax-returns list
+./freeagent self-assessment-returns list --user 119
+./freeagent final-accounts-reports get 2025-12-31
+./freeagent --json vat-returns get 2026-06-30
+```
+
+Filing markers record status in FreeAgent. They **do not submit returns to HMRC
+or Companies House**. Payment markers do not transfer money. Preview changes with
+`--dry-run` before running the same command without that flag:
+
+```sh
+./freeagent vat-returns mark-filed --dry-run 2026-06-30
+./freeagent vat-returns mark-paid --dry-run --payment-date 2026-08-07 2026-06-30
+./freeagent corporation-tax-returns mark-paid --dry-run 2025-12-31
+./freeagent self-assessment-returns mark-unpaid --dry-run --user 119 --payment-date 2027-01-31 2026-04-05
+```
+
+Document and accounting workflows:
+
+```sh
+./freeagent invoices pdf --output invoice-123.pdf 123
+./freeagent estimates duplicate --dry-run 42
+./freeagent estimates convert-to-invoice --dry-run 42
+./freeagent invoices update --dry-run --body invoice-update.json 123
+./freeagent invoices default-text set --dry-run --text 'Payment due within 30 days'
+./freeagent timeslips start-timer --dry-run 456
+./freeagent bank-feeds list
+./freeagent hire-purchases list
+./freeagent expenses mileage-settings
+./freeagent account-locks list
+```
+
+New ID-based commands accept a numeric ID or a URL for that resource on the
+configured API origin. Tax commands use a period-end date. PDF output creates a
+new file and refuses overwrite; use `--json` instead of `--output` to receive the
+base64 PDF API envelope. Invoice and journal updates accept either a JSON object
+of fields or an object wrapped in `invoice` / `journal_set`. Existing CLI flags
+and JSON output remain available. Use each command's `--help` for required flags.
+
+Nested operations use the documented wrapped JSON payload with `--body`:
+
+```sh
+./freeagent estimate-items create --dry-run --body estimate-item.json
+./freeagent estimates send --dry-run --body estimate-email.json 42
+./freeagent credit-notes send --dry-run --body credit-email.json 19
+./freeagent bank import-statement --dry-run --bank-account 7 --body statement.json
+./freeagent cis-settings update --dry-run --body cis-settings.json
+./freeagent invoices direct-debit --dry-run 123
+```
+
+Example `estimate-item.json`:
+
+```json
+{
+  "estimate": "https://api.freeagent.com/v2/estimates/42",
+  "estimate_item": {"item_type": "Days", "quantity": "1", "price": "500.00", "description": "Development"}
+}
+```
+
+Example `estimate-email.json`, using an existing FreeAgent email template:
+
+```json
+{"estimate": {"email": {"use_template": true}}}
+```
+
+Credit-note email payloads use `credit_note.email` with `to`, `from`, `subject`
+and `body`. The sender must be a registered user. CIS updates use a
+`cis_settings` object; setting a registration section to `null` deregisters it.
+See the [FreeAgent API documentation](https://dev.freeagent.com/docs) for payload details.
+
+Example `statement.json`:
+
+```json
+{"statement": [{"dated_on": "2026-09-01", "amount": "-100.00", "description": "Supplier", "fitid": "txn-123"}]}
+```
+
+Statement upload success does not prove that import completed. Check with
+`bank list --bank-account 7` or in FreeAgent afterwards. Include all of a day's
+transactions in an upload to avoid incorrect deduplication. This command supports
+JSON transactions; multipart OFX/QIF/CSV upload remains a gap.
+
+Unlike tax status markers, `invoices direct-debit` **collects payment** through an
+eligible GoCardless mandate. It requires `--yes` to run, or `--dry-run` to preview.
 
 Create a draft invoice:
 
@@ -123,12 +215,3 @@ Bank transactions (bulk approve):
 ## License
 
 MIT. See `LICENSE`.
-
-## Tax returns
-
-List or inspect VAT, corporation tax, Self Assessment and final accounts returns.
-Use `vat-returns get YYYY-MM-DD` (and `--user ID` for Self Assessment).
-Payment markers also require `--payment-date YYYY-MM-DD` for VAT/Self Assessment.
-`mark-filed` and `mark-paid` update FreeAgent status only; they do not submit
-returns or transfer money. Every marker supports `--dry-run`.
-Use `--json` for the complete response and `--page`/`--per-page` for lists.

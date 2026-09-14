@@ -383,7 +383,7 @@ func TestInvoiceSend_WithBodyFile(t *testing.T) {
 
 func TestInvoiceSend_MarksAsSent(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/invoices/1/transitions/mark_as_sent" {
+		if r.Method != http.MethodPut || r.URL.Path != "/invoices/1/transitions/mark_as_sent" {
 			t.Fatalf("unexpected %s %s", r.Method, r.URL.Path)
 		}
 		_, _ = w.Write([]byte(`{"status":"ok"}`))

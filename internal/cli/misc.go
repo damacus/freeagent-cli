@@ -348,7 +348,7 @@ func accountingFinalAccountsReports(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/accounting/final_accounts_reports", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/final_accounts_reports", nil, "")
 	if err != nil {
 		return err
 	}
