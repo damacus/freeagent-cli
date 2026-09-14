@@ -88,7 +88,7 @@ does not establish that the transactions were imported.
 | [credit_note_reconciliations](https://dev.freeagent.com/docs/credit_note_reconciliations) | `GET /credit_note_reconciliations/:id` | Supported | Supported | `credit-note-reconciliations get` |  |
 | [credit_note_reconciliations](https://dev.freeagent.com/docs/credit_note_reconciliations) | `PUT /credit_note_reconciliations/:id` | Supported | Supported | `credit-note-reconciliations update` |  |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `GET /credit_notes` | Supported | Supported | `credit-notes list` |  |
-| [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `POST /credit_notes` | Partial | Partial | `credit-notes create` | Partial fields: existing create flags do not expose line items/journal entries; see field limits below. |
+| [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `POST /credit_notes` | Partial | Supported | `credit-notes create` | Complete --body payload input; legacy scalar flags retained. |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `DELETE /credit_notes/:id` | Supported | Supported | `credit-notes delete` |  |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `GET /credit_notes/:id` | Supported | Supported | `credit-notes get` |  |
 | [credit_notes](https://dev.freeagent.com/docs/credit_notes) | `PUT /credit_notes/:id` | Supported | Supported | `credit-notes update` |  |
@@ -101,7 +101,7 @@ does not establish that the transactions were imported.
 | [estimates](https://dev.freeagent.com/docs/estimates) | `DELETE /estimate_items/:id` | Missing | Supported | `estimate-items delete` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `PUT /estimate_items/:id` | Missing | Supported | `estimate-items update` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `GET /estimates` | Supported | Supported | `estimates list` |  |
-| [estimates](https://dev.freeagent.com/docs/estimates) | `POST /estimates` | Partial | Partial | `estimates create` | Partial fields: existing create flags do not expose line items/journal entries; see field limits below. |
+| [estimates](https://dev.freeagent.com/docs/estimates) | `POST /estimates` | Partial | Supported | `estimates create` | Complete --body payload input; legacy scalar flags retained. |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `DELETE /estimates/:id` | Supported | Supported | `estimates delete` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `GET /estimates/:id` | Supported | Supported | `estimates get` |  |
 | [estimates](https://dev.freeagent.com/docs/estimates) | `PUT /estimates/:id` | Supported | Supported | `estimates update` |  |
@@ -153,7 +153,7 @@ does not establish that the transactions were imported.
 | [invoices](https://dev.freeagent.com/docs/invoices) | `PUT /invoices/default_additional_text` | Missing | Supported | `invoices default-text set` |  |
 | [invoices](https://dev.freeagent.com/docs/invoices) | `GET /invoices/timeline` | Missing | Supported | `invoices timeline` |  |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `GET /journal_sets` | Supported | Supported | `journal-sets list` |  |
-| [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `POST /journal_sets` | Partial | Partial | `journal-sets create` | Partial fields: existing create flags do not expose line items/journal entries; see field limits below. |
+| [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `POST /journal_sets` | Partial | Supported | `journal-sets create` | Complete --body payload input; legacy scalar flags retained. |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `DELETE /journal_sets/:id` | Supported | Supported | `journal-sets delete` |  |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `GET /journal_sets/:id` | Supported | Supported | `journal-sets get` |  |
 | [journal_sets](https://dev.freeagent.com/docs/journal_sets) | `PUT /journal_sets/:id` | Missing | Supported | `journal-sets update` |  |
@@ -373,8 +373,8 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `bank import-statement` | `--dry-run`, `--body`, `--file`, `--bank-account` |
 | `bills list` | `--contact`, `--view`, `--from`, `--to`, `--updated-since` |
 | `bills get` | — |
-| `bills create` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt` |
-| `bills update` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt` |
+| `bills create` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt`, `--body`, `--dry-run` |
+| `bills update` | `--contact`, `--dated-on`, `--due-on`, `--reference`, `--currency`, `--total-value`, `--sale-tax-rate`, `--receipt`, `--body`, `--dry-run` |
 | `bills delete` | — |
 | `capital-assets list` | — |
 | `capital-assets get` | — |
@@ -407,8 +407,8 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `credit-note-reconciliations delete` | — |
 | `credit-notes list` | `--contact`, `--view`, `--updated-since` |
 | `credit-notes get` | — |
-| `credit-notes create` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--payment-terms` |
-| `credit-notes update` | `--contact`, `--dated-on`, `--currency`, `--due-on` |
+| `credit-notes create` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--payment-terms`, `--body`, `--dry-run` |
+| `credit-notes update` | `--contact`, `--dated-on`, `--currency`, `--due-on`, `--body`, `--dry-run` |
 | `credit-notes delete` | — |
 | `credit-notes transition` | `--status` |
 | `credit-notes pdf` | `--output` |
@@ -416,8 +416,8 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `email-addresses list` | — |
 | `estimates list` | `--view`, `--contact`, `--from`, `--to`, `--updated-since` |
 | `estimates get` | — |
-| `estimates create` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status` |
-| `estimates update` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status` |
+| `estimates create` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status`, `--body`, `--dry-run` |
+| `estimates update` | `--contact`, `--currency`, `--dated-on`, `--due-on`, `--estimate-type`, `--status`, `--body`, `--dry-run` |
 | `estimates delete` | — |
 | `estimates transition` | `--status` |
 | `estimates pdf` | `--output` |
@@ -453,7 +453,7 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `invoices mark-cancelled` | `--dry-run` |
 | `journal-sets list` | `--from`, `--to`, `--tag` |
 | `journal-sets get` | — |
-| `journal-sets create` | `--dated-on`, `--description`, `--tag` |
+| `journal-sets create` | `--dated-on`, `--description`, `--tag`, `--body`, `--dry-run` |
 | `journal-sets delete` | — |
 | `journal-sets opening-balances` | — |
 | `journal-sets update` | `--dry-run`, `--body` |
@@ -527,3 +527,7 @@ Task creation sends `--project` as the project query parameter. Note creation se
 ### Statement file uploads (#47)
 
 `bank import-statement --bank-account ID --file statement.ofx` sends a multipart `statement` file. OFX/QBO, QIF and supported CSV formats up to 16 MiB are accepted; `--body` retains JSON import and cannot be mixed with `--file`. Dry-run shows file metadata without uploading. Upload success is not import verification: recheck `bank list` for the account and dates. Include every transaction for each day in one upload to avoid incorrect deduplication.
+
+### Complete write bodies (#48)
+
+Estimates, credit notes and bills accept `--body FILE` for create/update; journal sets accept it for create as well as the existing update operation. Use the documented singular root object. Nested items, journal entries, money/tax values and bill hire-purchase attributes pass through without scalar-model filtering, preserving false, zero and null. Body mode rejects mixed scalar flags and supports dry-run. Validation checks the envelope, required creation fields, dates and nested array/object shape; FreeAgent remains responsible for account-specific business rules. Existing scalar flags retain their behaviour.
