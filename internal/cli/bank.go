@@ -64,6 +64,7 @@ func bankCommand() *cli.Command {
 				Name:  "explain",
 				Usage: "Manage bank transaction explanations",
 				Commands: []*cli.Command{
+					bankExplanationListCommand(),
 					{
 						Name:  "create",
 						Usage: "Create an explanation for a bank transaction",

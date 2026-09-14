@@ -37,8 +37,9 @@ does not establish that the transactions were imported.
 | [bank_accounts](https://dev.freeagent.com/docs/bank_accounts) | `PUT /bank_accounts/:id` | Supported | Supported | `bank-accounts update` |  |
 | [bank_feeds](https://dev.freeagent.com/docs/bank_feeds) | `GET /bank_feeds` | Missing | Supported | `bank-feeds list` |  |
 | [bank_feeds](https://dev.freeagent.com/docs/bank_feeds) | `GET /bank_feeds/:id` | Missing | Supported | `bank-feeds get` |  |
-| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations` | Partial | Partial | `bank review list` | Partial: review workflow retrieves explanations, but there is no dedicated plain explanations list. |
-| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `POST /bank_transaction_explanations` | Supported | Supported | `bank explain create` |  |
+| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations` | Partial | Supported | `bank explain list` | One page; bank-account, date and updated-since filters; page/per-page. |
+| [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `POST /bank_transaction_explanations` | Supported | Supported | `bank explain list` | `--bank-account`, `--from`, `--to`, `--updated-since`, `--page`, `--per-page` |
+| `bank explain create` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `DELETE /bank_transaction_explanations/:id` | Missing | Supported | `bank explain delete` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `GET /bank_transaction_explanations/:id` | Supported | Supported | `bank explain get` |  |
 | [bank_transaction_explanations](https://dev.freeagent.com/docs/bank_transaction_explanations) | `PUT /bank_transaction_explanations/:id` | Supported | Supported | `bank explain update` |  |
@@ -257,6 +258,8 @@ These are query parameters shown in the fetched endpoint examples, compared with
 | [trial_balance](https://dev.freeagent.com/docs/trial_balance) | `from_date`, `to_date` | `accounting trial-balance`: `--from`, `--to` |
 | [users](https://dev.freeagent.com/docs/users) | `view` | `users list`: none |
 
+`bank explain list` sends `bank_account`, `from_date`, `to_date`, `updated_since`, `page` and `per_page` to the plain explanations endpoint.
+
 ## Remaining gaps and limits
 
 Tracked follow-ups:
@@ -362,6 +365,7 @@ Global `--json`, `--config`, `--profile`, `--sandbox` and `--base-url` apply to 
 | `bank review get` | — |
 | `bank review approve` | `--bank-account`, `--from`, `--to`, `--updated-since`, `--description-contains`, `--has-attachment`, `--has-explanation`, `--category`, `--per-page`, `--ids`, `--ids-type` |
 | `bank review attach-receipt` | `--explanation`, `--file`, `--approve` |
+| `bank explain list` | `--bank-account`, `--from`, `--to`, `--updated-since`, `--page`, `--per-page` |
 | `bank explain create` | `--bank-transaction`, `--dated-on`, `--description`, `--gross-value`, `--category`, `--sales-tax-status`, `--sales-tax-rate`, `--project`, `--receipt` |
 | `bank explain get` | — |
 | `bank explain update` | `--dated-on`, `--description`, `--gross-value`, `--category`, `--sales-tax-status`, `--sales-tax-rate`, `--project`, `--receipt` |
