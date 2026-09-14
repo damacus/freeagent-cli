@@ -136,7 +136,7 @@ func contactsListWithQuery(c *cli.Command, query string, requireQuery bool) erro
 		path += "?" + queryParams
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
+	resp, _, _, err := listRequest(c, client, path)
 	if err != nil {
 		return err
 	}
@@ -156,6 +156,9 @@ func contactsListWithQuery(c *cli.Command, query string, requireQuery bool) erro
 		return fmt.Errorf("query is required")
 	}
 
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
+	}
 	if rt.JSONOutput {
 		if query != "" {
 			data, err := json.Marshal(fa.ContactsResponse{Contacts: filtered})

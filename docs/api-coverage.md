@@ -527,3 +527,24 @@ Task creation sends `--project` as the project query parameter. Note creation se
 ### Complete write bodies (#48)
 
 Estimates, credit notes and bills accept `--body FILE` for create/update; journal sets accept it for create as well as the existing update operation. Use the documented singular root object. Nested items, journal entries, money/tax values and bill hire-purchase attributes pass through without scalar-model filtering, preserving false, zero and null. Body mode rejects mixed scalar flags and supports dry-run. Validation checks the envelope, required creation fields, dates and nested array/object shape; FreeAgent remains responsible for account-specific business rules. Existing scalar flags retain their behaviour.
+
+### List options (#49)
+
+Existing one-page resource lists now expose `--page` and `--per-page` (1–100), including contact search. Banking review retains its existing aggregation behaviour. Clients keep their separate minimal-data pagination limit.
+
+| Resource | Additional options |
+| --- | --- |
+| Invoices | project, nested-invoice-items, sort |
+| Estimates | project, invoice, nested-estimate-items |
+| Credit notes | project, nested-credit-note-items, sort |
+| Bills | project, nested-bill-items |
+| Projects | view, nested, sort; status remains an alias for view |
+| Timeslips | view, nested |
+| Expenses | project, view |
+| Stock items, price-list items, tasks | sort |
+| Capital assets | view, include-history |
+| Categories | sub-accounts |
+| Bank accounts, users | view |
+| Journal sets | updated-since |
+
+Date inputs and pagination limits are checked before requests. Nested human output uses labelled nested values; ordinary human tables and raw JSON output remain available. API filters are URL-encoded, and new resource references use the selected profile origin.

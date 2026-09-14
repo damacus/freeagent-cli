@@ -71,9 +71,12 @@ func journalSetsList(c *cli.Command) error {
 	appendParam("to_date", c.String("to"))
 	appendParam("tag", c.String("tag"))
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := listRequest(c, client, endpoint)
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)

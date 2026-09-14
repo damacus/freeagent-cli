@@ -100,11 +100,14 @@ func estimatesList(c *cli.Command) error {
 	appendParam("to_date", c.String("to"))
 	appendParam("updated_since", c.String("updated-since"))
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := listRequest(c, client, endpoint)
 	if err != nil {
 		return err
 	}
 
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
+	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
 	}

@@ -39,9 +39,12 @@ func emailAddressesList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/email_addresses", nil, "")
+	resp, _, _, err := listRequest(c, client, "/email_addresses")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
@@ -92,9 +95,12 @@ func cisBandsList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/cis_bands", nil, "")
+	resp, _, _, err := listRequest(c, client, "/cis_bands")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)

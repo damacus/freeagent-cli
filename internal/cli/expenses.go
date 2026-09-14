@@ -119,11 +119,14 @@ func expensesList(c *cli.Command) error {
 		path += "?" + query.Encode()
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
+	resp, _, _, err := listRequest(c, client, path)
 	if err != nil {
 		return err
 	}
 
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
+	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
 	}

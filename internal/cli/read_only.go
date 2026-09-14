@@ -59,9 +59,12 @@ func recurringInvoicesList(c *cli.Command) error {
 	appendParam("view", c.String("view"))
 	appendParam("contact", c.String("contact"))
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, endpoint, nil, "")
+	resp, _, _, err := listRequest(c, client, endpoint)
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
@@ -144,9 +147,12 @@ func stockItemsList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/stock_items", nil, "")
+	resp, _, _, err := listRequest(c, client, "/stock_items")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
@@ -229,9 +235,12 @@ func priceListItemsList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/price_list_items", nil, "")
+	resp, _, _, err := listRequest(c, client, "/price_list_items")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)

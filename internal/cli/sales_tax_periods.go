@@ -62,9 +62,12 @@ func salesTaxPeriodsList(c *cli.Command) error {
 		return err
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, "/sales_tax_periods", nil, "")
+	resp, _, _, err := listRequest(c, client, "/sales_tax_periods")
 	if err != nil {
 		return err
+	}
+	if wantsNestedList(c) {
+		return renderEndpointResponse(resp, rt.JSONOutput)
 	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
