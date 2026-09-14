@@ -18,6 +18,8 @@ import (
 	"strings"
 )
 
+const maxStatementFileSize = 16 << 20 // Bound both multipart and replay buffers.
+
 func withStatementFile(cmd *cli.Command) *cli.Command {
 	for _, flag := range cmd.Flags {
 		if f, ok := flag.(*cli.StringFlag); ok && f.Name == "body" {
@@ -25,7 +27,7 @@ func withStatementFile(cmd *cli.Command) *cli.Command {
 		}
 	}
 	cmd.Usage = "Upload a JSON, OFX, QIF or supported CSV statement; verify with bank list"
-	cmd.Flags = append(cmd.Flags, &cli.StringFlag{Name: "file", Usage: "Statement file (OFX, QIF, QBO or supported CSV)"})
+	cmd.Flags = append(cmd.Flags, &cli.StringFlag{Name: "file", Usage: "Statement file (OFX, QIF, QBO or supported CSV; maximum 16 MiB)"})
 	original := cmd.Action
 	cmd.Action = func(ctx context.Context, c *cli.Command) error {
 		if (c.String("file") == "") == (c.String("body") == "") {
@@ -53,6 +55,9 @@ func withStatementFile(cmd *cli.Command) *cli.Command {
 		}
 		if !info.Mode().IsRegular() || info.Size() == 0 {
 			return fmt.Errorf("statement must be a non-empty regular file")
+		}
+		if info.Size() > maxStatementFileSize {
+			return fmt.Errorf("statement file exceeds the 16 MiB limit")
 		}
 		filename := filepath.Base(file.Name())
 		contentType := "application/octet-stream"
@@ -83,8 +88,12 @@ func withStatementFile(cmd *cli.Command) *cli.Command {
 		if err != nil {
 			return err
 		}
-		if _, err = io.Copy(part, file); err != nil {
+		copied, err := io.Copy(part, io.LimitReader(file, maxStatementFileSize+1))
+		if err != nil {
 			return err
+		}
+		if copied > maxStatementFileSize {
+			return fmt.Errorf("statement file exceeds the 16 MiB limit")
 		}
 		if err = writer.Close(); err != nil {
 			return err

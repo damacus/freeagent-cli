@@ -222,9 +222,6 @@ func capitalAssetTypesCreate(c *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	if wantsNestedList(c) {
-		return renderEndpointResponse(resp, rt.JSONOutput)
-	}
 	if rt.JSONOutput {
 		return writeJSONOutput(resp)
 	}

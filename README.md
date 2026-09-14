@@ -177,7 +177,7 @@ Example `statement.json`:
 Statement upload success does not prove that import completed. Check with
 `bank list --bank-account 7` or in FreeAgent afterwards. Include all of a day's
 transactions in an upload to avoid incorrect deduplication. This command supports
-JSON transactions; multipart OFX/QIF/CSV upload remains a gap.
+JSON transactions or multipart OFX/QBO/QIF/CSV files up to 16 MiB.
 
 Unlike tax status markers, `invoices direct-debit` **collects payment** through an
 eligible GoCardless mandate. It requires `--yes` to run, or `--dry-run` to preview.
@@ -252,3 +252,5 @@ Bank transactions (bulk approve):
 ## License
 
 MIT. See `LICENSE`.
+
+Bank statements can also be uploaded with `bank import-statement --bank-account ID --file statement.ofx` (OFX/QBO/QIF/supported CSV, maximum 16 MiB). Use `--dry-run` to preview and recheck `bank list` to verify import.

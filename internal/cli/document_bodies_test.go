@@ -75,3 +75,25 @@ func TestDocumentBodyValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestMinimalDocumentBodiesAndTrailingFlags(t *testing.T) {
+	for group, body := range map[string]string{"estimates": `{"estimate":{"contact":"https://api.freeagent.com/v2/contacts/1","dated_on":"2026-09-01","currency":"GBP"}}`, "bills": `{"bill":{"contact":"https://api.freeagent.com/v2/contacts/1","dated_on":"2026-09-01"}}`, "credit-notes": `{"credit_note":{"contact":"https://api.freeagent.com/v2/contacts/1","dated_on":"2026-09-01"}}`} {
+		file := filepath.Join(t.TempDir(), "body.json")
+		os.WriteFile(file, []byte(body), 0600)
+		calls := 0
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls++; w.Write([]byte(`{}`)) }))
+		_, err := runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, group, "create", "--body", file), "")
+		if err != nil || calls != 1 {
+			t.Fatalf("%s %v", group, err)
+		}
+		_, err = runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, group, "update", "7", "--body", file, "--dry-run"), "")
+		if err != nil || calls != 1 {
+			t.Fatalf("trailing %s %v", group, err)
+		}
+		_, err = runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, group, "create", "--body", file, "--contact", "1"), "")
+		if err == nil || calls != 1 {
+			t.Fatal("mixed flags accepted")
+		}
+		srv.Close()
+	}
+}
