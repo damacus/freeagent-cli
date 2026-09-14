@@ -771,11 +771,15 @@ type UpdateCapitalAssetTypeRequest struct {
 // ---- Capital Assets ----
 
 type CapitalAsset struct {
-	URL         string `json:"url"`
-	Description string `json:"description"`
-	PurchasedOn string `json:"purchased_on"`
-	Value       string `json:"value"`
-	Status      string `json:"status"`
+	AssetType           string           `json:"asset_type,omitempty"`
+	DisposedOn          string           `json:"disposed_on,omitempty"`
+	DepreciationProfile map[string]any   `json:"depreciation_profile,omitempty"`
+	CapitalAssetHistory []map[string]any `json:"capital_asset_history,omitempty"`
+	URL                 string           `json:"url"`
+	Description         string           `json:"description"`
+	PurchasedOn         string           `json:"purchased_on"`
+	Value               string           `json:"value"`
+	Status              string           `json:"status"`
 }
 type CapitalAssetResponse struct {
 	CapitalAsset CapitalAsset `json:"capital_asset"`
@@ -831,10 +835,14 @@ type RecurringInvoicesResponse struct {
 // ---- Stock Items (read-only) ----
 
 type StockItem struct {
-	URL         string `json:"url"`
-	Description string `json:"description"`
-	ItemCode    string `json:"item_code"`
-	SalesPrice  string `json:"sales_price"`
+	OpeningQuantity    string `json:"opening_quantity,omitempty"`
+	OpeningBalance     string `json:"opening_balance,omitempty"`
+	CostOfSaleCategory string `json:"cost_of_sale_category,omitempty"`
+	StockOnHand        string `json:"stock_on_hand,omitempty"`
+	URL                string `json:"url"`
+	Description        string `json:"description"`
+	ItemCode           string `json:"item_code"`
+	SalesPrice         string `json:"sales_price"`
 }
 type StockItemResponse struct {
 	StockItem StockItem `json:"stock_item"`
@@ -843,12 +851,20 @@ type StockItemsResponse struct {
 	StockItems []StockItem `json:"stock_items"`
 }
 
-// ---- Price List Items (read-only) ----
+// ---- Price List Items ----
 
 type PriceListItem struct {
-	URL         string `json:"url"`
-	Description string `json:"description"`
-	Price       string `json:"price"`
+	Code               string `json:"code,omitempty"`
+	ItemType           string `json:"item_type,omitempty"`
+	Quantity           string `json:"quantity,omitempty"`
+	VATStatus          string `json:"vat_status,omitempty"`
+	SalesTaxRate       string `json:"sales_tax_rate,omitempty"`
+	SecondSalesTaxRate string `json:"second_sales_tax_rate,omitempty"`
+	Category           string `json:"category,omitempty"`
+	StockItem          string `json:"stock_item,omitempty"`
+	URL                string `json:"url"`
+	Description        string `json:"description"`
+	Price              string `json:"price"`
 }
 type PriceListItemResponse struct {
 	PriceListItem PriceListItem `json:"price_list_item"`
@@ -860,8 +876,10 @@ type PriceListItemsResponse struct {
 // ---- Clients (read-only, accountancy practice) ----
 
 type Client struct {
-	URL  string `json:"url"`
-	Name string `json:"name"`
+	ID        int    `json:"id,omitempty"`
+	Subdomain string `json:"subdomain,omitempty"`
+	URL       string `json:"url"`
+	Name      string `json:"name"`
 }
 type ClientsResponse struct {
 	Clients []Client `json:"clients"`
@@ -870,6 +888,7 @@ type ClientsResponse struct {
 // ---- Account Managers (read-only) ----
 
 type AccountManager struct {
+	Name      string `json:"name,omitempty"`
 	URL       string `json:"url"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`

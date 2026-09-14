@@ -548,3 +548,9 @@ Existing one-page resource lists now expose `--page` and `--per-page` (1–100),
 | Journal sets | updated-since |
 
 Date inputs and pagination limits are checked before requests. Nested human output uses labelled nested values; ordinary human tables and raw JSON output remain available. API filters are URL-encoded, and new resource references use the selected profile origin.
+
+### Specification audit (#53)
+
+The reference specification now includes the audited missing operations and list query options, corrects the double slash in statement upload and the old accounting-prefixed final-accounts paths, records multipart uploads and complete write envelopes, and models the documented account-manager name. Runtime compatibility models also include minimal clients, stock quantities, price-list attributes and asset history. Legacy fields remain for compatibility. Regenerate with `go generate ./internal/freeagentapi`; generated reference types remain excluded from runtime builds. This is an operation/query audit, not a claim that every response field has a closed schema.
+
+The current bank transaction documentation announces a 1 December 2026 attachment transition: an attachments array and dedicated explanation-attachment writes under API version 2026-09-01. Existing receipt behaviour is preserved; migration needs separate implementation and verification.

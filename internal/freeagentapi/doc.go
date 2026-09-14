@@ -1,9 +1,7 @@
-// Package freeagentapi contains typed models for the FreeAgent REST API.
-// Response shapes are derived from live API responses; request shapes mirror
-// the API's accepted JSON payloads.
+// Package freeagentapi contains hand-maintained runtime models and generated
+// reference types for the FreeAgent API. Raw CLI JSON is never filtered by these
+// models. Reference types carry the ignore build tag to avoid conflicting with
+// compatibility models used by existing commands.
 //
-// To regenerate reference types from the OpenAPI spec (query-param structs
-// only — the spec has no response schemas):
-//
-//go:generate oapi-codegen --config ../../oapi-codegen.yaml ../../spec.yaml
+//go:generate sh ../../scripts/generate-api.sh
 package freeagentapi
