@@ -196,7 +196,12 @@ func documentedResourceID(c *cli.Command, resource, value string) (string, error
 		if err != nil {
 			return "", fmt.Errorf("invalid %s URL", resource)
 		}
-		base, err := url.Parse(rt.BaseURL)
+		cfg, _, err := loadConfig(rt)
+		if err != nil {
+			return "", err
+		}
+		profile := ensureProfile(cfg, rt.Profile, rt, config.Profile{})
+		base, err := url.Parse(profile.BaseURL)
 		if err != nil {
 			return "", err
 		}
