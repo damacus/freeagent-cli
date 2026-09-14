@@ -50,6 +50,8 @@ func NewApp(version string) *cli.Command {
 			accountManagersCommand(),
 			authCommand(),
 			bankAccountsCommand(),
+			documentedReadResource("bank-feeds", "bank_feeds", "bank feeds"),
+			documentedReadResource("hire-purchases", "hire_purchases", "hire purchases"),
 			taxReturnsCommand("vat-returns", "vat_returns", false, true, true),
 			taxReturnsCommand("corporation-tax-returns", "corporation_tax_returns", false, true, false),
 			taxReturnsCommand("self-assessment-returns", "self_assessment_returns", true, true, true),
@@ -89,6 +91,7 @@ func NewApp(version string) *cli.Command {
 		},
 	}
 
+	addWorkflowEndpoints(app)
 	cli.RootCommandHelpTemplate = strings.ReplaceAll(cli.RootCommandHelpTemplate, "GLOBAL OPTIONS", "GLOBAL FLAGS")
 	return app
 }

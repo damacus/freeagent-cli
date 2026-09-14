@@ -578,7 +578,7 @@ func invoiceSend(c *cli.Command) error {
 		return nil
 	}
 
-	resp, _, _, err := client.Do(commandContext(c), http.MethodPost, path+"/transitions/mark_as_sent", nil, "")
+	resp, _, _, err := client.Do(commandContext(c), http.MethodPut, path+"/transitions/mark_as_sent", nil, "")
 	if err != nil {
 		return err
 	}
