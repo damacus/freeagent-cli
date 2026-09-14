@@ -258,9 +258,13 @@ func cisSettingsUpdateCommand() *cli.Command {
 			if bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
 				continue
 			}
-			section, err := payloadObject(settings, name)
-			if err != nil {
-				return err
+			var section map[string]json.RawMessage
+			if err := json.Unmarshal(raw, &section); err != nil || section == nil {
+				return fmt.Errorf("%s must be a JSON object or null", name)
+			}
+			// An empty subcontractor object registers with the API defaults.
+			if name == "contractor_details" && len(section) == 0 {
+				return fmt.Errorf("contractor_details must be a non-empty JSON object")
 			}
 			if dateRaw, ok := section["reporting_starts_on"]; ok {
 				date, err := requiredPayloadString(map[string]json.RawMessage{"reporting_starts_on": dateRaw}, "reporting_starts_on")
