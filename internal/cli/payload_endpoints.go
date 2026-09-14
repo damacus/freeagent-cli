@@ -239,7 +239,7 @@ func statementImportCommand() *cli.Command {
 		return nil
 	})
 	cmd.Flags = append(cmd.Flags, &cli.StringFlag{Name: "bank-account", Required: true, Usage: "Bank account ID or API URL"})
-	return cmd
+	return withStatementFile(cmd)
 }
 
 func cisSettingsUpdateCommand() *cli.Command {
