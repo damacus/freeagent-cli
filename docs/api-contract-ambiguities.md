@@ -1,6 +1,6 @@
 # Mutation contracts awaiting clarification
 
-Checked against the official resource pages on 14 September 2026. This record accompanies issue #52; it does not establish a new mutation contract.
+Checked against the official resource pages on 15 September 2026. This record accompanies issue #52; it does not establish a new mutation contract.
 
 | Operation | Current official example | Conflict | CLI decision |
 | --- | --- | --- | --- |

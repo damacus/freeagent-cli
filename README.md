@@ -254,3 +254,24 @@ Bank transactions (bulk approve):
 MIT. See `LICENSE`.
 
 Bank statements can also be uploaded with `bank import-statement --bank-account ID --file statement.ofx` (OFX/QBO/QIF/supported CSV, maximum 16 MiB). Use `--dry-run` to preview and recheck `bank list` to verify import.
+
+### Multiple bank explanation attachments
+
+`bank explain attachments list --explanation 7` lists all attached files.
+Use `upload --explanation 7 --file receipt.pdf` to add a file, or
+`update --explanation 7 --attachment 3 --file replacement.pdf` to replace one.
+`delete --explanation 7 --attachment 3 --yes` removes that attachment.
+Write commands support `--dry-run`; upload and update accept `--description`.
+These commands select API version `2026-09-01` automatically.
+
+Use `bank --api-version 2026-09-01` before existing `explain` and `review`
+commands to select the multiple-attachment API. Existing `--receipt` and
+`review attach-receipt` then add a file through the dedicated attachment endpoint.
+Without this option the server default and legacy receipt payload are retained
+while supported. FreeAgent changes its default on 1 December 2026; select the
+explicit version when migrating. Reviews recognise both response shapes.
+An explanation and its receipt require separate requests: an upload failure
+reports the saved explanation so you can retry the attachment without duplicating it.
+
+`bank list --bank-account 7 --last-uploaded` selects the latest statement upload.
+Bank listing follows next-page links and preserves filters and unknown JSON fields.
