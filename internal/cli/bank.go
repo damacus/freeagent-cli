@@ -24,8 +24,10 @@ import (
 
 func bankCommand() *cli.Command {
 	return &cli.Command{
-		Name:  "bank",
-		Usage: "Work with bank transactions",
+		Name:   "bank",
+		Usage:  "Work with bank transactions",
+		Flags:  []cli.Flag{&cli.StringFlag{Name: "api-version", Usage: "Bank API version: 2026-09-01 (multiple attachments), or omit for server default"}},
+		Before: bankAPIVersion,
 		Commands: []*cli.Command{
 			{
 				Name:  "list",
@@ -36,6 +38,7 @@ func bankCommand() *cli.Command {
 					&cli.StringFlag{Name: "to", Usage: "End date (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "updated-since", Usage: "Updated since (YYYY-MM-DD)"},
 					&cli.StringFlag{Name: "view", Usage: "Filter view (e.g. unexplained)"},
+					&cli.BoolFlag{Name: "last-uploaded", Usage: "Only transactions from the latest statement upload"},
 					&cli.IntFlag{Name: "per-page", Value: 100, Usage: "Results per page"},
 				},
 				Action: action(bankList),
@@ -65,6 +68,7 @@ func bankCommand() *cli.Command {
 				Usage: "Manage bank transaction explanations",
 				Commands: []*cli.Command{
 					bankExplanationListCommand(),
+					bankAttachmentsCommand(),
 					{
 						Name:  "create",
 						Usage: "Create an explanation for a bank transaction",
@@ -158,7 +162,7 @@ func bankExplainCreate(c *cli.Command) error {
 		input.Attachment = att
 	}
 
-	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, "/bank_transaction_explanations", fa.CreateBankTransactionExplanationRequest{BankTransactionExplanation: input})
+	resp, _, _, err := writeBankExplanation(c, client, http.MethodPost, "/bank_transaction_explanations", input)
 	if err != nil {
 		return err
 	}
@@ -277,7 +281,7 @@ func bankExplainUpdate(c *cli.Command) error {
 		return fmt.Errorf("no fields to update")
 	}
 
-	resp, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, explanationURL, fa.UpdateBankTransactionExplanationRequest{BankTransactionExplanation: input})
+	resp, _, _, err := writeBankExplanation(c, client, http.MethodPut, explanationURL, input)
 	if err != nil {
 		return err
 	}
@@ -323,6 +327,9 @@ func bankList(c *cli.Command) error {
 	}
 
 	query := url.Values{}
+	if c.Bool("last-uploaded") {
+		query.Set("last_uploaded", "true")
+	}
 	query.Set("bank_account", bankAccountURL)
 	if v := c.String("from"); v != "" {
 		query.Set("from_date", v)
@@ -341,7 +348,7 @@ func bankList(c *cli.Command) error {
 	}
 
 	path := "/bank_transactions?" + query.Encode()
-	resp, _, _, err := client.Do(commandContext(c), http.MethodGet, path, nil, "")
+	resp, err := client.ListBankTransactionPages(commandContext(c), path)
 	if err != nil {
 		return err
 	}

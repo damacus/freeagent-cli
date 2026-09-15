@@ -5192,6 +5192,118 @@ paths:
           required: true
           schema:
             type: string
+  /v2/bank_transaction_explanations/{id}/attachments:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Api-Version
+        in: header
+        required: true
+        schema:
+          type: string
+          enum: ['2026-09-01']
+    get:
+      summary: List bank explanation attachments
+      responses:
+        '200':
+          description: Current attachments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attachments:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+    post:
+      summary: Upload bank explanation attachments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attachments]
+              properties:
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                    properties:
+                      url:
+                        type: string
+                      data:
+                        type: string
+                      file_name:
+                        type: string
+                      content_type:
+                        type: string
+                      description:
+                        type: string
+                      _destroy:
+                        type: string
+                        enum: ['true']
+      responses:
+        '200':
+          description: Current attachments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attachments:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+    put:
+      summary: Update or remove bank explanation attachments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attachments]
+              properties:
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                    properties:
+                      url:
+                        type: string
+                      data:
+                        type: string
+                      file_name:
+                        type: string
+                      content_type:
+                        type: string
+                      description:
+                        type: string
+                      _destroy:
+                        type: string
+                        enum: ['true']
+      responses:
+        '200':
+          description: Current attachments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attachments:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
 components:
   securitySchemes:
     oauth2:

@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -234,12 +235,20 @@ func bankReviewAttachReceipt(c *cli.Command) error {
 		return err
 	}
 
+	if freeagent.APIVersion(commandContext(c)) == freeagent.AttachmentsAPIVersion {
+		_, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, explanationURL+"/attachments", map[string]any{"attachments": []*fa.AttachmentInput{attachment}})
+		if err != nil {
+			return fmt.Errorf("receipt upload failed; explanation was not approved: %w", err)
+		}
+		attachment = nil
+	}
+
 	markedForReview := explanation.MarkedForReview
 	if c.Bool("approve") {
 		markedForReview = false
 	}
 
-	updated, err := client.UpdateBankTransactionExplanation(commandContext(c), explanationURL, fa.BankTransactionExplanationInput{
+	response, _, _, err := writeBankExplanation(c, client, http.MethodPut, explanationURL, fa.BankTransactionExplanationInput{
 		BankTransaction: explanation.BankTransaction,
 		DatedOn:         explanation.DatedOn,
 		Description:     explanation.Description,
@@ -256,6 +265,12 @@ func bankReviewAttachReceipt(c *cli.Command) error {
 	if err != nil {
 		return err
 	}
+
+	var decoded fa.BankTransactionExplanationResponse
+	if err := json.Unmarshal(response, &decoded); err != nil {
+		return err
+	}
+	updated := decoded.BankTransactionExplanation
 
 	if rt.JSONOutput {
 		data, err := json.Marshal(fa.BankTransactionExplanationResponse{
