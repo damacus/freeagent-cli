@@ -226,21 +226,35 @@ func bankReviewAttachReceipt(c *cli.Command) error {
 	if err != nil {
 		return err
 	}
-	explanation, err := client.GetBankTransactionExplanation(commandContext(c), explanationURL)
-	if err != nil {
-		return err
-	}
 	attachment, err := attachmentPayload(c.String("file"))
 	if err != nil {
 		return err
 	}
-
 	if freeagent.APIVersion(commandContext(c)) == freeagent.AttachmentsAPIVersion {
-		_, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, explanationURL+"/attachments", map[string]any{"attachments": []*fa.AttachmentInput{attachment}})
+		response, _, _, err := client.DoJSON(commandContext(c), http.MethodPost, explanationURL+"/attachments", map[string]any{"attachments": []*fa.AttachmentInput{attachment}})
 		if err != nil {
 			return fmt.Errorf("receipt upload failed; explanation was not approved: %w", err)
 		}
-		attachment = nil
+		result := map[string]any{"receipt_uploaded": true, "explanation_url": explanationURL, "attachment_response": savedResponse(response)}
+		if c.Bool("approve") {
+			approved := false
+			updated, _, _, err := client.DoJSON(commandContext(c), http.MethodPut, explanationURL, fa.UpdateBankTransactionExplanationRequest{BankTransactionExplanation: fa.BankTransactionExplanationInput{MarkedForReview: &approved}})
+			result["approved"] = err == nil
+			if err != nil {
+				result["warning"] = "Receipt uploaded, but approval failed. Retry approval only; do not upload the receipt again: " + err.Error()
+			} else {
+				result["explanation_response"] = savedResponse(updated)
+			}
+		}
+		data, err := json.Marshal(result)
+		if err != nil {
+			return err
+		}
+		return renderEndpointResponse(data, rt.JSONOutput)
+	}
+	explanation, err := client.GetBankTransactionExplanation(commandContext(c), explanationURL)
+	if err != nil {
+		return err
 	}
 
 	markedForReview := explanation.MarkedForReview

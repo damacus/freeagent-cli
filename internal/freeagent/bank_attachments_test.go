@@ -2,6 +2,7 @@ package freeagent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -66,5 +67,36 @@ func TestBankPaginationRejectsRepeatedPage(t *testing.T) {
 	_, err := client.ListBankTransactionPages(context.Background(), "/bank_transactions?last_uploaded=true")
 	if err == nil || calls != 2 {
 		t.Fatalf("calls=%d err=%v", calls, err)
+	}
+}
+
+func TestBankPageMetadataAndLinkFormats(t *testing.T) {
+	for _, params := range []string{`rel=next`, `rel = "next"`, `REL="prev next"; title="a,b;c"`} {
+		t.Run(params, func(t *testing.T) {
+			calls := 0
+			client, srv := newBankTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				if calls == 1 {
+					w.Header().Add("Link", `</v2/bank_transactions?page=1>; rel=first`)
+					w.Header().Add("Link", `</v2/bank_transactions?page=2>; `+params)
+				}
+				fmt.Fprintf(w, `{"bank_transactions":[{"future":true}],"page":%d,"count":1}`, calls)
+			})
+			defer srv.Close()
+			data, err := client.ListBankTransactionPages(context.Background(), "/bank_transactions")
+			if err != nil || calls != 2 {
+				t.Fatalf("%d %v", calls, err)
+			}
+			var result map[string]json.RawMessage
+			json.Unmarshal(data, &result)
+			if result["page"] != nil || result["count"] != nil {
+				t.Fatal(string(data))
+			}
+			var metadata []map[string]int
+			json.Unmarshal(result["page_metadata"], &metadata)
+			if len(metadata) != 2 || metadata[0]["page"] != 1 || metadata[1]["page"] != 2 {
+				t.Fatal(string(data))
+			}
+		})
 	}
 }

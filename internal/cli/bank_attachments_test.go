@@ -153,7 +153,7 @@ func TestVersionedReceiptCreate(t *testing.T) {
 					fmt.Fprint(w, `{"error":"too large"}`)
 					return
 				}
-				fmt.Fprint(w, `{"attachments":[]}`)
+				fmt.Fprint(w, `{"attachments":[],"future":false}`)
 			case 3:
 				if r.Method != "GET" {
 					t.Error(r.Method)
@@ -170,7 +170,7 @@ func TestVersionedReceiptCreate(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), "explanation saved") || calls != 2 {
 				t.Fatalf("%d %v", calls, err)
 			}
-		} else if err != nil || calls != 3 || !strings.Contains(out, `"future":false`) {
+		} else if err != nil || calls != 2 || !strings.Contains(out, `"future":false`) {
 			t.Fatalf("%d %v %s", calls, err, out)
 		}
 	}
@@ -184,10 +184,7 @@ func TestFailedReviewReceiptDoesNotApprove(t *testing.T) {
 	calls := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
-		if calls == 1 && r.Method == "GET" {
-			fmt.Fprint(w, `{"bank_transaction_explanation":{"marked_for_review":true}}`)
-			return
-		}
+
 		if r.Method != "POST" || !strings.HasSuffix(r.URL.Path, "/attachments") {
 			t.Error("unexpected write", r.Method, r.URL)
 		}
@@ -196,7 +193,71 @@ func TestFailedReviewReceiptDoesNotApprove(t *testing.T) {
 	}))
 	defer srv.Close()
 	_, err := runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, "bank", "--api-version", "2026-09-01", "review", "attach-receipt", "--explanation", "7", "--file", file, "--approve"), "")
-	if err == nil || !strings.Contains(err.Error(), "not approved") || calls != 2 {
+	if err == nil || !strings.Contains(err.Error(), "not approved") || calls != 1 {
 		t.Fatalf("calls=%d err=%v", calls, err)
+	}
+}
+
+func TestVersionedReviewMinimalWrites(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "receipt.pdf")
+	if err := os.WriteFile(file, []byte("receipt"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"upload", "approve", "approval-failure"} {
+		t.Run(mode, func(t *testing.T) {
+			calls := 0
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				if calls == 1 {
+					if r.Method != "POST" {
+						t.Error("unexpected read or stale update", r.Method)
+					}
+					fmt.Fprint(w, `{"attachments":[{"file_name":"receipt.pdf"}]}`)
+					return
+				}
+				if mode == "upload" || r.Method != "PUT" {
+					t.Error("unexpected request", r.Method)
+				}
+				var body map[string]map[string]any
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				input := body["bank_transaction_explanation"]
+				if len(input) != 1 || input["marked_for_review"] != false {
+					t.Error("stale fields sent", body)
+				}
+				if mode == "approval-failure" {
+					w.WriteHeader(422)
+					fmt.Fprint(w, `{}`)
+					return
+				}
+				fmt.Fprint(w, `{"bank_transaction_explanation":{"description":"Concurrent edit","marked_for_review":false}}`)
+			}))
+			defer srv.Close()
+			args := []string{"--json", "bank", "--api-version", "2026-09-01", "review", "attach-receipt", "--explanation", "7", "--file", file}
+			if mode != "upload" {
+				args = append(args, "--approve")
+			}
+			out, err := runCLIWithIO(t, testApp(srv.URL+"/v2"), cliArgsWithConfig(t, args...), "")
+			want := 2
+			if mode == "upload" {
+				want = 1
+			}
+			if err != nil || calls != want || !strings.Contains(out, `"receipt_uploaded":true`) {
+				t.Fatalf("%d %v %s", calls, err, out)
+			}
+			if mode == "approval-failure" && (!strings.Contains(out, `"approved":false`) || !strings.Contains(out, "Retry approval only")) {
+				t.Fatal(out)
+			}
+		})
+	}
+}
+
+func TestSavedResponseCannotInvalidateSuccess(t *testing.T) {
+	for _, body := range []string{"", "upstream text", `{"ok":true}`} {
+		data, err := json.Marshal(map[string]any{"receipt_uploaded": true, "response": savedResponse([]byte(body))})
+		if err != nil || !strings.Contains(string(data), `"receipt_uploaded":true`) {
+			t.Fatalf("%s %v", data, err)
+		}
 	}
 }

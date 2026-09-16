@@ -275,3 +275,9 @@ reports the saved explanation so you can retry the attachment without duplicatin
 
 `bank list --bank-account 7 --last-uploaded` selects the latest statement upload.
 Bank listing follows next-page links and preserves filters and unknown JSON fields.
+
+Versioned receipt writes return the saved explanation and attachment responses without
+a follow-up read. If approval fails after upload, the result reports
+`receipt_uploaded: true`, `approved: false` and a warning to retry approval only.
+Aggregated bank lists retain per-page top-level fields under `page_metadata`;
+transaction fields remain unchanged. Single-page responses retain their original metadata.

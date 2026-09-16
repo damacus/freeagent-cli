@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,6 +21,7 @@ func (c *Client) ListBankTransactionPages(ctx context.Context, endpoint string) 
 	seen := map[string]bool{}
 	var result map[string]json.RawMessage
 	var transactions []json.RawMessage
+	var metadata []map[string]json.RawMessage
 	for {
 		if seen[queryURL.String()] {
 			return nil, fmt.Errorf("bank transaction pagination repeated a page")
@@ -41,22 +43,34 @@ func (c *Client) ListBankTransactionPages(ctx context.Context, endpoint string) 
 			return nil, err
 		}
 		transactions = append(transactions, records...)
+		fields := map[string]json.RawMessage{}
+		for key, value := range page {
+			if key != "bank_transactions" {
+				fields[key] = value
+			}
+		}
+		metadata = append(metadata, fields)
 		next := ""
-		for _, link := range strings.Split(headers.Get("Link"), ",") {
-			parts := strings.Split(link, ";")
-			if len(parts) < 2 {
+		for _, link := range splitLinkValues(strings.Join(headers.Values("Link"), ",")) {
+			close := strings.Index(link, ">")
+			open := strings.Index(link, "<")
+			if open < 0 || close < open {
 				continue
 			}
+			_, params, err := mime.ParseMediaType("link" + link[close+1:])
+			if err != nil {
+				return nil, fmt.Errorf("invalid pagination Link: %w", err)
+			}
 			isNext := false
-			for _, attribute := range parts[1:] {
-				if strings.TrimSpace(attribute) == `rel="next"` {
+			for _, relation := range strings.Fields(params["rel"]) {
+				if relation == "next" {
 					isNext = true
 				}
 			}
 			if !isNext {
 				continue
 			}
-			target, err := url.Parse(strings.Trim(strings.TrimSpace(parts[0]), "<>"))
+			target, err := url.Parse(link[open+1 : close])
 			if err != nil {
 				return nil, err
 			}
@@ -75,9 +89,49 @@ func (c *Client) ListBankTransactionPages(ctx context.Context, endpoint string) 
 	if transactions == nil {
 		transactions = []json.RawMessage{}
 	}
+	if len(metadata) > 1 {
+		result = map[string]json.RawMessage{}
+		result["page_metadata"], err = json.Marshal(metadata)
+		if err != nil {
+			return nil, err
+		}
+	}
 	result["bank_transactions"], err = json.Marshal(transactions)
 	if err != nil {
 		return nil, err
 	}
 	return json.Marshal(result)
+}
+
+// Commas inside URI references or quoted parameters do not separate links.
+func splitLinkValues(header string) []string {
+	var links []string
+	start := 0
+	quoted, angle, escaped := false, false, false
+	for i, r := range header {
+		if escaped {
+			escaped = false
+			continue
+		}
+		if quoted && r == '\\' {
+			escaped = true
+			continue
+		}
+		if r == '"' && !angle {
+			quoted = !quoted
+		}
+		if !quoted {
+			if r == '<' {
+				angle = true
+			}
+			if r == '>' {
+				angle = false
+			}
+			if r == ',' && !angle {
+				links = append(links, strings.TrimSpace(header[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	return append(links, strings.TrimSpace(header[start:]))
 }

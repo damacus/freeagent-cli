@@ -106,9 +106,23 @@ func writeBankExplanation(c *cli.Command, client *freeagent.Client, method, endp
 		}
 		endpoint = "/bank_transaction_explanations/" + id
 	}
-	_, _, _, err = client.DoJSON(ctx, http.MethodPost, endpoint+"/attachments", map[string]any{"attachments": []*fa.AttachmentInput{attachment}})
+	attachmentResponse, _, _, err := client.DoJSON(ctx, http.MethodPost, endpoint+"/attachments", map[string]any{"attachments": []*fa.AttachmentInput{attachment}})
 	if err != nil {
 		return nil, status, headers, fmt.Errorf("explanation saved but receipt upload failed; retry with bank explain attachments upload: %w", err)
 	}
-	return client.Do(ctx, http.MethodGet, endpoint, nil, "")
+	result := map[string]any{"receipt_uploaded": true, "explanation_url": endpoint, "explanation_response": savedResponse(response), "attachment_response": savedResponse(attachmentResponse)}
+	data, err := json.Marshal(result)
+	return data, status, headers, err
+}
+
+// A successful write remains successful even if its optional response is empty
+// or is not JSON. Preserve that response without making it a retryable failure.
+func savedResponse(data []byte) any {
+	if len(data) == 0 {
+		return nil
+	}
+	if json.Valid(data) {
+		return json.RawMessage(data)
+	}
+	return string(data)
 }
