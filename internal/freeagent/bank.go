@@ -17,6 +17,7 @@ import (
 const bankReviewConcurrency = 8
 
 type ListBankTransactionsOptions struct {
+	LastUploaded bool
 	BankAccount  string
 	FromDate     string
 	ToDate       string
@@ -33,17 +34,18 @@ type ListBankTransactionExplanationsOptions struct {
 }
 
 type BankReviewExplanation struct {
-	ID              string         `json:"id"`
-	URL             string         `json:"url"`
-	Category        string         `json:"category"`
-	Description     string         `json:"description"`
-	GrossValue      string         `json:"gross_value"`
-	Project         string         `json:"project,omitempty"`
-	Type            string         `json:"type,omitempty"`
-	Detail          string         `json:"detail,omitempty"`
-	MarkedForReview bool           `json:"marked_for_review"`
-	HasAttachment   bool           `json:"has_attachment"`
-	Attachment      *fa.Attachment `json:"attachment,omitempty"`
+	ID              string          `json:"id"`
+	URL             string          `json:"url"`
+	Category        string          `json:"category"`
+	Description     string          `json:"description"`
+	GrossValue      string          `json:"gross_value"`
+	Project         string          `json:"project,omitempty"`
+	Type            string          `json:"type,omitempty"`
+	Detail          string          `json:"detail,omitempty"`
+	MarkedForReview bool            `json:"marked_for_review"`
+	HasAttachment   bool            `json:"has_attachment"`
+	Attachment      *fa.Attachment  `json:"attachment,omitempty"`
+	Attachments     []fa.Attachment `json:"attachments,omitempty"`
 }
 
 type BankReviewItem struct {
@@ -72,6 +74,9 @@ type BankReviewItemResponse struct {
 
 func (c *Client) ListBankTransactions(ctx context.Context, opts ListBankTransactionsOptions) ([]fa.BankTransaction, error) {
 	query := url.Values{}
+	if opts.LastUploaded {
+		query.Set("last_uploaded", "true")
+	}
 	if opts.BankAccount != "" {
 		query.Set("bank_account", opts.BankAccount)
 	}
@@ -251,11 +256,15 @@ func (c *Client) BuildBankReviewItems(ctx context.Context, transactions []fa.Ban
 				Type:            explanation.Type,
 				Detail:          explanation.Detail,
 				MarkedForReview: explanation.MarkedForReview,
-				HasAttachment:   explanation.Attachment != nil,
+				HasAttachment:   explanation.Attachment != nil || len(explanation.Attachments) > 0,
+				Attachments:     explanation.Attachments,
 				Attachment:      explanation.Attachment,
 			})
 			if explanation.Category != "" {
 				item.Categories = append(item.Categories, explanation.Category)
+			}
+			for _, attachment := range explanation.Attachments {
+				item.AttachmentFilenames = append(item.AttachmentFilenames, attachment.FileName)
 			}
 			if explanation.Attachment != nil {
 				item.AttachmentFilenames = append(item.AttachmentFilenames, explanation.Attachment.FileName)

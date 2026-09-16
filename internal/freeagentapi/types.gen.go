@@ -16,6 +16,36 @@ const (
 	Oauth2Scopes = "oauth2.Scopes"
 )
 
+// Defines values for PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy.
+const (
+	PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroyTrue PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy = "true"
+)
+
+// Valid indicates whether the value is a known member of the PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy enum.
+func (e PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy) Valid() bool {
+	switch e {
+	case PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroyTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy.
+const (
+	PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroyTrue PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy = "true"
+)
+
+// Valid indicates whether the value is a known member of the PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy enum.
+func (e PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy) Valid() bool {
+	switch e {
+	case PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroyTrue:
+		return true
+	default:
+		return false
+	}
+}
+
 // DocumentedAccountManager defines model for DocumentedAccountManager.
 type DocumentedAccountManager struct {
 	Email                *string                `json:"email,omitempty"`
@@ -140,6 +170,59 @@ type DeleteABankTransactionExplanationJSONBody struct {
 // PutVBankTransactionExplanationsIdJSONBody defines parameters for PutVBankTransactionExplanationsId.
 type PutVBankTransactionExplanationsIdJSONBody struct {
 	BankTransactionExplanation map[string]interface{} `json:"bank_transaction_explanation"`
+}
+
+// GetV2BankTransactionExplanationsIdAttachmentsParams defines parameters for GetV2BankTransactionExplanationsIdAttachments.
+type GetV2BankTransactionExplanationsIdAttachmentsParams struct {
+	XApiVersion string `json:"X-Api-Version"`
+}
+
+// PostV2BankTransactionExplanationsIdAttachmentsJSONBody defines parameters for PostV2BankTransactionExplanationsIdAttachments.
+type PostV2BankTransactionExplanationsIdAttachmentsJSONBody struct {
+	Attachments []PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item `json:"attachments"`
+}
+
+// PostV2BankTransactionExplanationsIdAttachmentsParams defines parameters for PostV2BankTransactionExplanationsIdAttachments.
+type PostV2BankTransactionExplanationsIdAttachmentsParams struct {
+	XApiVersion string `json:"X-Api-Version"`
+}
+
+// PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy defines parameters for PostV2BankTransactionExplanationsIdAttachments.
+type PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy string
+
+// PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item defines parameters for PostV2BankTransactionExplanationsIdAttachments.
+type PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item struct {
+	UnderscoreDestroy    *PostV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy `json:"_destroy,omitempty"`
+	ContentType          *string                                                                   `json:"content_type,omitempty"`
+	Data                 *string                                                                   `json:"data,omitempty"`
+	Description          *string                                                                   `json:"description,omitempty"`
+	FileName             *string                                                                   `json:"file_name,omitempty"`
+	Url                  *string                                                                   `json:"url,omitempty"`
+	AdditionalProperties map[string]interface{}                                                    `json:"-"`
+}
+
+// PutV2BankTransactionExplanationsIdAttachmentsJSONBody defines parameters for PutV2BankTransactionExplanationsIdAttachments.
+type PutV2BankTransactionExplanationsIdAttachmentsJSONBody struct {
+	Attachments []PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item `json:"attachments"`
+}
+
+// PutV2BankTransactionExplanationsIdAttachmentsParams defines parameters for PutV2BankTransactionExplanationsIdAttachments.
+type PutV2BankTransactionExplanationsIdAttachmentsParams struct {
+	XApiVersion string `json:"X-Api-Version"`
+}
+
+// PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy defines parameters for PutV2BankTransactionExplanationsIdAttachments.
+type PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy string
+
+// PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item defines parameters for PutV2BankTransactionExplanationsIdAttachments.
+type PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item struct {
+	UnderscoreDestroy    *PutV2BankTransactionExplanationsIdAttachmentsJSONBodyAttachmentsDestroy `json:"_destroy,omitempty"`
+	ContentType          *string                                                                  `json:"content_type,omitempty"`
+	Data                 *string                                                                  `json:"data,omitempty"`
+	Description          *string                                                                  `json:"description,omitempty"`
+	FileName             *string                                                                  `json:"file_name,omitempty"`
+	Url                  *string                                                                  `json:"url,omitempty"`
+	AdditionalProperties map[string]interface{}                                                   `json:"-"`
 }
 
 // ListAllBankTransactionsUnderACertainBankAccountParams defines parameters for ListAllBankTransactionsUnderACertainBankAccount.
@@ -953,6 +1036,12 @@ type DeleteABankTransactionExplanationJSONRequestBody DeleteABankTransactionExpl
 // PutVBankTransactionExplanationsIdJSONRequestBody defines body for PutVBankTransactionExplanationsId for application/json ContentType.
 type PutVBankTransactionExplanationsIdJSONRequestBody PutVBankTransactionExplanationsIdJSONBody
 
+// PostV2BankTransactionExplanationsIdAttachmentsJSONRequestBody defines body for PostV2BankTransactionExplanationsIdAttachments for application/json ContentType.
+type PostV2BankTransactionExplanationsIdAttachmentsJSONRequestBody PostV2BankTransactionExplanationsIdAttachmentsJSONBody
+
+// PutV2BankTransactionExplanationsIdAttachmentsJSONRequestBody defines body for PutV2BankTransactionExplanationsIdAttachments for application/json ContentType.
+type PutV2BankTransactionExplanationsIdAttachmentsJSONRequestBody PutV2BankTransactionExplanationsIdAttachmentsJSONBody
+
 // UploadABankStatementJSONRequestBody defines body for UploadABankStatement for application/json ContentType.
 type UploadABankStatementJSONRequestBody UploadABankStatementJSONBody
 
@@ -1138,6 +1227,292 @@ type PutVUsersMeJSONRequestBody PutVUsersMeJSONBody
 
 // UpdateAUserJSONRequestBody defines body for UpdateAUser for application/json ContentType.
 type UpdateAUserJSONRequestBody UpdateAUserJSONBody
+
+// Getter for additional properties for PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item. Returns the specified
+// element and whether it was found
+func (a PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item
+func (a *PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item to handle AdditionalProperties
+func (a *PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["_destroy"]; found {
+		err = json.Unmarshal(raw, &a.UnderscoreDestroy)
+		if err != nil {
+			return fmt.Errorf("error reading '_destroy': %w", err)
+		}
+		delete(object, "_destroy")
+	}
+
+	if raw, found := object["content_type"]; found {
+		err = json.Unmarshal(raw, &a.ContentType)
+		if err != nil {
+			return fmt.Errorf("error reading 'content_type': %w", err)
+		}
+		delete(object, "content_type")
+	}
+
+	if raw, found := object["data"]; found {
+		err = json.Unmarshal(raw, &a.Data)
+		if err != nil {
+			return fmt.Errorf("error reading 'data': %w", err)
+		}
+		delete(object, "data")
+	}
+
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &a.Description)
+		if err != nil {
+			return fmt.Errorf("error reading 'description': %w", err)
+		}
+		delete(object, "description")
+	}
+
+	if raw, found := object["file_name"]; found {
+		err = json.Unmarshal(raw, &a.FileName)
+		if err != nil {
+			return fmt.Errorf("error reading 'file_name': %w", err)
+		}
+		delete(object, "file_name")
+	}
+
+	if raw, found := object["url"]; found {
+		err = json.Unmarshal(raw, &a.Url)
+		if err != nil {
+			return fmt.Errorf("error reading 'url': %w", err)
+		}
+		delete(object, "url")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item to handle AdditionalProperties
+func (a PostV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.UnderscoreDestroy != nil {
+		object["_destroy"], err = json.Marshal(a.UnderscoreDestroy)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '_destroy': %w", err)
+		}
+	}
+
+	if a.ContentType != nil {
+		object["content_type"], err = json.Marshal(a.ContentType)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'content_type': %w", err)
+		}
+	}
+
+	if a.Data != nil {
+		object["data"], err = json.Marshal(a.Data)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'data': %w", err)
+		}
+	}
+
+	if a.Description != nil {
+		object["description"], err = json.Marshal(a.Description)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'description': %w", err)
+		}
+	}
+
+	if a.FileName != nil {
+		object["file_name"], err = json.Marshal(a.FileName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'file_name': %w", err)
+		}
+	}
+
+	if a.Url != nil {
+		object["url"], err = json.Marshal(a.Url)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'url': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item. Returns the specified
+// element and whether it was found
+func (a PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item
+func (a *PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item to handle AdditionalProperties
+func (a *PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["_destroy"]; found {
+		err = json.Unmarshal(raw, &a.UnderscoreDestroy)
+		if err != nil {
+			return fmt.Errorf("error reading '_destroy': %w", err)
+		}
+		delete(object, "_destroy")
+	}
+
+	if raw, found := object["content_type"]; found {
+		err = json.Unmarshal(raw, &a.ContentType)
+		if err != nil {
+			return fmt.Errorf("error reading 'content_type': %w", err)
+		}
+		delete(object, "content_type")
+	}
+
+	if raw, found := object["data"]; found {
+		err = json.Unmarshal(raw, &a.Data)
+		if err != nil {
+			return fmt.Errorf("error reading 'data': %w", err)
+		}
+		delete(object, "data")
+	}
+
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &a.Description)
+		if err != nil {
+			return fmt.Errorf("error reading 'description': %w", err)
+		}
+		delete(object, "description")
+	}
+
+	if raw, found := object["file_name"]; found {
+		err = json.Unmarshal(raw, &a.FileName)
+		if err != nil {
+			return fmt.Errorf("error reading 'file_name': %w", err)
+		}
+		delete(object, "file_name")
+	}
+
+	if raw, found := object["url"]; found {
+		err = json.Unmarshal(raw, &a.Url)
+		if err != nil {
+			return fmt.Errorf("error reading 'url': %w", err)
+		}
+		delete(object, "url")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item to handle AdditionalProperties
+func (a PutV2BankTransactionExplanationsIdAttachmentsJSONBody_Attachments_Item) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.UnderscoreDestroy != nil {
+		object["_destroy"], err = json.Marshal(a.UnderscoreDestroy)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '_destroy': %w", err)
+		}
+	}
+
+	if a.ContentType != nil {
+		object["content_type"], err = json.Marshal(a.ContentType)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'content_type': %w", err)
+		}
+	}
+
+	if a.Data != nil {
+		object["data"], err = json.Marshal(a.Data)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'data': %w", err)
+		}
+	}
+
+	if a.Description != nil {
+		object["description"], err = json.Marshal(a.Description)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'description': %w", err)
+		}
+	}
+
+	if a.FileName != nil {
+		object["file_name"], err = json.Marshal(a.FileName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'file_name': %w", err)
+		}
+	}
+
+	if a.Url != nil {
+		object["url"], err = json.Marshal(a.Url)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'url': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
 
 // Getter for additional properties for DocumentedAccountManager. Returns the specified
 // element and whether it was found

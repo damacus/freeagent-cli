@@ -10,12 +10,15 @@ type AttachmentInput struct {
 
 // Attachment represents an attachment returned by the API.
 type Attachment struct {
-	URL         string `json:"url"`
-	ContentSrc  string `json:"content_src"`
-	ContentType string `json:"content_type"`
-	FileName    string `json:"file_name"`
-	FileSize    int    `json:"file_size"`
-	ExpiresAt   string `json:"expires_at"`
+	Description      string `json:"description,omitempty"`
+	ContentSrcMedium string `json:"content_src_medium,omitempty"`
+	ContentSrcSmall  string `json:"content_src_small,omitempty"`
+	URL              string `json:"url"`
+	ContentSrc       string `json:"content_src"`
+	ContentType      string `json:"content_type"`
+	FileName         string `json:"file_name"`
+	FileSize         int    `json:"file_size"`
+	ExpiresAt        string `json:"expires_at"`
 }
 
 // Contact represents a FreeAgent contact.
@@ -393,26 +396,27 @@ type BankTransactionsResponse struct {
 
 // BankTransactionExplanation represents a FreeAgent bank transaction explanation.
 type BankTransactionExplanation struct {
-	URL             string      `json:"url"`
-	BankAccount     string      `json:"bank_account"`
-	BankTransaction string      `json:"bank_transaction"`
-	Category        string      `json:"category"`
-	DatedOn         string      `json:"dated_on"`
-	Description     string      `json:"description"`
-	GrossValue      string      `json:"gross_value"`
-	Project         string      `json:"project,omitempty"`
-	Type            string      `json:"type,omitempty"`
-	Detail          string      `json:"detail,omitempty"`
-	RebillType      string      `json:"rebill_type,omitempty"`
-	RebillFactor    string      `json:"rebill_factor,omitempty"`
-	SalesTaxStatus  string      `json:"sales_tax_status,omitempty"`
-	SalesTaxRate    string      `json:"sales_tax_rate,omitempty"`
-	MarkedForReview bool        `json:"marked_for_review"`
-	IsLocked        bool        `json:"is_locked"`
-	IsDeletable     bool        `json:"is_deletable"`
-	Attachment      *Attachment `json:"attachment,omitempty"`
-	UpdatedAt       string      `json:"updated_at"`
-	CreatedAt       string      `json:"created_at"`
+	URL             string       `json:"url"`
+	BankAccount     string       `json:"bank_account"`
+	BankTransaction string       `json:"bank_transaction"`
+	Category        string       `json:"category"`
+	DatedOn         string       `json:"dated_on"`
+	Description     string       `json:"description"`
+	GrossValue      string       `json:"gross_value"`
+	Project         string       `json:"project,omitempty"`
+	Type            string       `json:"type,omitempty"`
+	Detail          string       `json:"detail,omitempty"`
+	RebillType      string       `json:"rebill_type,omitempty"`
+	RebillFactor    string       `json:"rebill_factor,omitempty"`
+	SalesTaxStatus  string       `json:"sales_tax_status,omitempty"`
+	SalesTaxRate    string       `json:"sales_tax_rate,omitempty"`
+	MarkedForReview bool         `json:"marked_for_review"`
+	IsLocked        bool         `json:"is_locked"`
+	IsDeletable     bool         `json:"is_deletable"`
+	Attachments     []Attachment `json:"attachments,omitempty"`
+	Attachment      *Attachment  `json:"attachment,omitempty"`
+	UpdatedAt       string       `json:"updated_at"`
+	CreatedAt       string       `json:"created_at"`
 }
 
 type BankTransactionExplanationResponse struct {

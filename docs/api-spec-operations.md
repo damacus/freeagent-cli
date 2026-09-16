@@ -211,3 +211,6 @@ Generated from spec.yaml by scripts/generate-api.sh. This lists declared operati
 | PUT | `/v2/vat_returns/{period_ends_on}/mark_as_unfiled` |
 | PUT | `/v2/vat_returns/{period_ends_on}/payments/{payment_date}/mark_as_paid` |
 | PUT | `/v2/vat_returns/{period_ends_on}/payments/{payment_date}/mark_as_unpaid` |
+| GET | `/v2/bank_transaction_explanations/{id}/attachments` |
+| POST | `/v2/bank_transaction_explanations/{id}/attachments` |
+| PUT | `/v2/bank_transaction_explanations/{id}/attachments` |

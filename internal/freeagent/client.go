@@ -255,6 +255,9 @@ func (c *Client) doRequest(ctx context.Context, method, urlStr string, body []by
 			req.Header.Set("Content-Type", contentType)
 		}
 		req.Header.Set("Accept", "application/json")
+		if version := APIVersion(ctx); version != "" {
+			req.Header.Set("X-Api-Version", version)
+		}
 		if c.UserAgent != "" {
 			req.Header.Set("User-Agent", c.UserAgent)
 		}
