@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0](https://github.com/damacus/freeagent-cli/compare/v0.6.0...v0.7.0) (2026-09-27)
+
+
+### Features
+
+* complete bank attachment workflows ([#68](https://github.com/damacus/freeagent-cli/issues/68)) ([fd3bc1f](https://github.com/damacus/freeagent-cli/commit/fd3bc1faf4f1a11021acacb95ebf2a04ad3d2ea2))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/urfave/cli/v3 to v3.13.0 ([#70](https://github.com/damacus/freeagent-cli/issues/70)) ([5df6777](https://github.com/damacus/freeagent-cli/commit/5df67773d062ca5d552af1bf450bceaed7f075f0))
+
 ## [0.6.0](https://github.com/damacus/freeagent-cli/compare/v0.5.5...v0.6.0) (2026-09-14)
 
 
